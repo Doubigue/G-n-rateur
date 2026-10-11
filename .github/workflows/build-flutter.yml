@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Détecter la demande
+      - name: DÃ©tecter la demande
         run: |
           CFG=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E '^builds/[^/]+/flutter\.json$' | head -n1)
           test -n "$CFG"
@@ -38,7 +38,7 @@ jobs:
       - name: Installer ImageMagick
         run: sudo apt-get update && sudo apt-get install -y imagemagick
 
-      - name: Préparer le projet Flutter
+      - name: PrÃ©parer le projet Flutter
         run: |
           set -e
           CFG="$GITHUB_WORKSPACE/$DIR/flutter.json"
@@ -77,6 +77,8 @@ jobs:
           s=open(m).read()
           s=re.sub(r'android:label="[^"]*"',lambda _:'android:label="%s"'%name,s,count=1)
           s=s.replace('<activity','<activity android:screenOrientation="%s"'%ori,1)
+          if 'android.permission.INTERNET' not in s:
+              s=s.replace('<application','<uses-permission android:name="android.permission.INTERNET"/>\n    <application',1)
           open(m,'w').write(s)
           for f in glob.glob('android/app/build.gradle*'):
               t=open(f).read()
@@ -111,7 +113,7 @@ jobs:
           SLUG=$(echo "$NAME" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cs 'A-Za-z0-9' '-' | sed 's/^-//;s/-$//')
           [ -n "$SLUG" ] || SLUG=app
           cp work/app/build/app/outputs/flutter-apk/app-release.apk "$SLUG-$VN.apk"
-          gh release create "apk-$ID" "$SLUG-$VN.apk" --title "$NAME $VN" --notes "APK Flutter généré pour $NAME (version $VN)."
+          gh release create "apk-$ID" "$SLUG-$VN.apk" --title "$NAME $VN" --notes "APK Flutter gÃ©nÃ©rÃ© pour $NAME (version $VN)."
 
       - name: Nettoyer la demande
         run: |
@@ -121,4 +123,3 @@ jobs:
           git commit -qm "Nettoyage $ID [skip ci]"
           git pull --rebase -q || true
           git push -q || true
-          
