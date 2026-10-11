@@ -8,7 +8,82 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
+/* ---------- Onglets, toast ---------- */
+const TABS={create:'tCreate',apps:'tApps',set:'tSet'};
+function goTab(n){
+  for(const k in TABS)$(TABS[k]).style.display=k===n?'block':'none';
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===n));
+  if(n==='apps')chargerApps();
+  scrollTo(0,0);
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>goTab(b.dataset.t));
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600)}
+function sauverCx(){try{if($('rem').checked){localStorage.setItem('apk-repo',$('repo').value.trim());localStorage.setItem('apk-token',$('token').value.trim())}else{localStorage.removeItem('apk-repo');localStorage.removeItem('apk-token')}}catch(_){}}
+$('saveCx').onclick=()=>{sauverCx();cxState();toast('Connexion enregistrée')};
+$('token').oninput=cxState;$('repo').oninput=cxState;
+
+/* ---------- Autorisations ---------- */
+const PERMS=[['storage','Stockage (lecture et écriture)'],['media','Photos, vidéos et musique'],['allfiles','Accès à tous les fichiers'],['camera','Caméra'],['micro','Micro'],['location','Localisation'],['notifications','Notifications'],['contacts','Contacts'],['calendar','Calendrier'],['bluetooth','Bluetooth'],['phone','Téléphone']];
+$('perms').innerHTML=PERMS.map(([k,t])=>'<label class="sw"><input type="checkbox" name="perm" value="'+k+'" checked><i></i>'+t+'</label>').join('');
+const pcb=()=>[...document.querySelectorAll('input[name=perm]')];
+const permsChoisies=()=>pcb().filter(c=>c.checked).map(c=>c.value);
+$('all').onchange=e=>pcb().forEach(c=>c.checked=e.target.checked);
+$('perms').onchange=()=>{$('all').checked=pcb().every(c=>c.checked)};
+
+/* ---------- Mes applications ---------- */
+function ouvrirLien(u){const B=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.Browser;if(B)B.open({url:u});else window.open(u,'_blank','noopener')}
+function meta(x){const b=x.body||'',g=r=>(b.match(r)||[])[1];return{ver:g(/Version\s*:\s*(.+)/)||g(/version ([^)]+)/i)||'',type:g(/Type\s*:\s*(\w+)/)||''}}
+async function apiDel(p){return fetch('https://api.github.com/repos/'+repo+p,{method:'DELETE',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token}})}
+async function chargerApps(){
+  const box=$('appList');repo=$('repo').value.trim();token=$('token').value.trim();
+  if(!repo||!token){box.innerHTML='<p class="vide">Ajoute ton dépôt et ton jeton dans Réglages.</p>';return}
+  box.innerHTML='<p class="vide">Chargement…</p>';
+  try{
+    const r=await api('/releases?per_page=100');
+    if(!r.ok)throw new Error('GitHub ('+r.status+')');
+    const l=(await r.json()).filter(x=>x.tag_name.startsWith('apk-')&&(x.assets||[]).some(a=>/\.apk$/i.test(a.name)));
+    if(!l.length){box.innerHTML="<p class=\"vide\">Aucune application pour le moment. Génère la première dans l'onglet Créer.</p>";return}
+    box.innerHTML='';
+    l.forEach(x=>{
+      const a=x.assets.find(a=>/\.apk$/i.test(a.name)),m=meta(x);
+      const c=document.createElement('article');c.className='app';
+      c.innerHTML='<div class="ico"></div><div class="inf"><b></b><small class="d1"></small><small class="d2"></small></div><div class="acts"><button type="button" class="dl">Télécharger</button><button type="button" class="rm">Supprimer</button></div>';
+      c.querySelector('.ico').textContent=(x.name||'?')[0].toUpperCase();
+      c.querySelector('b').textContent=x.name||a.name;
+      c.querySelector('.d1').textContent=[m.ver&&'Version '+m.ver,m.type==='flutter'?'Flutter':m.type==='web'?'Site web':''].filter(Boolean).join(' · ');
+      c.querySelector('.d2').textContent=new Date(x.published_at||x.created_at).toLocaleDateString('fr-FR')+' · '+(a.size/1048576).toFixed(1)+' Mo';
+      c.querySelector('.dl').onclick=()=>ouvrirLien(a.browser_download_url);
+      const rm=c.querySelector('.rm');let t2;
+      rm.onclick=async()=>{
+        if(rm.textContent!=='Confirmer'){rm.textContent='Confirmer';clearTimeout(t2);t2=setTimeout(()=>rm.textContent='Supprimer',3000);return}
+        rm.disabled=true;
+        const d=await apiDel('/releases/'+x.id);await apiDel('/git/refs/tags/'+x.tag_name);
+        if(d.ok||d.status===404){c.remove();toast('Application supprimée')}else{rm.disabled=false;rm.textContent='Supprimer';toast('Suppression impossible ('+d.status+')')}
+      };
+      box.appendChild(c);
+    });
+  }catch(e){box.innerHTML='<p class="vide"></p>';box.firstChild.textContent='Chargement impossible : '+e.message}
+}
+$('refApps').onclick=chargerApps;
+
+/* ---------- Partage Android : ZIP et icône PNG reçus ---------- */
+async function importPartage(items){
+  let n=0;
+  for(const it of items||[]){
+    if(it.kind!=='file')continue;
+    try{
+      const f=new File([await(await fetch(Capacitor.convertFileSrc('file://'+it.path))).blob()],it.name,{type:it.mime||''});
+      const dt=new DataTransfer();dt.items.add(f);
+      if(/\.zip$/i.test(it.name)){$('zip').files=dt.files;zipInfo();n++}
+      else if(/\.png$/i.test(it.name)||it.mime==='image/png'){$('icon').files=dt.files;$('icon').dispatchEvent(new Event('change'));n++}
+    }catch(e){}
+  }
+  if(n){goTab('create');toast(n+' fichier(s) reçu(s)')}else toast('Aucun ZIP ou PNG dans ce partage.')
+}
+addEventListener('appshare',e=>importPartage(e.detail));
+try{const sh=window.AndroidShare&&AndroidShare.take();if(sh)importPartage(JSON.parse(sh))}catch(e){}
+</script>
 <style>
 :root{--bg:#080a18;--ink:#eef0ff;--mut:#8f95b8;--line:rgba(255,255,255,.09);--glass:rgba(255,255,255,.05);--a:#8b9bff;--b:#5eead4;--err:#ff7a8a;--g:linear-gradient(135deg,#8b9bff,#5eead4);box-sizing:border-box;color-scheme:dark}
 *{box-sizing:inherit;-webkit-tap-highlight-color:transparent}
@@ -96,6 +171,26 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var
 .seg span{display:block;text-align:center;padding:10px;border-radius:10px;font-weight:600;transition:.2s}
 .seg input:checked+span{background:var(--g);color:#06111c}
 .seg input:focus-visible+span{outline:2px solid var(--a);outline-offset:2px}
+body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;padding:6px 8px calc(env(safe-area-inset-bottom,0px) + 6px);background:rgba(8,10,24,.88);backdrop-filter:blur(16px);border-top:1px solid var(--line);z-index:5}
+.tabs button{flex:1;background:none;border:0;color:var(--mut);font:500 12px Inter,sans-serif;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;cursor:pointer;transition:color .2s}
+.tabs button.on{color:var(--b)}
+.tabs svg{width:23px;height:23px}
+.apps-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.apps-head h2{margin:0;font-size:20px}
+.mini2{background:var(--glass);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 14px;font:500 13px Inter,sans-serif;cursor:pointer}
+.app{display:flex;gap:14px;align-items:center;padding:14px;margin-bottom:12px;background:var(--glass);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(14px)}
+.app .ico{width:52px;height:52px;border-radius:15px;background:var(--g);color:#06111c;display:grid;place-items:center;font:700 22px Sora,sans-serif;flex:none}
+.app .inf{flex:1;min-width:0}
+.app .inf b{display:block;font:600 16px Sora,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app .inf small{color:var(--mut);font-size:12px;display:block}
+.app .acts{display:flex;flex-direction:column;gap:6px}
+.app .dl{background:var(--g);color:#06111c;border:0;border-radius:10px;padding:9px 12px;font:600 13px Sora,sans-serif;cursor:pointer}
+.app .rm{background:none;border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:6px;font:500 12px Inter,sans-serif;cursor:pointer}
+.vide{color:var(--mut);text-align:center;padding:32px 12px}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);transform:translateX(-50%) translateY(20px);background:#1d2140;color:#eef0ff;padding:10px 18px;border-radius:99px;border:1px solid var(--line);opacity:0;transition:.3s;z-index:9;pointer-events:none;font-size:14px}
+#toast.on{opacity:1;transform:translateX(-50%)}
+.cstat{color:var(--mut);font-size:14px;margin:4px 0 0}
 </style>
 </head>
 <body>
@@ -106,6 +201,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var
   <div><h1>APK Studio</h1><p>Site web ou Flutter, vers l'application Android</p></div>
 </header>
 
+<div id="tCreate">
 <section id="vForm">
   <div class="preview" aria-label="Aperçu de l'application">
     <div class="tile" id="tile"><img id="tImg" alt=""><span id="tLet">M</span></div>
@@ -138,15 +234,14 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var
       <input id="icon" type="file" accept="image/png">
     </div>
 
-    <details class="panel" id="cx">
-      <summary><h2 style="margin:0"><span>3</span>Connexion GitHub</h2><em id="cs"></em></summary>
-      <label for="repo">Dépôt</label>
-      <input id="repo" required value="Doubigue/G-n-rateur" autocapitalize="none" autocorrect="off">
-      <label for="token">Jeton d'accès</label>
-      <input id="token" type="password" required autocomplete="off" placeholder="github_pat_…">
-      <label class="mini" style="margin-top:14px"><input id="rem" type="checkbox" checked style="width:auto">Mémoriser sur cet appareil</label>
-      <small class="h">Le jeton reste dans ton navigateur et n'est envoyé qu'à api.github.com.</small>
-    </details>
+    <div class="panel">
+      <h2><span>3</span>Autorisations</h2>
+      <label class="sw"><input id="all" type="checkbox" checked><i></i>Tout autoriser</label>
+      <div id="perms"></div>
+      <label class="sw"><input id="share" type="checkbox" checked><i></i>Accepter les partages de fichiers</label>
+      <label class="sw"><input id="ask" type="checkbox" checked><i></i>Demander les autorisations au premier lancement</label>
+      <small class="h">Le bouton Partager d'Android listera l'application. « Tous les fichiers » ouvre un réglage Android à la première ouverture.</small>
+    </div>
 
     <button class="btn" id="go" type="submit">Générer l'APK</button>
     <p class="err" id="err" role="alert"></p>
@@ -163,7 +258,33 @@ button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var
   <p id="stat"></p>
   <div id="act"></div>
 </section>
+</div>
+
+<section id="tApps" style="display:none">
+  <div class="apps-head"><h2>Mes applications</h2><button type="button" class="mini2" id="refApps">Actualiser</button></div>
+  <div id="appList"></div>
+</section>
+
+<section id="tSet" style="display:none">
+  <div class="panel">
+    <h2>Connexion GitHub</h2>
+    <p class="cstat" id="cstat"></p>
+    <label for="repo">Dépôt</label>
+    <input id="repo" value="Doubigue/G-n-rateur" autocapitalize="none" autocorrect="off">
+    <label for="token">Jeton d'accès</label>
+    <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
+    <label class="sw"><input id="rem" type="checkbox" checked><i></i>Mémoriser sur cet appareil</label>
+    <small class="h">Le jeton reste dans ton navigateur et n'est envoyé qu'à api.github.com.</small>
+    <button type="button" class="btn" id="saveCx" style="margin-top:18px">Enregistrer</button>
+  </div>
+</section>
 </main>
+<div id="toast" role="status"></div>
+<nav class="tabs" aria-label="Navigation">
+  <button type="button" data-t="create" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Créer</button>
+  <button type="button" data-t="apps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>Mes applis</button>
+  <button type="button" data-t="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Réglages</button>
+</nav>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -179,7 +300,7 @@ try{
   $('repo').value=localStorage.getItem('apk-repo')||$('repo').value;
   $('token').value=localStorage.getItem('apk-token')||'';
 }catch(e){}
-function cxState(){$('cs').textContent=$('token').value?'Connecté · '+$('repo').value:'';$('cx').open=!$('token').value}
+function cxState(){$('cstat').textContent=$('token').value?'Connecté à '+$('repo').value:'Non connecté : ajoute ton jeton pour générer des applications.'}
 cxState();
 
 /* ---------- Aperçu en direct ---------- */
@@ -270,8 +391,9 @@ function steps2phase(steps){
 function succeed(asset){
   final=100;for(let k=0;k<PH.length;k++)st[k]=2;
   $('rb').className='ringbox state-ok';$('stat').textContent='Ton application est prête.';
-  $('act').innerHTML='<a class="btn" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a><button class="btn ghost" id="again">Nouvelle application</button>';
-  $('again').onclick=reset;cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+  $('act').innerHTML='<a class="btn" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a><button class="btn ghost" id="toApps">Mes applications</button><button class="btn ghost" id="again">Nouvelle application</button>';
+  $('again').onclick=reset;$('toApps').onclick=()=>goTab('apps');cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+  const dl=$('act').querySelector('a');dl.onclick=e=>{e.preventDefault();ouvrirLien(asset.browser_download_url)};
   if(navigator.vibrate)navigator.vibrate([60,40,60]);
 }
 function fail(msg,url){
@@ -286,6 +408,7 @@ $('f').addEventListener('submit',async e=>{
   e.preventDefault();$('err').textContent='';$('go').disabled=true;
   try{
     repo=$('repo').value.trim();token=$('token').value.trim();
+    if(!repo||!token){goTab('set');throw new Error('Renseigne ton dépôt et ton jeton dans Réglages.')}
     try{if($('rem').checked){localStorage.setItem('apk-repo',repo);localStorage.setItem('apk-token',token)}else{localStorage.removeItem('apk-repo');localStorage.removeItem('apk-token')}}catch(_){}
     cxState();
     const zip=$('zip').files[0];
@@ -298,7 +421,7 @@ $('f').addEventListener('submit',async e=>{
 
     initProg();
     const id=Date.now().toString(36),dir='builds/'+id+'/';
-    const cfg={name:$('name').value.trim(),pkg:$('pkg').value.trim().toLowerCase(),versionName:$('vname').value.trim(),versionCode:+$('vcode').value,orientation:$('orient').value,color:$('color').value,fullscreen:$('full').checked,icon:!!$('icon').files[0],type:mode()};
+    const cfg={name:$('name').value.trim(),pkg:$('pkg').value.trim().toLowerCase(),versionName:$('vname').value.trim(),versionCode:+$('vcode').value,orientation:$('orient').value,color:$('color').value,fullscreen:$('full').checked,icon:!!$('icon').files[0],type:mode(),permissions:permsChoisies(),share:$('share').checked,askStart:$('ask').checked};
     $('stat').textContent='Envoi de l\'archive…';
     await put(dir+'app.zip',await fileB64(zip),'Build '+id+' : archive');upProg(.5);
     if(cfg.icon){$('stat').textContent="Envoi de l'icône…";await put(dir+'icon.png',await iconPng($('icon').files[0]),'Build '+id+' : icône')}
