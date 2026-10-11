@@ -8,82 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js">
-/* ---------- Onglets, toast ---------- */
-const TABS={create:'tCreate',apps:'tApps',set:'tSet'};
-function goTab(n){
-  for(const k in TABS)$(TABS[k]).style.display=k===n?'block':'none';
-  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===n));
-  if(n==='apps')chargerApps();
-  scrollTo(0,0);
-}
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>goTab(b.dataset.t));
-let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600)}
-function sauverCx(){try{if($('rem').checked){localStorage.setItem('apk-repo',$('repo').value.trim());localStorage.setItem('apk-token',$('token').value.trim())}else{localStorage.removeItem('apk-repo');localStorage.removeItem('apk-token')}}catch(_){}}
-$('saveCx').onclick=()=>{sauverCx();cxState();toast('Connexion enregistrée')};
-$('token').oninput=cxState;$('repo').oninput=cxState;
-
-/* ---------- Autorisations ---------- */
-const PERMS=[['storage','Stockage (lecture et écriture)'],['media','Photos, vidéos et musique'],['allfiles','Accès à tous les fichiers'],['camera','Caméra'],['micro','Micro'],['location','Localisation'],['notifications','Notifications'],['contacts','Contacts'],['calendar','Calendrier'],['bluetooth','Bluetooth'],['phone','Téléphone']];
-$('perms').innerHTML=PERMS.map(([k,t])=>'<label class="sw"><input type="checkbox" name="perm" value="'+k+'" checked><i></i>'+t+'</label>').join('');
-const pcb=()=>[...document.querySelectorAll('input[name=perm]')];
-const permsChoisies=()=>pcb().filter(c=>c.checked).map(c=>c.value);
-$('all').onchange=e=>pcb().forEach(c=>c.checked=e.target.checked);
-$('perms').onchange=()=>{$('all').checked=pcb().every(c=>c.checked)};
-
-/* ---------- Mes applications ---------- */
-function ouvrirLien(u){const B=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.Browser;if(B)B.open({url:u});else window.open(u,'_blank','noopener')}
-function meta(x){const b=x.body||'',g=r=>(b.match(r)||[])[1];return{ver:g(/Version\s*:\s*(.+)/)||g(/version ([^)]+)/i)||'',type:g(/Type\s*:\s*(\w+)/)||''}}
-async function apiDel(p){return fetch('https://api.github.com/repos/'+repo+p,{method:'DELETE',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token}})}
-async function chargerApps(){
-  const box=$('appList');repo=$('repo').value.trim();token=$('token').value.trim();
-  if(!repo||!token){box.innerHTML='<p class="vide">Ajoute ton dépôt et ton jeton dans Réglages.</p>';return}
-  box.innerHTML='<p class="vide">Chargement…</p>';
-  try{
-    const r=await api('/releases?per_page=100');
-    if(!r.ok)throw new Error('GitHub ('+r.status+')');
-    const l=(await r.json()).filter(x=>x.tag_name.startsWith('apk-')&&(x.assets||[]).some(a=>/\.apk$/i.test(a.name)));
-    if(!l.length){box.innerHTML="<p class=\"vide\">Aucune application pour le moment. Génère la première dans l'onglet Créer.</p>";return}
-    box.innerHTML='';
-    l.forEach(x=>{
-      const a=x.assets.find(a=>/\.apk$/i.test(a.name)),m=meta(x);
-      const c=document.createElement('article');c.className='app';
-      c.innerHTML='<div class="ico"></div><div class="inf"><b></b><small class="d1"></small><small class="d2"></small></div><div class="acts"><button type="button" class="dl">Télécharger</button><button type="button" class="rm">Supprimer</button></div>';
-      c.querySelector('.ico').textContent=(x.name||'?')[0].toUpperCase();
-      c.querySelector('b').textContent=x.name||a.name;
-      c.querySelector('.d1').textContent=[m.ver&&'Version '+m.ver,m.type==='flutter'?'Flutter':m.type==='web'?'Site web':''].filter(Boolean).join(' · ');
-      c.querySelector('.d2').textContent=new Date(x.published_at||x.created_at).toLocaleDateString('fr-FR')+' · '+(a.size/1048576).toFixed(1)+' Mo';
-      c.querySelector('.dl').onclick=()=>ouvrirLien(a.browser_download_url);
-      const rm=c.querySelector('.rm');let t2;
-      rm.onclick=async()=>{
-        if(rm.textContent!=='Confirmer'){rm.textContent='Confirmer';clearTimeout(t2);t2=setTimeout(()=>rm.textContent='Supprimer',3000);return}
-        rm.disabled=true;
-        const d=await apiDel('/releases/'+x.id);await apiDel('/git/refs/tags/'+x.tag_name);
-        if(d.ok||d.status===404){c.remove();toast('Application supprimée')}else{rm.disabled=false;rm.textContent='Supprimer';toast('Suppression impossible ('+d.status+')')}
-      };
-      box.appendChild(c);
-    });
-  }catch(e){box.innerHTML='<p class="vide"></p>';box.firstChild.textContent='Chargement impossible : '+e.message}
-}
-$('refApps').onclick=chargerApps;
-
-/* ---------- Partage Android : ZIP et icône PNG reçus ---------- */
-async function importPartage(items){
-  let n=0;
-  for(const it of items||[]){
-    if(it.kind!=='file')continue;
-    try{
-      const f=new File([await(await fetch(Capacitor.convertFileSrc('file://'+it.path))).blob()],it.name,{type:it.mime||''});
-      const dt=new DataTransfer();dt.items.add(f);
-      if(/\.zip$/i.test(it.name)){$('zip').files=dt.files;zipInfo();n++}
-      else if(/\.png$/i.test(it.name)||it.mime==='image/png'){$('icon').files=dt.files;$('icon').dispatchEvent(new Event('change'));n++}
-    }catch(e){}
-  }
-  if(n){goTab('create');toast(n+' fichier(s) reçu(s)')}else toast('Aucun ZIP ou PNG dans ce partage.')
-}
-addEventListener('appshare',e=>importPartage(e.detail));
-try{const sh=window.AndroidShare&&AndroidShare.take();if(sh)importPartage(JSON.parse(sh))}catch(e){}
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 :root{--bg:#080a18;--ink:#eef0ff;--mut:#8f95b8;--line:rgba(255,255,255,.09);--glass:rgba(255,255,255,.05);--a:#8b9bff;--b:#5eead4;--err:#ff7a8a;--g:linear-gradient(135deg,#8b9bff,#5eead4);box-sizing:border-box;color-scheme:dark}
 *{box-sizing:inherit;-webkit-tap-highlight-color:transparent}
@@ -450,6 +375,81 @@ $('f').addEventListener('submit',async e=>{
     if(pv.style.display==='block')fail(err.message);else{$('err').textContent=err.message;$('go').disabled=false}
   }
 });
+
+/* ---------- Onglets, toast ---------- */
+const TABS={create:'tCreate',apps:'tApps',set:'tSet'};
+function goTab(n){
+  for(const k in TABS)$(TABS[k]).style.display=k===n?'block':'none';
+  document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===n));
+  if(n==='apps')chargerApps();
+  scrollTo(0,0);
+}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>goTab(b.dataset.t));
+let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600)}
+function sauverCx(){try{if($('rem').checked){localStorage.setItem('apk-repo',$('repo').value.trim());localStorage.setItem('apk-token',$('token').value.trim())}else{localStorage.removeItem('apk-repo');localStorage.removeItem('apk-token')}}catch(_){}}
+$('saveCx').onclick=()=>{sauverCx();cxState();toast('Connexion enregistrée')};
+$('token').oninput=cxState;$('repo').oninput=cxState;
+
+/* ---------- Autorisations ---------- */
+const PERMS=[['storage','Stockage (lecture et écriture)'],['media','Photos, vidéos et musique'],['allfiles','Accès à tous les fichiers'],['camera','Caméra'],['micro','Micro'],['location','Localisation'],['notifications','Notifications'],['contacts','Contacts'],['calendar','Calendrier'],['bluetooth','Bluetooth'],['phone','Téléphone']];
+$('perms').innerHTML=PERMS.map(([k,t])=>'<label class="sw"><input type="checkbox" name="perm" value="'+k+'" checked><i></i>'+t+'</label>').join('');
+const pcb=()=>[...document.querySelectorAll('input[name=perm]')];
+const permsChoisies=()=>pcb().filter(c=>c.checked).map(c=>c.value);
+$('all').onchange=e=>pcb().forEach(c=>c.checked=e.target.checked);
+$('perms').onchange=()=>{$('all').checked=pcb().every(c=>c.checked)};
+
+/* ---------- Mes applications ---------- */
+function ouvrirLien(u){const B=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.Browser;if(B)B.open({url:u});else window.open(u,'_blank','noopener')}
+function meta(x){const b=x.body||'',g=r=>(b.match(r)||[])[1];return{ver:g(/Version\s*:\s*(.+)/)||g(/version ([^)]+)/i)||'',type:g(/Type\s*:\s*(\w+)/)||''}}
+async function apiDel(p){return fetch('https://api.github.com/repos/'+repo+p,{method:'DELETE',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token}})}
+async function chargerApps(){
+  const box=$('appList');repo=$('repo').value.trim();token=$('token').value.trim();
+  if(!repo||!token){box.innerHTML='<p class="vide">Ajoute ton dépôt et ton jeton dans Réglages.</p>';return}
+  box.innerHTML='<p class="vide">Chargement…</p>';
+  try{
+    const r=await api('/releases?per_page=100');
+    if(!r.ok)throw new Error('GitHub ('+r.status+')');
+    const l=(await r.json()).filter(x=>x.tag_name.startsWith('apk-')&&(x.assets||[]).some(a=>/\.apk$/i.test(a.name)));
+    if(!l.length){box.innerHTML="<p class=\"vide\">Aucune application pour le moment. Génère la première dans l'onglet Créer.</p>";return}
+    box.innerHTML='';
+    l.forEach(x=>{
+      const a=x.assets.find(a=>/\.apk$/i.test(a.name)),m=meta(x);
+      const c=document.createElement('article');c.className='app';
+      c.innerHTML='<div class="ico"></div><div class="inf"><b></b><small class="d1"></small><small class="d2"></small></div><div class="acts"><button type="button" class="dl">Télécharger</button><button type="button" class="rm">Supprimer</button></div>';
+      c.querySelector('.ico').textContent=(x.name||'?')[0].toUpperCase();
+      c.querySelector('b').textContent=x.name||a.name;
+      c.querySelector('.d1').textContent=[m.ver&&'Version '+m.ver,m.type==='flutter'?'Flutter':m.type==='web'?'Site web':''].filter(Boolean).join(' · ');
+      c.querySelector('.d2').textContent=new Date(x.published_at||x.created_at).toLocaleDateString('fr-FR')+' · '+(a.size/1048576).toFixed(1)+' Mo';
+      c.querySelector('.dl').onclick=()=>ouvrirLien(a.browser_download_url);
+      const rm=c.querySelector('.rm');let t2;
+      rm.onclick=async()=>{
+        if(rm.textContent!=='Confirmer'){rm.textContent='Confirmer';clearTimeout(t2);t2=setTimeout(()=>rm.textContent='Supprimer',3000);return}
+        rm.disabled=true;
+        const d=await apiDel('/releases/'+x.id);await apiDel('/git/refs/tags/'+x.tag_name);
+        if(d.ok||d.status===404){c.remove();toast('Application supprimée')}else{rm.disabled=false;rm.textContent='Supprimer';toast('Suppression impossible ('+d.status+')')}
+      };
+      box.appendChild(c);
+    });
+  }catch(e){box.innerHTML='<p class="vide"></p>';box.firstChild.textContent='Chargement impossible : '+e.message}
+}
+$('refApps').onclick=chargerApps;
+
+/* ---------- Partage Android : ZIP et icône PNG reçus ---------- */
+async function importPartage(items){
+  let n=0;
+  for(const it of items||[]){
+    if(it.kind!=='file')continue;
+    try{
+      const f=new File([await(await fetch(Capacitor.convertFileSrc('file://'+it.path))).blob()],it.name,{type:it.mime||''});
+      const dt=new DataTransfer();dt.items.add(f);
+      if(/\.zip$/i.test(it.name)){$('zip').files=dt.files;zipInfo();n++}
+      else if(/\.png$/i.test(it.name)||it.mime==='image/png'){$('icon').files=dt.files;$('icon').dispatchEvent(new Event('change'));n++}
+    }catch(e){}
+  }
+  if(n){goTab('create');toast(n+' fichier(s) reçu(s)')}else toast('Aucun ZIP ou PNG dans ce partage.')
+}
+addEventListener('appshare',e=>importPartage(e.detail));
+try{const sh=window.AndroidShare&&AndroidShare.take();if(sh)importPartage(JSON.parse(sh))}catch(e){}
 </script>
 </body>
 </html>
