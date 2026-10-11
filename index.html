@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>APK Studio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#080a18">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#080a18;--ink:#eef0ff;--mut:#8f95b8;--line:rgba(255,255,255,.09);--glass:rgba(255,255,255,.05);--a:#8b9bff;--b:#5eead4;--err:#ff7a8a;--g:linear-gradient(135deg,#8b9bff,#5eead4);box-sizing:border-box;color-scheme:dark}
+*{box-sizing:inherit;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif}
+body{min-height:100vh;padding:calc(env(safe-area-inset-top,0px) + 22px) 16px calc(env(safe-area-inset-bottom,0px) + 48px);overflow-x:hidden}
+.aurora{position:fixed;inset:0;z-index:-1;overflow:hidden}
+.aurora i{position:absolute;width:70vmax;height:70vmax;border-radius:50%;filter:blur(90px);opacity:.28;animation:drift 24s ease-in-out infinite alternate}
+.aurora i:nth-child(1){background:#5b6bff;top:-30vmax;left:-20vmax}
+.aurora i:nth-child(2){background:#18c7b0;bottom:-35vmax;right:-25vmax;animation-delay:-9s}
+@keyframes drift{to{transform:translate(12vmax,8vmax) scale(1.15)}}
+main{max-width:560px;margin:0 auto}
+header{display:flex;gap:14px;align-items:center;margin-bottom:22px}
+.logo{width:48px;height:48px;border-radius:14px;background:var(--g);display:grid;place-items:center;box-shadow:0 8px 28px rgba(139,155,255,.35)}
+h1,h2,.pct{font-family:Sora,Inter,sans-serif}
+h1{font-size:26px;margin:0;letter-spacing:-.01em}
+header p{margin:2px 0 0;color:var(--mut);font-size:14px}
+
+.preview{display:flex;gap:16px;align-items:center;padding:18px;border-radius:22px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(14px);margin-bottom:16px}
+.tile{width:72px;height:72px;border-radius:20px;flex:none;display:grid;place-items:center;overflow:hidden;font:700 30px Sora,sans-serif;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.15);transition:background .3s}
+.tile img{width:100%;height:100%;object-fit:cover;display:none}
+.preview b{display:block;font:600 18px Sora,sans-serif}
+.preview small{display:block;color:var(--mut);font-size:13px}
+
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:22px;padding:20px;margin-bottom:16px;backdrop-filter:blur(14px)}
+h2{font-size:16px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+h2 span{width:26px;height:26px;border-radius:50%;background:var(--g);color:#08101c;font-size:13px;display:grid;place-items:center;font-weight:700}
+label{display:block;font-size:13px;color:var(--mut);margin:14px 0 6px}
+input,select{width:100%;font:inherit;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:border-color .2s,background .2s}
+input:focus,select:focus{outline:none;border-color:var(--a);background:rgba(139,155,255,.1)}
+select option{background:#14172b}
+input[type=color]{padding:3px;height:48px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sw{display:flex;align-items:center;gap:12px;margin-top:16px;cursor:pointer;color:var(--ink);font-size:15px}
+.sw input{position:absolute;opacity:0;width:0}
+.sw i{width:44px;height:26px;border-radius:99px;background:rgba(255,255,255,.14);position:relative;transition:.25s;flex:none}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.25s}
+.sw input:checked+i{background:var(--g)}
+.sw input:checked+i::after{transform:translateX(18px)}
+.sw input:focus-visible+i{outline:2px solid var(--a);outline-offset:2px}
+.drop{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:26px 14px;margin-top:14px;border:1.5px dashed rgba(139,155,255,.5);border-radius:16px;cursor:pointer;color:var(--mut);transition:.2s;font-size:14px}
+.drop:hover,.drop.on{background:rgba(139,155,255,.1);border-color:var(--b)}
+.drop b{color:var(--ink);font-weight:600;word-break:break-all}
+.drop input{display:none}
+.mini{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mut);cursor:pointer}
+summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary em{font-style:normal;color:var(--b);font-size:13px}
+small.h{display:block;color:var(--mut);font-size:12px;margin-top:6px}
+
+.btn{display:block;width:100%;text-align:center;text-decoration:none;font:600 17px Sora,sans-serif;padding:16px;border:0;border-radius:16px;background:var(--g);color:#06111c;cursor:pointer;box-shadow:0 12px 34px rgba(94,234,212,.28);transition:transform .15s,box-shadow .2s}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:var(--glass);color:var(--ink);box-shadow:none;border:1px solid var(--line);margin-top:12px}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--a);outline-offset:3px}
+.err{color:var(--err);font-size:14px;margin-top:12px;text-align:center}
+
+#vProg{display:none;text-align:center}
+.ringbox{position:relative;width:230px;height:230px;margin:10px auto 6px}
+.ringbox svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ringbox circle{fill:none;stroke-width:12;stroke-linecap:round}
+.trk{stroke:rgba(255,255,255,.08)}
+#arc{stroke:url(#gr);filter:drop-shadow(0 0 10px rgba(139,155,255,.55))}
+.ringc{position:absolute;inset:0;display:grid;place-content:center}
+.pct{font-size:52px;font-weight:700;line-height:1}
+.pct sup{font-size:20px;color:var(--mut);margin-left:2px}
+#clock{color:var(--mut);font-size:13px;margin-top:6px;font-variant-numeric:tabular-nums}
+.state-ok #arc{stroke:var(--b);filter:drop-shadow(0 0 14px rgba(94,234,212,.7))}
+.state-ko #arc{stroke:var(--err);filter:drop-shadow(0 0 14px rgba(255,122,138,.6))}
+#phases{list-style:none;margin:22px 0 0;padding:18px;text-align:left;background:var(--glass);border:1px solid var(--line);border-radius:22px}
+#phases li{display:flex;align-items:center;gap:14px;padding:9px 0;color:var(--mut);font-size:15px;position:relative;transition:color .3s}
+#phases li+li::before{content:"";position:absolute;left:11px;top:-11px;height:20px;width:2px;background:var(--line)}
+.dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;transition:.3s}
+#phases li.act{color:var(--ink)}
+#phases li.act .dot{border-color:transparent;border-top-color:var(--b);border-right-color:var(--a);animation:spin .9s linear infinite}
+#phases li.ok{color:var(--ink)}
+#phases li.ok .dot{background:var(--g);border-color:transparent}
+#phases li.ok .dot::after{content:"";width:6px;height:11px;border:solid #06111c;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+#phases li.ko .dot{border-color:var(--err)}
+@keyframes spin{to{transform:rotate(360deg)}}
+#stat{margin:16px 0;color:var(--mut);font-size:14px;min-height:21px}
+#act{margin-top:6px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin-top:12px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:14px}
+.seg label{margin:0;color:var(--mut);font-size:14px;cursor:pointer}
+.seg input{position:absolute;opacity:0;width:0}
+.seg span{display:block;text-align:center;padding:10px;border-radius:10px;font-weight:600;transition:.2s}
+.seg input:checked+span{background:var(--g);color:#06111c}
+.seg input:focus-visible+span{outline:2px solid var(--a);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="aurora" aria-hidden="true"><i></i><i></i></div>
+<main>
+<header>
+  <div class="logo"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#06111c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg></div>
+  <div><h1>APK Studio</h1><p>Site web ou Flutter, vers l'application Android</p></div>
+</header>
+
+<section id="vForm">
+  <div class="preview" aria-label="Aperçu de l'application">
+    <div class="tile" id="tile"><img id="tImg" alt=""><span id="tLet">M</span></div>
+    <div><b id="pName">Mon application</b><small id="pPkg">com.doubigue.app</small><small id="pVer">Version 1.0.0 (1)</small></div>
+  </div>
+
+  <form id="f">
+    <div class="panel">
+      <h2><span>1</span>Application</h2>
+      <label for="name">Nom</label>
+      <input id="name" required maxlength="40" placeholder="Mon application">
+      <label for="pkg">Identifiant du paquet</label>
+      <input id="pkg" required value="com.doubigue.app" autocapitalize="none" autocorrect="off" pattern="[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+">
+      <div class="row">
+        <div><label for="vname">Version</label><input id="vname" required value="1.0.0" pattern="[0-9A-Za-z.\-]+"></div>
+        <div><label for="vcode">Code de version</label><input id="vcode" type="number" min="1" required value="1" inputmode="numeric"></div>
+      </div>
+      <div class="row">
+        <div><label for="orient">Orientation</label><select id="orient"><option value="auto">Automatique</option><option value="portrait">Portrait</option><option value="landscape">Paysage</option></select></div>
+        <div><label for="color">Couleur</label><input id="color" type="color" value="#2a2f6b"></div>
+      </div>
+      <label class="sw"><input id="full" type="checkbox"><i></i>Plein écran</label>
+    </div>
+
+    <div class="panel">
+      <h2><span>2</span>Fichiers</h2>
+      <div class="seg" role="radiogroup" aria-label="Type de projet"><label><input type="radio" name="mode" value="web" checked><span>Site web</span></label><label><input type="radio" name="mode" value="flutter"><span>Flutter</span></label></div>
+      <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8b9bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,application/zip" required></label>
+      <label for="icon">Icône PNG (optionnelle, carrée)</label>
+      <input id="icon" type="file" accept="image/png">
+    </div>
+
+    <details class="panel" id="cx">
+      <summary><h2 style="margin:0"><span>3</span>Connexion GitHub</h2><em id="cs"></em></summary>
+      <label for="repo">Dépôt</label>
+      <input id="repo" required value="Doubigue/G-n-rateur" autocapitalize="none" autocorrect="off">
+      <label for="token">Jeton d'accès</label>
+      <input id="token" type="password" required autocomplete="off" placeholder="github_pat_…">
+      <label class="mini" style="margin-top:14px"><input id="rem" type="checkbox" checked style="width:auto">Mémoriser sur cet appareil</label>
+      <small class="h">Le jeton reste dans ton navigateur et n'est envoyé qu'à api.github.com.</small>
+    </details>
+
+    <button class="btn" id="go" type="submit">Générer l'APK</button>
+    <p class="err" id="err" role="alert"></p>
+  </form>
+</section>
+
+<section id="vProg" aria-live="polite">
+  <div class="ringbox" id="rb">
+    <svg viewBox="0 0 200 200"><defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b9bff"/><stop offset="1" stop-color="#5eead4"/></linearGradient></defs>
+    <circle class="trk" cx="100" cy="100" r="90"/><circle id="arc" cx="100" cy="100" r="90" stroke-dasharray="565.49" stroke-dashoffset="565.49"/></svg>
+    <div class="ringc"><div class="pct"><span id="pv">0</span><sup>%</sup></div><div id="clock">00:00</div></div>
+  </div>
+  <ul id="phases"></ul>
+  <p id="stat"></p>
+  <div id="act"></div>
+</section>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const fv=$('vForm'),pv=$('vProg');
+let repo,token;
+
+/* ---------- Mémoire & préremplissage ---------- */
+try{
+  if(location.hostname.endsWith('.github.io')){
+    const o=location.hostname.split('.')[0],r=location.pathname.split('/')[1];
+    if(r)$('repo').value=o+'/'+r;
+  }
+  $('repo').value=localStorage.getItem('apk-repo')||$('repo').value;
+  $('token').value=localStorage.getItem('apk-token')||'';
+}catch(e){}
+function cxState(){$('cs').textContent=$('token').value?'Connecté · '+$('repo').value:'';$('cx').open=!$('token').value}
+cxState();
+
+/* ---------- Aperçu en direct ---------- */
+function prev(){
+  const n=$('name').value.trim()||'Mon application';
+  $('pName').textContent=n;$('pPkg').textContent=$('pkg').value||'com.doubigue.app';
+  $('pVer').textContent='Version '+($('vname').value||'1.0.0')+' ('+($('vcode').value||1)+')';
+  $('tLet').textContent=n[0].toUpperCase();
+  const c=$('color').value;$('tile').style.background='linear-gradient(135deg,'+c+',#0b0d1c)';
+}
+['name','pkg','vname','vcode','color'].forEach(i=>$(i).addEventListener('input',prev));prev();
+$('icon').addEventListener('change',e=>{
+  const f=e.target.files[0],im=$('tImg');
+  if(f){im.src=URL.createObjectURL(f);im.style.display='block';$('tLet').style.display='none'}
+  else{im.style.display='none';$('tLet').style.display=''}
+});
+function zipInfo(){const f=$('zip').files[0];if(!f)return;$('zn').textContent=f.name;$('zs').textContent=(f.size/1048576).toFixed(1)+' Mo'}
+$('zip').addEventListener('change',zipInfo);
+const mode=()=>document.querySelector('input[name=mode]:checked').value;
+document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',()=>{
+  if($('zip').files[0])return;const fl=mode()==='flutter';
+  $('zn').textContent=fl?'Déposer le projet Flutter (ZIP)':'Déposer le ZIP du site';
+  $('zs').textContent=fl?'pubspec.yaml + lib/, ou simplement main.dart · 40 Mo max':'index.html + ressources · 40 Mo max'}));
+const dz=$('dz');
+['dragenter','dragover'].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.add('on')}));
+['dragleave','drop'].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.remove('on')}));
+dz.addEventListener('drop',e=>{if(e.dataTransfer.files.length){$('zip').files=e.dataTransfer.files;zipInfo()}});
+
+/* ---------- Utilitaires ---------- */
+function b64(a){let s='';for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000));return btoa(s)}
+async function fileB64(f){return b64(new Uint8Array(await f.arrayBuffer()))}
+function iconPng(file){return new Promise((res,rej)=>{const im=new Image();
+  im.onload=()=>{const c=document.createElement('canvas');c.width=c.height=512;c.getContext('2d').drawImage(im,0,0,512,512);
+    c.toBlob(b=>b.arrayBuffer().then(a=>res(b64(new Uint8Array(a)))),'image/png')};
+  im.onerror=()=>rej(new Error('Icône illisible.'));im.src=URL.createObjectURL(file)})}
+async function api(p){return fetch('https://api.github.com/repos/'+repo+p,{headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token,'X-GitHub-Api-Version':'2022-11-28'}})}
+async function put(path,content,message){
+  const r=await fetch('https://api.github.com/repos/'+repo+'/contents/'+path,{method:'PUT',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({message,content})});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error('GitHub ('+r.status+') : '+(e.message||'erreur')+(r.status==401||r.status==404?' — vérifie le dépôt et les droits du jeton.':''))}
+  return r.json()}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- Moteur de progression ---------- */
+const PH=[
+ {t:'Envoi des fichiers',w:10,exp:20},
+ {t:'Démarrage du serveur',w:15,exp:45,m:['Set up job','Run actions/','Détecter','Installer']},
+ {t:'Préparation du projet Android',w:25,exp:90,m:['Préparer']},
+ {t:"Compilation de l'APK",w:40,exp:210,m:['Compiler']},
+ {t:'Publication',w:10,exp:25,m:['Publier','Nettoyer']}];
+const C=565.49;
+let st,tgt,shown,t0,raf,final;
+function initProg(){
+  st=PH.map(()=>0);st[0]=1;tgt=0;shown=0;final=null;t0=Date.now();
+  st.start=PH.map(()=>0);st.start[0]=t0;
+  $('phases').innerHTML=PH.map(p=>'<li><span class="dot"></span>'+p.t+'</li>').join('');
+  $('rb').className='ringbox';$('act').innerHTML='';$('stat').textContent='';
+  fv.style.display='none';pv.style.display='block';scrollTo(0,0);
+  cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+}
+function setPhase(i){ // marque les phases < i comme terminées et i comme active
+  for(let k=0;k<PH.length;k++){const n=k<i?2:k==i?1:0;if(st[k]!=n){st[k]=n;if(n==1&&!st.start[k])st.start[k]=Date.now()}}
+}
+function upProg(f){tgt=Math.max(tgt,PH[0].w*f)}
+function calc(){
+  let v=0;
+  PH.forEach((p,k)=>{if(st[k]==2)v+=p.w;else if(st[k]==1){
+    const c=k==0?0:Math.min(.92,(Date.now()-st.start[k])/(p.exp*1000));v+=p.w*c}});
+  return v}
+function loop(){
+  const now=Date.now();
+  if(final==null)tgt=Math.max(tgt,Math.min(99,calc()));else tgt=final;
+  shown+=(tgt-shown)*.06;if(Math.abs(tgt-shown)<.05)shown=tgt;
+  $('arc').style.strokeDashoffset=C*(1-shown/100);
+  $('pv').textContent=Math.round(shown);
+  const s=Math.floor((now-t0)/1000);$('clock').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+  [...$('phases').children].forEach((li,k)=>{li.className=final===0?(st[k]==1?'ko':st[k]==2?'ok':''):st[k]==2?'ok':st[k]==1?'act':''});
+  if(final==null||Math.abs(shown-final)>.05)raf=requestAnimationFrame(loop)
+}
+function steps2phase(steps){
+  let done=[true];
+  PH.forEach((p,k)=>{if(!p.m)return;
+    const ms=steps.filter(s=>p.m.some(x=>s.name.startsWith(x)));
+    done[k]=ms.length>0&&ms.every(s=>s.status==='completed')});
+  let a=1;while(a<PH.length&&done[a])a++;
+  setPhase(Math.min(a,PH.length-1));
+  if(a>=PH.length)setPhase(PH.length-1);
+}
+function succeed(asset){
+  final=100;for(let k=0;k<PH.length;k++)st[k]=2;
+  $('rb').className='ringbox state-ok';$('stat').textContent='Ton application est prête.';
+  $('act').innerHTML='<a class="btn" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a><button class="btn ghost" id="again">Nouvelle application</button>';
+  $('again').onclick=reset;cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+  if(navigator.vibrate)navigator.vibrate([60,40,60]);
+}
+function fail(msg,url){
+  final=0;tgt=shown;$('rb').className='ringbox state-ko';$('stat').textContent=msg;
+  $('act').innerHTML=(url?'<a class="btn ghost" target="_blank" rel="noopener" href="'+url+'">Voir le journal de compilation</a>':'')+'<button class="btn ghost" id="again">Réessayer</button>';
+  $('again').onclick=reset;
+}
+function reset(){cancelAnimationFrame(raf);pv.style.display='none';fv.style.display='block';$('go').disabled=false}
+
+/* ---------- Génération ---------- */
+$('f').addEventListener('submit',async e=>{
+  e.preventDefault();$('err').textContent='';$('go').disabled=true;
+  try{
+    repo=$('repo').value.trim();token=$('token').value.trim();
+    try{if($('rem').checked){localStorage.setItem('apk-repo',repo);localStorage.setItem('apk-token',token)}else{localStorage.removeItem('apk-repo');localStorage.removeItem('apk-token')}}catch(_){}
+    cxState();
+    const zip=$('zip').files[0];
+    if(!zip)throw new Error('Choisis un fichier ZIP.');
+    if(zip.size>40*1048576)throw new Error('ZIP trop volumineux (40 Mo max).');
+    const z=await JSZip.loadAsync(zip).catch(()=>{throw new Error('ZIP invalide.')});
+    const ok=Object.keys(z.files).filter(n=>!n.startsWith('__MACOSX'));
+    if(mode()==='flutter'){if(!ok.some(n=>/(^|\/)pubspec\.yaml$/i.test(n)||/\.dart$/i.test(n)))throw new Error('Aucun pubspec.yaml ni fichier .dart dans le ZIP.')}
+    else if(!ok.some(n=>/(^|\/)index\.html$/i.test(n)))throw new Error('index.html est introuvable dans le ZIP.');
+
+    initProg();
+    const id=Date.now().toString(36),dir='builds/'+id+'/';
+    const cfg={name:$('name').value.trim(),pkg:$('pkg').value.trim().toLowerCase(),versionName:$('vname').value.trim(),versionCode:+$('vcode').value,orientation:$('orient').value,color:$('color').value,fullscreen:$('full').checked,icon:!!$('icon').files[0],type:mode()};
+    $('stat').textContent='Envoi de l\'archive…';
+    await put(dir+'app.zip',await fileB64(zip),'Build '+id+' : archive');upProg(.5);
+    if(cfg.icon){$('stat').textContent="Envoi de l'icône…";await put(dir+'icon.png',await iconPng($('icon').files[0]),'Build '+id+' : icône')}
+    upProg(.8);$('stat').textContent='Lancement de la compilation…';
+    const res=await put(dir+(mode()==='flutter'?'flutter.json':'config.json'),b64(new TextEncoder().encode(JSON.stringify(cfg,null,2))),'Build '+id+' : '+cfg.name);
+    const sha=res.commit.sha;setPhase(1);
+    $('stat').textContent='Compilation en cours, laisse cette page ouverte.';
+
+    const start=Date.now();
+    while(Date.now()-start<35*60*1000){
+      await sleep(4000);
+      const rel=await api('/releases/tags/apk-'+id);
+      if(rel.ok){const a=((await rel.json()).assets||[])[0];if(a)return succeed(a)}
+      const rr=await api('/actions/runs?head_sha='+sha);
+      if(rr.ok){
+        const run=(await rr.json()).workflow_runs[0];
+        if(run){
+          const jr=await api('/actions/runs/'+run.id+'/jobs');
+          if(jr.ok){const j=(await jr.json()).jobs[0];if(j&&j.steps)steps2phase(j.steps)}
+          if(run.status==='completed'&&run.conclusion!=='success')return fail('La compilation a échoué.',run.html_url);
+        }
+      }
+    }
+    fail('Délai dépassé. Consulte l\'onglet Actions du dépôt.');
+  }catch(err){
+    if(pv.style.display==='block')fail(err.message);else{$('err').textContent=err.message;$('go').disabled=false}
+  }
+});
+</script>
+</body>
+</html>
