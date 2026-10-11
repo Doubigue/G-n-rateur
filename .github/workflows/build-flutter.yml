@@ -91,6 +91,33 @@ jobs:
                   open(f,'w').write(t)
           PY
 
+          # Protection contre les captures d'Ã©cran (FLAG_SECURE), activÃ©e seulement si le code Dart l'utilise
+          if grep -rq 'baobab/secure' lib; then
+            MA=$(find android/app/src/main -name MainActivity.kt | head -n1)
+            PKGL=$(grep -m1 '^package' "$MA")
+            cat > "$MA" << KT
+          $PKGL
+
+          import android.view.WindowManager
+          import io.flutter.embedding.android.FlutterActivity
+          import io.flutter.embedding.engine.FlutterEngine
+          import io.flutter.plugin.common.MethodChannel
+
+          class MainActivity : FlutterActivity() {
+            override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+              super.configureFlutterEngine(flutterEngine)
+              MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "baobab/secure").setMethodCallHandler { call, result ->
+                runOnUiThread {
+                  if (call.method == "on") window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                  else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                  result.success(null)
+                }
+              }
+            }
+          }
+          KT
+          fi
+
           if [ "$(jq -r .icon "$CFG")" = "true" ]; then
             IM=$(command -v magick || command -v convert)
             for p in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
