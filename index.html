@@ -4,129 +4,186 @@
 <meta charset="utf-8">
 <title>APK Studio</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#080a18">
+<meta name="theme-color" content="#2338F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#4A5BFF" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
-:root{--bg:#080a18;--ink:#eef0ff;--mut:#8f95b8;--line:rgba(255,255,255,.09);--glass:rgba(255,255,255,.05);--a:#8b9bff;--b:#5eead4;--err:#ff7a8a;--g:linear-gradient(135deg,#8b9bff,#5eead4);box-sizing:border-box;color-scheme:dark}
+/* ---------- Jetons : papier bleuté, encre marine, cobalt, jaune surligneur ---------- */
+:root{
+  --paper:#E9EDF7;--card:#fff;--field:#F5F7FC;--soft:#D9DFF0;
+  --ink:#0F1B4C;--mut:#56628F;--line:#0F1B4C;--edge:#0F1B4C;
+  --pri:#2338F0;--onpri:#fff;--sun:#FFD23F;--onsun:#0F1B4C;
+  --ok:#0B8A5F;--err:#C8223E;
+  box-sizing:border-box;color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root{
+  --paper:#0A1030;--card:#121A47;--field:#0D1439;--soft:#232D69;
+  --ink:#EEF1FF;--mut:#9CA7D8;--line:#4A57A6;--edge:#03061A;
+  --pri:#4A5BFF;--ok:#3DDC9B;--err:#FF7088;
+}}
 *{box-sizing:inherit;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif}
-body{min-height:100vh;padding:calc(env(safe-area-inset-top,0px) + 22px) 16px calc(env(safe-area-inset-bottom,0px) + 48px);overflow-x:hidden}
-.aurora{position:fixed;inset:0;z-index:-1;overflow:hidden}
-.aurora i{position:absolute;width:70vmax;height:70vmax;border-radius:50%;filter:blur(90px);opacity:.28;animation:drift 24s ease-in-out infinite alternate}
-.aurora i:nth-child(1){background:#5b6bff;top:-30vmax;left:-20vmax}
-.aurora i:nth-child(2){background:#18c7b0;bottom:-35vmax;right:-25vmax;animation-delay:-9s}
-@keyframes drift{to{transform:translate(12vmax,8vmax) scale(1.15)}}
-main{max-width:560px;margin:0 auto}
-header{display:flex;gap:14px;align-items:center;margin-bottom:22px}
-.logo{width:48px;height:48px;border-radius:14px;background:var(--g);display:grid;place-items:center;box-shadow:0 8px 28px rgba(139,155,255,.35)}
-h1,h2,.pct{font-family:Sora,Inter,sans-serif}
-h1{font-size:26px;margin:0;letter-spacing:-.01em}
-header p{margin:2px 0 0;color:var(--mut);font-size:14px}
+html,body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 Figtree,system-ui,sans-serif}
+body{min-height:100vh;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 104px);overflow-x:hidden}
+h1,h2,h3,.pct,.btn,.app b,.preview b{font-family:'Bricolage Grotesque',Figtree,system-ui,sans-serif}
+main{max-width:560px;margin:0 auto;padding:0 16px}
 
-.preview{display:flex;gap:16px;align-items:center;padding:18px;border-radius:22px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(14px);margin-bottom:16px}
-.tile{width:72px;height:72px;border-radius:20px;flex:none;display:grid;place-items:center;overflow:hidden;font:700 30px Sora,sans-serif;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.15);transition:background .3s}
-.tile img{width:100%;height:100%;object-fit:cover;display:none}
-.preview b{display:block;font:600 18px Sora,sans-serif}
-.preview small{display:block;color:var(--mut);font-size:13px}
+/* ---------- En-tête ---------- */
+.top{background:var(--pri);color:var(--onpri);border-bottom:2px solid var(--edge);border-radius:0 0 28px 28px;padding:calc(env(safe-area-inset-top,0px) + 20px) 16px 26px;margin-bottom:20px}
+.top .in{max-width:560px;margin:0 auto;display:flex;gap:14px;align-items:center}
+.mark{width:50px;height:50px;border-radius:15px;background:var(--sun);border:2px solid var(--edge);box-shadow:0 4px 0 var(--edge);display:grid;place-items:center;flex:none}
+h1{font-size:29px;font-weight:800;margin:0;line-height:1.05;letter-spacing:-.02em}
+.top p{margin:4px 0 0;font-size:14px;opacity:.88}
 
-.panel{background:var(--glass);border:1px solid var(--line);border-radius:22px;padding:20px;margin-bottom:16px;backdrop-filter:blur(14px)}
-h2{font-size:16px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
-h2 span{width:26px;height:26px;border-radius:50%;background:var(--g);color:#08101c;font-size:13px;display:grid;place-items:center;font-weight:700}
-label{display:block;font-size:13px;color:var(--mut);margin:14px 0 6px}
-input,select{width:100%;font:inherit;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:border-color .2s,background .2s}
-input:focus,select:focus{outline:none;border-color:var(--a);background:rgba(139,155,255,.1)}
-select option{background:#14172b}
+/* ---------- Surfaces ---------- */
+.panel{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:18px;margin-bottom:16px}
+h2{font-size:19px;font-weight:800;margin:0 0 2px;display:flex;align-items:center;gap:10px;letter-spacing:-.01em}
+h2 span{width:28px;height:28px;border-radius:8px;background:var(--sun);color:var(--onsun);border:2px solid var(--edge);font:800 14px 'Bricolage Grotesque',sans-serif;display:grid;place-items:center;flex:none}
+.pgh{margin:0 0 16px}
+.pgh h2{font-size:24px;margin-bottom:4px}
+.pgh p{margin:0;color:var(--mut);font-size:14px}
+label{display:block;font-size:13.5px;font-weight:600;margin:14px 0 6px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--field);border:2px solid var(--line);border-radius:12px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px var(--sun)}
+input::placeholder{color:var(--mut);opacity:.7}
 input[type=color]{padding:3px;height:48px}
+input[type=file]:not(.hid){padding:9px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.sw{display:flex;align-items:center;gap:12px;margin-top:16px;cursor:pointer;color:var(--ink);font-size:15px}
+small.h{display:block;color:var(--mut);font-size:12.5px;margin-top:7px;line-height:1.4}
+.hid{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+
+/* Interrupteur : piste jaune quand activé */
+.sw{display:flex;align-items:center;gap:12px;margin:15px 0 0;cursor:pointer;font-size:15px;font-weight:500}
 .sw input{position:absolute;opacity:0;width:0}
-.sw i{width:44px;height:26px;border-radius:99px;background:rgba(255,255,255,.14);position:relative;transition:.25s;flex:none}
-.sw i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.25s}
-.sw input:checked+i{background:var(--g)}
-.sw input:checked+i::after{transform:translateX(18px)}
-.sw input:focus-visible+i{outline:2px solid var(--a);outline-offset:2px}
-.drop{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:26px 14px;margin-top:14px;border:1.5px dashed rgba(139,155,255,.5);border-radius:16px;cursor:pointer;color:var(--mut);transition:.2s;font-size:14px}
-.drop:hover,.drop.on{background:rgba(139,155,255,.1);border-color:var(--b)}
-.drop b{color:var(--ink);font-weight:600;word-break:break-all}
+.sw i{width:48px;height:28px;border-radius:99px;background:var(--soft);border:2px solid var(--line);position:relative;transition:background .2s;flex:none}
+.sw i::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--card);border:2px solid var(--line);transition:transform .2s,background .2s}
+.sw input:checked+i{background:var(--sun)}
+.sw input:checked+i::after{transform:translateX(20px);background:var(--onsun);border-color:var(--onsun)}
+.sw input:focus-visible+i{outline:3px solid var(--pri);outline-offset:2px}
+
+/* Sélecteur segmenté */
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;padding:3px;margin-top:12px;background:var(--card);border:2px solid var(--line);border-radius:14px}
+.seg label{margin:0;font-size:14px;cursor:pointer}
+.seg input{position:absolute;opacity:0;width:0}
+.seg span{display:block;text-align:center;padding:9px 6px;border-radius:10px;font-weight:600;color:var(--mut);transition:background .15s,color .15s}
+.seg input:checked+span{background:var(--ink);color:var(--paper)}
+.seg input:focus-visible+span{outline:3px solid var(--pri);outline-offset:2px}
+
+/* Boutons : touches épaisses qui s'enfoncent */
+.btn{display:block;width:100%;text-align:center;text-decoration:none;font-weight:700;font-size:17px;padding:15px;border:2px solid var(--edge);border-radius:14px;background:var(--pri);color:var(--onpri);cursor:pointer;box-shadow:0 4px 0 var(--edge);transition:transform .08s,box-shadow .08s}
+.btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn.sun{background:var(--sun);color:var(--onsun)}
+.btn.ghost{background:var(--card);color:var(--ink);margin-top:14px}
+.btn.sm{display:inline-block;width:auto;font-size:14px;padding:9px 16px;border-radius:12px;box-shadow:0 3px 0 var(--edge)}
+button:focus-visible,a:focus-visible,summary:focus-visible,label.btn:focus-within{outline:3px solid var(--pri);outline-offset:3px}
+.btn+.btn{margin-top:14px}
+.err{color:var(--err);font-size:14px;font-weight:600;margin:12px 0 0;text-align:center}
+.mini2{background:var(--card);border:2px solid var(--line);color:var(--ink);border-radius:10px;padding:7px 13px;font:600 13px Figtree,sans-serif;cursor:pointer}
+.mini2:active{background:var(--soft)}
+
+/* ---------- Aperçu de l'application ---------- */
+.preview{display:flex;gap:16px;align-items:center;padding:16px;border:2px solid var(--line);border-radius:20px;background:var(--card);margin-bottom:16px}
+.tile{width:76px;height:76px;border-radius:22px;flex:none;display:grid;place-items:center;overflow:hidden;font:800 32px 'Bricolage Grotesque',sans-serif;color:#fff;border:2px solid var(--edge);box-shadow:0 4px 0 var(--edge);transition:background .25s}
+.tile img{width:100%;height:100%;object-fit:cover;display:none}
+.preview b{display:block;font-weight:800;font-size:20px;line-height:1.15}
+.preview small{display:block;color:var(--mut);font-size:13px;margin-top:2px}
+
+/* ---------- Dépôt de fichiers ---------- */
+.drop{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:22px 14px;margin-top:14px;border:2px dashed var(--pri);border-radius:16px;background:var(--field);color:var(--mut);font-size:14px;cursor:pointer;transition:background .15s}
+.drop:hover,.drop.on{background:var(--sun);border-style:solid;border-color:var(--edge)}
+.drop.on b,.drop.on span,.drop:hover b,.drop:hover span{color:var(--onsun)}
+.drop b{color:var(--ink);font-weight:700;word-break:break-all;font-size:15px}
+.drop .ic{width:46px;height:46px;border-radius:50%;background:var(--sun);border:2px solid var(--edge);display:grid;place-items:center;margin-bottom:4px}
 .drop input{display:none}
-.mini{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mut);cursor:pointer}
-summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.picks{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+details.opts{margin-top:16px;border-top:2px solid var(--soft);padding-top:4px}
+summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:14px;padding:10px 0}
 summary::-webkit-details-marker{display:none}
-summary em{font-style:normal;color:var(--b);font-size:13px}
-small.h{display:block;color:var(--mut);font-size:12px;margin-top:6px}
+summary::after{content:"+";font:800 20px 'Bricolage Grotesque',sans-serif;line-height:1}
+details[open]>summary::after{content:"−"}
 
-.btn{display:block;width:100%;text-align:center;text-decoration:none;font:600 17px Sora,sans-serif;padding:16px;border:0;border-radius:16px;background:var(--g);color:#06111c;cursor:pointer;box-shadow:0 12px 34px rgba(94,234,212,.28);transition:transform .15s,box-shadow .2s}
-.btn:active{transform:scale(.98)}
-.btn.ghost{background:var(--glass);color:var(--ink);box-shadow:none;border:1px solid var(--line);margin-top:12px}
-button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--a);outline-offset:3px}
-.err{color:var(--err);font-size:14px;margin-top:12px;text-align:center}
-
+/* ---------- Progression ---------- */
 #vProg{display:none;text-align:center}
-.ringbox{position:relative;width:230px;height:230px;margin:10px auto 6px}
-.ringbox svg{width:100%;height:100%;transform:rotate(-90deg)}
-.ringbox circle{fill:none;stroke-width:12;stroke-linecap:round}
-.trk{stroke:rgba(255,255,255,.08)}
-#arc{stroke:url(#gr);filter:drop-shadow(0 0 10px rgba(139,155,255,.55))}
-.ringc{position:absolute;inset:0;display:grid;place-content:center}
-.pct{font-size:52px;font-weight:700;line-height:1}
-.pct sup{font-size:20px;color:var(--mut);margin-left:2px}
-#clock{color:var(--mut);font-size:13px;margin-top:6px;font-variant-numeric:tabular-nums}
-.state-ok #arc{stroke:var(--b);filter:drop-shadow(0 0 14px rgba(94,234,212,.7))}
-.state-ko #arc{stroke:var(--err);filter:drop-shadow(0 0 14px rgba(255,122,138,.6))}
-#phases{list-style:none;margin:22px 0 0;padding:18px;text-align:left;background:var(--glass);border:1px solid var(--line);border-radius:22px}
-#phases li{display:flex;align-items:center;gap:14px;padding:9px 0;color:var(--mut);font-size:15px;position:relative;transition:color .3s}
-#phases li+li::before{content:"";position:absolute;left:11px;top:-11px;height:20px;width:2px;background:var(--line)}
-.dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;transition:.3s}
-#phases li.act{color:var(--ink)}
-#phases li.act .dot{border-color:transparent;border-top-color:var(--b);border-right-color:var(--a);animation:spin .9s linear infinite}
+.meter{padding:20px 18px 22px;background:var(--card);border:2px solid var(--line);border-radius:20px}
+.big{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.pct{font-size:64px;font-weight:800;line-height:1;letter-spacing:-.03em}
+.pct sup{font-size:22px;color:var(--mut);margin-left:3px;vertical-align:baseline;position:relative;top:-.9em}
+#clock{color:var(--mut);font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.track{height:24px;border:2px solid var(--line);border-radius:99px;background:var(--field);overflow:hidden}
+.track i{display:block;height:100%;width:0;min-width:0;background:var(--pri);border-right:2px solid var(--edge);border-radius:0 99px 99px 0;transition:width .25s}
+.track i[style*="width: 0%"]{border-right:0}
+.state-ok .track i{background:var(--ok)}
+.state-ko .track i{background:var(--err)}
+#phases{list-style:none;margin:16px 0 0;padding:16px 18px;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:20px}
+#phases li{display:flex;align-items:center;gap:14px;padding:9px 0;color:var(--mut);font-size:15px;position:relative;transition:color .2s}
+#phases li+li::before{content:"";position:absolute;left:12px;top:-11px;height:20px;width:2px;background:var(--soft)}
+.dot{width:26px;height:26px;border-radius:9px;border:2px solid var(--line);flex:none;display:grid;place-items:center;background:var(--field)}
+#phases li.act{color:var(--ink);font-weight:600}
+#phases li.act .dot{border-radius:50%;border-color:var(--soft);border-top-color:var(--pri);border-right-color:var(--pri);animation:spin .9s linear infinite}
 #phases li.ok{color:var(--ink)}
-#phases li.ok .dot{background:var(--g);border-color:transparent}
-#phases li.ok .dot::after{content:"";width:6px;height:11px;border:solid #06111c;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
-#phases li.ko .dot{border-color:var(--err)}
+#phases li.ok .dot{background:var(--pri);border-color:var(--edge)}
+#phases li.ok .dot::after{content:"";width:6px;height:11px;border:solid var(--onpri);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+#phases li.ko .dot{border-color:var(--err);background:var(--err)}
 @keyframes spin{to{transform:rotate(360deg)}}
-#stat{margin:16px 0;color:var(--mut);font-size:14px;min-height:21px}
+#stat,#gStat{margin:16px 0;color:var(--mut);font-size:14px;min-height:21px;font-weight:500}
 #act{margin-top:6px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin-top:12px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:14px}
-.seg label{margin:0;color:var(--mut);font-size:14px;cursor:pointer}
-.seg input{position:absolute;opacity:0;width:0}
-.seg span{display:block;text-align:center;padding:10px;border-radius:10px;font-weight:600;transition:.2s}
-.seg input:checked+span{background:var(--g);color:#06111c}
-.seg input:focus-visible+span{outline:2px solid var(--a);outline-offset:2px}
-body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
-.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;padding:6px 8px calc(env(safe-area-inset-bottom,0px) + 6px);background:rgba(8,10,24,.88);backdrop-filter:blur(16px);border-top:1px solid var(--line);z-index:5}
-.tabs button{flex:1;background:none;border:0;color:var(--mut);font:500 12px Inter,sans-serif;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;cursor:pointer;transition:color .2s}
-.tabs button.on{color:var(--b)}
+
+/* ---------- Navigation basse ---------- */
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;padding:6px 8px calc(env(safe-area-inset-bottom,0px) + 6px);background:var(--card);border-top:2px solid var(--line);z-index:5}
+.tabs button{flex:1;background:none;border:0;color:var(--mut);font:600 11.5px Figtree,sans-serif;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px;cursor:pointer}
+.tabs .ic{width:52px;height:30px;border-radius:99px;display:grid;place-items:center;transition:background .15s}
 .tabs svg{width:23px;height:23px}
-.apps-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.apps-head h2{margin:0;font-size:20px}
-.mini2{background:var(--glass);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 14px;font:500 13px Inter,sans-serif;cursor:pointer}
-.app{display:flex;gap:14px;align-items:center;padding:14px;margin-bottom:12px;background:var(--glass);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(14px)}
-.app .ico{width:52px;height:52px;border-radius:15px;background:var(--g);color:#06111c;display:grid;place-items:center;font:700 22px Sora,sans-serif;flex:none}
+.tabs button.on{color:var(--ink)}
+.tabs button.on .ic{background:var(--sun);color:var(--onsun);box-shadow:inset 0 0 0 2px var(--edge)}
+
+/* ---------- Mes applications ---------- */
+.app{display:flex;gap:14px;align-items:center;padding:14px;margin-bottom:12px;background:var(--card);border:2px solid var(--line);border-radius:18px}
+.app .ico{width:54px;height:54px;border-radius:16px;background:var(--sun);color:var(--onsun);border:2px solid var(--edge);display:grid;place-items:center;font:800 23px 'Bricolage Grotesque',sans-serif;flex:none}
 .app .inf{flex:1;min-width:0}
-.app .inf b{display:block;font:600 16px Sora,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.app .inf small{color:var(--mut);font-size:12px;display:block}
+.app .inf b{display:block;font-weight:800;font-size:16.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app .inf small{color:var(--mut);font-size:12.5px;display:block}
 .app .acts{display:flex;flex-direction:column;gap:6px}
-.app .dl{background:var(--g);color:#06111c;border:0;border-radius:10px;padding:9px 12px;font:600 13px Sora,sans-serif;cursor:pointer}
-.app .rm{background:none;border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:6px;font:500 12px Inter,sans-serif;cursor:pointer}
+.app .dl{background:var(--pri);color:var(--onpri);border:2px solid var(--edge);border-radius:10px;padding:8px 12px;font:700 13px 'Bricolage Grotesque',sans-serif;cursor:pointer;box-shadow:0 2px 0 var(--edge)}
+.app .ed,.app .rm{background:var(--card);border:2px solid var(--line);color:var(--ink);border-radius:10px;padding:6px;font:600 12px Figtree,sans-serif;cursor:pointer}
+.app .rm{color:var(--mut)}
 .vide{color:var(--mut);text-align:center;padding:32px 12px}
-#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);transform:translateX(-50%) translateY(20px);background:#1d2140;color:#eef0ff;padding:10px 18px;border-radius:99px;border:1px solid var(--line);opacity:0;transition:.3s;z-index:9;pointer-events:none;font-size:14px}
+.apps-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.apps-head h2{margin:0;font-size:24px}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 90px);transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:12px;opacity:0;transition:.25s;z-index:9;pointer-events:none;font-size:14px;font-weight:600;max-width:90vw;text-align:center}
 #toast.on{opacity:1;transform:translateX(-50%)}
 .cstat{color:var(--mut);font-size:14px;margin:4px 0 0}
-.edbar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;margin-bottom:16px;border-radius:16px;background:rgba(94,234,212,.12);border:1px solid rgba(94,234,212,.35);font-size:14px;line-height:1.4}
-.app .ed{background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:7px;font:500 12px Inter,sans-serif;cursor:pointer}
+.edbar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;margin-bottom:16px;border-radius:14px;background:var(--sun);color:var(--onsun);border:2px solid var(--edge);font-size:14px;font-weight:500;line-height:1.4}
+.edbar .mini2{background:#fff;color:#0F1B4C;border-color:#0F1B4C}
+
+/* ---------- Dépôts GitHub ---------- */
+.sums{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;border:2px solid var(--line);white-space:nowrap;flex:none}
+.tag.new{background:var(--sun);color:var(--onsun);border-color:var(--edge)}
+.tag.mod{background:var(--pri);color:var(--onpri);border-color:var(--edge)}
+.tag.del{background:var(--err);color:#fff;border-color:var(--edge)}
+.tag.same{background:var(--field);color:var(--mut);border-color:var(--soft)}
+.files{margin:10px 0 0;padding:0;list-style:none;border:2px solid var(--line);border-radius:14px;max-height:300px;overflow:auto;background:var(--field)}
+.files li{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:7px 12px;font-size:13px;border-bottom:1px solid var(--soft)}
+.files li:last-child{border-bottom:0}
+.files .p{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.files .p em{font-style:normal;color:var(--mut)}
+.files .more{justify-content:center;color:var(--mut)}
+#gRun{display:none;margin-top:18px}
+.gok{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.gok .btn{flex:1;min-width:150px;margin:0}
+.warn{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:var(--field);border:2px solid var(--line);font-size:13px;color:var(--ink)}
 </style>
 </head>
 <body>
-<div class="aurora" aria-hidden="true"><i></i><i></i></div>
+<header class="top"><div class="in">
+  <div class="mark"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="#0F1B4C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg></div>
+  <div><h1>APK Studio</h1><p>Applications Android et dépôts GitHub</p></div>
+</div></header>
 <main>
-<header>
-  <div class="logo"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#06111c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg></div>
-  <div><h1>APK Studio</h1><p>Site web ou Flutter, vers l'application Android</p></div>
-</header>
 
 <div id="tCreate">
 <section id="vForm">
@@ -158,7 +215,7 @@ body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
       <h2><span>2</span>Fichiers</h2>
       <div class="seg" role="radiogroup" aria-label="Type de projet"><label><input type="radio" name="mode" value="web" checked><span>Site web</span></label><label><input type="radio" name="mode" value="flutter"><span>Flutter</span></label></div>
       <div id="zipBox"><div class="seg" role="radiogroup" aria-label="Source du projet" style="margin-bottom:6px"><label><input type="radio" name="src" value="zip" checked><span>ZIP</span></label><label><input type="radio" name="src" value="link"><span>Lien</span></label></div>
-      <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8b9bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,application/zip"></label></div>
+      <label class="drop" id="dz" for="zip"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F1B4C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg></span><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,application/zip"></label></div>
       <div id="lnkBox" style="display:none"><label for="url">Lien source</label><input id="url" type="url" inputmode="url" autocapitalize="none" autocorrect="off" placeholder="https://…"><small class="h" id="lnkHint"></small></div>
       <label for="icon">Icône PNG (optionnelle, carrée)</label>
       <input id="icon" type="file" accept="image/png">
@@ -180,10 +237,9 @@ body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
 </section>
 
 <section id="vProg" aria-live="polite">
-  <div class="ringbox" id="rb">
-    <svg viewBox="0 0 200 200"><defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b9bff"/><stop offset="1" stop-color="#5eead4"/></linearGradient></defs>
-    <circle class="trk" cx="100" cy="100" r="90"/><circle id="arc" cx="100" cy="100" r="90" stroke-dasharray="565.49" stroke-dashoffset="565.49"/></svg>
-    <div class="ringc"><div class="pct"><span id="pv">0</span><sup>%</sup></div><div id="clock">00:00</div></div>
+  <div class="meter" id="rb">
+    <div class="big"><div class="pct"><span id="pv">0</span><sup>%</sup></div><div id="clock">00:00</div></div>
+    <div class="track"><i id="bar"></i></div>
   </div>
   <ul id="phases"></ul>
   <p id="stat"></p>
@@ -196,16 +252,91 @@ body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
   <div id="appList"></div>
 </section>
 
+<!-- ======== Dépôts GitHub ======== -->
+<section id="tGit" style="display:none">
+  <div class="pgh"><h2>Dépôts GitHub</h2><p>Dépose un dossier ou un ZIP : son contenu devient la racine du dépôt, sous-dossiers compris.</p></div>
+
+  <div class="panel">
+    <h2><span>1</span>Dépôt</h2>
+    <div class="seg" role="radiogroup" aria-label="Type de dépôt"><label><input type="radio" name="gmode" value="exist" checked><span>Dépôt existant</span></label><label><input type="radio" name="gmode" value="new"><span>Nouveau dépôt</span></label></div>
+
+    <div id="gExist">
+      <label for="gRepo">Dépôt</label>
+      <input id="gRepo" list="gRepos" placeholder="propriétaire/nom" autocapitalize="none" autocorrect="off" autocomplete="off">
+      <datalist id="gRepos"></datalist>
+      <small class="h" id="gInfo">Choisis dans la liste ou saisis propriétaire/nom.</small>
+      <label for="gBr">Branche</label>
+      <select id="gBr"><option value="">—</option></select>
+      <label class="sw" id="gNbSw"><input id="gNb" type="checkbox"><i></i>Publier sur une nouvelle branche</label>
+      <div id="gNbBox" style="display:none"><label for="gNbName">Nom de la nouvelle branche</label><input id="gNbName" placeholder="maj-depuis-appli" autocapitalize="none" autocorrect="off"><small class="h">Elle part de la branche choisie ci-dessus.</small></div>
+    </div>
+
+    <div id="gNew" style="display:none">
+      <label for="gNm">Nom du dépôt</label>
+      <input id="gNm" placeholder="mon-projet" autocapitalize="none" autocorrect="off" maxlength="100">
+      <label for="gDesc">Description (optionnelle)</label>
+      <input id="gDesc" maxlength="200">
+      <div class="seg" role="radiogroup" aria-label="Visibilité"><label><input type="radio" name="gvis" value="priv" checked><span>Privé</span></label><label><input type="radio" name="gvis" value="pub"><span>Public</span></label></div>
+      <small class="h">Le dépôt est créé sur ton compte et ne contient que tes fichiers. Il faut un jeton classique avec la portée « repo ».</small>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2><span>2</span>Fichiers</h2>
+    <div class="drop" id="gDz">
+      <span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F1B4C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></span>
+      <b id="gSrc">Aucun fichier choisi</b>
+      <span>Glisse un dossier ou un ZIP ici, ou utilise les boutons.</span>
+      <div class="picks">
+        <label class="btn sm" for="gDir">Choisir un dossier</label>
+        <label class="btn sm sun" for="gZip">Choisir un ZIP</label>
+      </div>
+    </div>
+    <input id="gDir" class="hid" type="file" webkitdirectory multiple>
+    <input id="gZip" class="hid" type="file" accept=".zip,application/zip">
+    <small class="h">Sur Android, le navigateur ne propose parfois pas les dossiers : dans ce cas, envoie un ZIP.</small>
+
+    <details class="opts">
+      <summary>Options des fichiers</summary>
+      <label class="sw"><input id="gStrip" type="checkbox" checked><i></i>Prendre l'intérieur du dossier comme racine</label>
+      <label class="sw"><input id="gIgn" type="checkbox" checked><i></i>Ignorer .DS_Store, __MACOSX et node_modules</label>
+      <label for="gPre">Dossier de destination dans le dépôt</label>
+      <input id="gPre" placeholder="vide = racine du dépôt (ex. docs)" autocapitalize="none" autocorrect="off">
+    </details>
+
+    <div class="sums" id="gSums"></div>
+    <ul class="files" id="gList" style="display:none"></ul>
+  </div>
+
+  <div class="panel">
+    <h2><span>3</span>Publication</h2>
+    <label for="gMsg">Message du commit</label>
+    <input id="gMsg" value="Mise à jour depuis APK Studio" maxlength="200">
+    <label class="sw" id="gSyncSw"><input id="gSync" type="checkbox"><i></i>Supprimer les fichiers absents de l'envoi</label>
+    <small class="h" id="gSyncH">Désactivé : les fichiers du dépôt qui ne sont pas dans ton dossier restent en place.</small>
+    <button type="button" class="btn" id="gGo" style="margin-top:20px" disabled>Comparer avec le dépôt</button>
+    <p class="err" id="gErr" role="alert"></p>
+    <div id="gRun" aria-live="polite">
+      <div class="meter" id="gMeter"><div class="track"><i id="gBar"></i></div></div>
+      <p id="gStat"></p>
+      <div id="gAct" class="gok"></div>
+    </div>
+  </div>
+</section>
+
 <section id="tSet" style="display:none">
   <div class="panel">
     <h2>Connexion GitHub</h2>
     <p class="cstat" id="cstat"></p>
-    <label for="repo">Dépôt</label>
+    <label for="repo">Dépôt des compilations</label>
     <input id="repo" value="Doubigue/G-n-rateur" autocapitalize="none" autocorrect="off">
     <label for="token">Jeton d'accès</label>
     <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
+    <label for="gtoken">Jeton pour les dépôts (optionnel)</label>
+    <input id="gtoken" type="password" autocomplete="off" placeholder="ghp_…">
+    <small class="h">Utilisé par l'onglet Dépôts. S'il est vide, le jeton ci-dessus sert aussi pour les dépôts.</small>
     <label class="sw"><input id="rem" type="checkbox" checked><i></i>Mémoriser sur cet appareil</label>
-    <small class="h">Le jeton reste dans ton navigateur et n'est envoyé qu'à api.github.com.</small>
+    <small class="h">Le jeton reste dans ton navigateur et n'est envoyé qu'à api.github.com. Pour publier dans des dépôts, il lui faut le droit « Contents » en écriture (ou la portée « repo »). Pousser un fichier de .github/workflows demande aussi la portée « workflow ».</small>
     <button type="button" class="btn" id="saveCx" style="margin-top:18px">Enregistrer</button>
     <button type="button" class="btn ghost" id="clrCx">Effacer le jeton de cet appareil</button>
   </div>
@@ -213,15 +344,16 @@ body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
 </main>
 <div id="toast" role="status"></div>
 <nav class="tabs" aria-label="Navigation">
-  <button type="button" data-t="create" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Créer</button>
-  <button type="button" data-t="apps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>Mes applis</button>
-  <button type="button" data-t="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Réglages</button>
+  <button type="button" data-t="create" class="on"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span>Créer</button>
+  <button type="button" data-t="apps"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg></span>Mes applis</button>
+  <button type="button" data-t="git"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="9" r="2"/><path d="M6 7v10M18 11c0 4-6 3-12 6"/></svg></span>Dépôts</button>
+  <button type="button" data-t="set"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span>Réglages</button>
 </nav>
 
 <script>
 const $=id=>document.getElementById(id);
 const fv=$('vForm'),pv=$('vProg');
-let repo,token;
+let repo,token,curTab='create';
 
 /* ---------- Mémoire & préremplissage ---------- */
 try{
@@ -231,6 +363,8 @@ try{
   }
   $('repo').value=localStorage.getItem('apk-repo')||$('repo').value;
   $('token').value=localStorage.getItem('apk-token')||'';
+  $('gRepo').value=localStorage.getItem('apk-git-repo')||'';
+  $('gtoken').value=localStorage.getItem('apk-git-token')||'';
 }catch(e){}
 function cxState(){$('cstat').textContent=$('token').value?'Connecté à '+$('repo').value:'Non connecté : ajoute ton jeton pour générer des applications.'}
 cxState();
@@ -241,7 +375,8 @@ function prev(){
   $('pName').textContent=n;$('pPkg').textContent=$('pkg').value||'com.doubigue.app';
   $('pVer').textContent='Version '+($('vname').value||'1.0.0')+' ('+($('vcode').value||1)+')';
   $('tLet').textContent=n[0].toUpperCase();
-  const c=$('color').value;$('tile').style.background='linear-gradient(135deg,'+c+',#0b0d1c)';
+  const c=$('color').value,v=parseInt(c.slice(1),16),L=.299*(v>>16)+.587*(v>>8&255)+.114*(v&255);
+  $('tile').style.background=c;$('tile').style.color=L>165?'#0F1B4C':'#fff';
 }
 ['name','pkg','vname','vcode','color'].forEach(i=>$(i).addEventListener('input',prev));prev();
 $('icon').addEventListener('change',e=>{
@@ -274,25 +409,25 @@ async function put(path,content,message){
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error('GitHub ('+r.status+') : '+(e.message||'erreur')+(r.status==401||r.status==404?' — vérifie le dépôt et les droits du jeton.':''))}
   return r.json()}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const fmt=n=>n<1024?n+' o':n<1048576?(n/1024).toFixed(0)+' Ko':(n/1048576).toFixed(1)+' Mo';
 
-/* ---------- Moteur de progression ---------- */
+/* ---------- Moteur de progression (APK) ---------- */
 const PH=[
  {t:'Envoi des fichiers',w:10,exp:20},
  {t:'Démarrage du serveur',w:15,exp:45,m:['Set up job','Run actions/','Détecter','Installer']},
  {t:'Préparation du projet Android',w:25,exp:90,m:['Préparer']},
  {t:"Compilation de l'APK",w:40,exp:210,m:['Compiler']},
  {t:'Publication',w:10,exp:25,m:['Publier','Nettoyer']}];
-const C=565.49;
 let st,tgt,shown,t0,raf,final;
 function initProg(){
   st=PH.map(()=>0);st[0]=1;tgt=0;shown=0;final=null;t0=Date.now();
   st.start=PH.map(()=>0);st.start[0]=t0;
   $('phases').innerHTML=PH.map(p=>'<li><span class="dot"></span>'+p.t+'</li>').join('');
-  $('rb').className='ringbox';$('act').innerHTML='';$('stat').textContent='';
+  $('rb').className='meter';$('act').innerHTML='';$('stat').textContent='';
   fv.style.display='none';pv.style.display='block';scrollTo(0,0);
   cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
 }
-function setPhase(i){ // marque les phases < i comme terminées et i comme active
+function setPhase(i){
   for(let k=0;k<PH.length;k++){const n=k<i?2:k==i?1:0;if(st[k]!=n){st[k]=n;if(n==1&&!st.start[k])st.start[k]=Date.now()}}
 }
 function upProg(f){tgt=Math.max(tgt,PH[0].w*f)}
@@ -305,7 +440,7 @@ function loop(){
   const now=Date.now();
   if(final==null)tgt=Math.max(tgt,Math.min(99,calc()));else tgt=final;
   shown+=(tgt-shown)*.06;if(Math.abs(tgt-shown)<.05)shown=tgt;
-  $('arc').style.strokeDashoffset=C*(1-shown/100);
+  $('bar').style.width=shown+'%';
   $('pv').textContent=Math.round(shown);
   const s=Math.floor((now-t0)/1000);$('clock').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
   [...$('phases').children].forEach((li,k)=>{li.className=final===0?(st[k]==1?'ko':st[k]==2?'ok':''):st[k]==2?'ok':st[k]==1?'act':''});
@@ -322,14 +457,14 @@ function steps2phase(steps){
 }
 function succeed(asset){edition=null;$('edBar').style.display='none';
   final=100;for(let k=0;k<PH.length;k++)st[k]=2;
-  $('rb').className='ringbox state-ok';$('stat').textContent='Ton application est prête.';
-  $('act').innerHTML='<a class="btn" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a><button class="btn ghost" id="toApps">Mes applications</button><button class="btn ghost" id="again">Nouvelle application</button>';
+  $('rb').className='meter state-ok';$('stat').textContent='Ton application est prête.';
+  $('act').innerHTML='<a class="btn sun" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a><button class="btn ghost" id="toApps">Mes applications</button><button class="btn ghost" id="again">Nouvelle application</button>';
   $('again').onclick=reset;$('toApps').onclick=()=>goTab('apps');cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
   const dl=$('act').querySelector('a');dl.onclick=e=>{e.preventDefault();ouvrirLien(asset.browser_download_url)};
   if(navigator.vibrate)navigator.vibrate([60,40,60]);
 }
 function fail(msg,url){
-  final=0;tgt=shown;$('rb').className='ringbox state-ko';$('stat').textContent=msg;
+  final=0;tgt=shown;$('rb').className='meter state-ko';$('stat').textContent=msg;
   $('act').innerHTML=(url?'<a class="btn ghost" target="_blank" rel="noopener" href="'+url+'">Voir le journal de compilation</a>':'')+'<button class="btn ghost" id="again">Réessayer</button>';
   $('again').onclick=reset;
 }
@@ -392,16 +527,18 @@ $('f').addEventListener('submit',async e=>{
 });
 
 /* ---------- Onglets, toast ---------- */
-const TABS={create:'tCreate',apps:'tApps',set:'tSet'};
+const TABS={create:'tCreate',apps:'tApps',git:'tGit',set:'tSet'};
 function goTab(n){
+  curTab=n;
   for(const k in TABS)$(TABS[k]).style.display=k===n?'block':'none';
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===n));
   if(n==='apps')chargerApps();
+  if(n==='git')gOpen();
   scrollTo(0,0);
 }
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>goTab(b.dataset.t));
 let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2600)}
-function sauverCx(){try{if($('rem').checked){localStorage.setItem('apk-repo',$('repo').value.trim());localStorage.setItem('apk-token',$('token').value.trim())}else{localStorage.removeItem('apk-repo');localStorage.removeItem('apk-token')}}catch(_){}}
+function sauverCx(){try{if($('rem').checked){localStorage.setItem('apk-repo',$('repo').value.trim());localStorage.setItem('apk-token',$('token').value.trim());localStorage.setItem('apk-git-token',$('gtoken').value.trim())}else{localStorage.removeItem('apk-repo');localStorage.removeItem('apk-token');localStorage.removeItem('apk-git-token')}}catch(_){}}
 $('saveCx').onclick=()=>{sauverCx();cxState();toast('Connexion enregistrée')};
 $('token').oninput=cxState;$('repo').oninput=cxState;
 
@@ -457,12 +594,13 @@ async function importPartage(items){
     if(it.kind!=='file')continue;
     try{
       const f=new File([await(await fetch(Capacitor.convertFileSrc('file://'+it.path))).blob()],it.name,{type:it.mime||''});
+      if(/\.zip$/i.test(it.name)&&curTab==='git'){await gLoadZip(f);n++;continue}
       const dt=new DataTransfer();dt.items.add(f);
       if(/\.zip$/i.test(it.name)){$('zip').files=dt.files;zipInfo();n++}
       else if(/\.png$/i.test(it.name)||it.mime==='image/png'){$('icon').files=dt.files;$('icon').dispatchEvent(new Event('change'));n++}
     }catch(e){}
   }
-  if(n){goTab('create');toast(n+' fichier(s) reçu(s)')}else toast('Aucun ZIP ou PNG dans ce partage.')
+  if(n){if(curTab!=='git')goTab('create');toast(n+' fichier(s) reçu(s)')}else toast('Aucun ZIP ou PNG dans ce partage.')
 }
 addEventListener('appshare',e=>importPartage(e.detail));
 try{const sh=window.AndroidShare&&AndroidShare.take();if(sh)importPartage(JSON.parse(sh))}catch(e){}
@@ -523,9 +661,334 @@ $('rst').onclick=()=>{
   clearTimeout(tr);b.textContent='Réinitialiser les options';reinitialiser();toast('Options réinitialisées');
 };
 $('clrCx').onclick=()=>{
-  try{localStorage.removeItem('apk-repo');localStorage.removeItem('apk-token')}catch(_){}
-  $('token').value='';$('repo').value='Doubigue/G-n-rateur';cxState();toast('Jeton effacé de cet appareil');
+  try{localStorage.removeItem('apk-repo');localStorage.removeItem('apk-token');localStorage.removeItem('apk-git-token')}catch(_){}
+  $('token').value='';$('gtoken').value='';$('repo').value='Doubigue/G-n-rateur';cxState();toast('Jeton effacé de cet appareil');
 };
+
+/* =====================================================================
+   Dépôts GitHub : dossier ou ZIP  ->  comparaison  ->  commit + push
+   (API Git Data : blobs, arbre, commit, référence = un seul commit)
+   ===================================================================== */
+const G={raw:[],src:'',stripped:'',plan:null,info:null,empty:false,busy:false,reposTok:'',seq:0};
+const tok=()=>$('gtoken').value.trim()||$('token').value.trim();
+$('gtoken').addEventListener('input',()=>{G.reposTok='';G.info=null;G.plan=null});
+const gMode=()=>document.querySelector('input[name=gmode]:checked').value;
+const gVis=()=>document.querySelector('input[name=gvis]:checked').value;
+const encPath=p=>p.split('/').map(encodeURIComponent).join('/');
+
+async function gh(path,o={}){
+  const r=await fetch('https://api.github.com'+path,{method:o.method||'GET',headers:Object.assign({Accept:'application/vnd.github+json',Authorization:'Bearer '+tok(),'X-GitHub-Api-Version':'2022-11-28'},o.body?{'Content-Type':'application/json'}:{}),body:o.body?JSON.stringify(o.body):undefined});
+  if(!r.ok){
+    let m='';try{m=(await r.json()).message||''}catch(_){}
+    const h=r.status===401?' — jeton invalide ou expiré.':r.status===404?' — introuvable, ou jeton sans accès à ce dépôt.':r.status===403?(/workflow/i.test(m)?' — ajoute la portée « workflow » au jeton.':' — droits insuffisants ou limite atteinte.'):'';
+    const e=new Error('GitHub ('+r.status+') : '+(m||'erreur')+h);
+    e.status=r.status;e.msg=m;e.retry=+r.headers.get('retry-after')||0;throw e;
+  }
+  return r.status===204?null:r.json();
+}
+async function retry(fn,n=4){
+  for(let k=0;;k++){
+    try{return await fn()}
+    catch(e){
+      const limite=e.status===429||(e.status===403&&/rate|abuse|secondary/i.test(e.msg||''));
+      const transitoire=[500,502,503,504].includes(e.status)||e instanceof TypeError;
+      if(k>=n-1||!(limite||transitoire))throw e;
+      await sleep(Math.max((e.retry||0)*1000,1500*(k+1)));
+    }
+  }
+}
+async function pool(items,n,fn){
+  let i=0,dead=false;
+  await Promise.all(Array.from({length:Math.min(n,items.length)},async()=>{
+    while(!dead&&i<items.length){const k=i++;try{await fn(items[k],k)}catch(e){dead=true;throw e}}
+  }));
+}
+async function gitSha(u8){
+  const h=new TextEncoder().encode('blob '+u8.length+'\0'),m=new Uint8Array(h.length+u8.length);
+  m.set(h);m.set(u8,h.length);
+  const d=await crypto.subtle.digest('SHA-1',m);
+  return [...new Uint8Array(d)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+
+/* ---- Lecture des sources : dossier, glisser-déposer, ZIP ---- */
+const lecteur=f=>()=>f.arrayBuffer().then(b=>new Uint8Array(b));
+function gSetRaw(raw,label){G.raw=raw;G.src=label;G.plan=null;gRefresh()}
+$('gDir').addEventListener('change',e=>{
+  const l=[...e.target.files];e.target.value='';if(!l.length)return;
+  const nom=((l[0].webkitRelativePath||'').split('/')[0])||'Sélection';
+  gSetRaw(l.map(f=>({path:f.webkitRelativePath||f.name,size:f.size,read:lecteur(f)})),'Dossier « '+nom+' »');
+});
+async function gLoadZip(file){
+  try{
+    if(file.size>100*1048576)throw new Error('ZIP trop volumineux (100 Mo max).');
+    const z=await JSZip.loadAsync(file).catch(()=>{throw new Error('ZIP invalide.')});
+    const raw=[];z.forEach((p,o)=>{if(!o.dir)raw.push({path:p,size:(o._data&&o._data.uncompressedSize)||0,read:()=>o.async('uint8array')})});
+    if(!raw.length)throw new Error('Ce ZIP est vide.');
+    gSetRaw(raw,file.name);
+  }catch(e){toast(e.message)}
+}
+$('gZip').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)gLoadZip(f)});
+async function walk(en,base,out){
+  if(en.isFile){const f=await new Promise((ok,ko)=>en.file(ok,ko));out.push({path:base+en.name,size:f.size,read:lecteur(f)})}
+  else if(en.isDirectory){
+    const rd=en.createReader();let all=[];
+    for(;;){const b=await new Promise((ok,ko)=>rd.readEntries(ok,ko));if(!b.length)break;all=all.concat(b)}
+    for(const c of all)await walk(c,base+en.name+'/',out);
+  }
+}
+const gdz=$('gDz');
+['dragenter','dragover'].forEach(v=>gdz.addEventListener(v,e=>{e.preventDefault();gdz.classList.add('on')}));
+['dragleave','drop'].forEach(v=>gdz.addEventListener(v,e=>{e.preventDefault();gdz.classList.remove('on')}));
+gdz.addEventListener('drop',async e=>{
+  const ents=[...(e.dataTransfer.items||[])].map(i=>i.webkitGetAsEntry&&i.webkitGetAsEntry()).filter(Boolean);
+  const files=[...e.dataTransfer.files];
+  try{
+    if(files.length===1&&/\.zip$/i.test(files[0].name)&&!(ents[0]&&ents[0].isDirectory))return gLoadZip(files[0]);
+    const out=[];
+    if(ents.length)for(const en of ents)await walk(en,'',out);
+    else files.forEach(f=>out.push({path:f.name,size:f.size,read:lecteur(f)}));
+    if(out.length)gSetRaw(out,ents.length===1&&ents[0].isDirectory?'Dossier « '+ents[0].name+' »':out.length+' éléments déposés');
+  }catch(err){toast('Lecture impossible : '+err.message)}
+});
+
+/* ---- Fichiers retenus : racine, ignorés, dossier de destination ---- */
+function gPrefix(){const p=$('gPre').value.trim().replace(/\\/g,'/').replace(/^\/+|\/+$/g,'');return p?p+'/':''}
+function gFiles(){
+  const ign=$('gIgn').checked;
+  let l=G.raw.map(f=>({path:f.path.replace(/\\/g,'/').replace(/^(\.\/|\/)+/,''),size:f.size,read:f.read}))
+    .filter(f=>{
+      if(!f.path||f.path.endsWith('/'))return false;
+      const s=f.path.split('/'),n=s[s.length-1];
+      if(s.includes('..')||s.includes('.git'))return false;
+      if(ign&&(s.includes('__MACOSX')||s.includes('node_modules')||/^(\.DS_Store|Thumbs\.db|desktop\.ini)$/i.test(n)))return false;
+      return true});
+  G.stripped='';
+  if($('gStrip').checked&&l.length){
+    const first=l[0].path.split('/')[0];
+    if(!first.startsWith('.')&&l.every(f=>f.path.includes('/')&&f.path.split('/')[0]===first)){G.stripped=first;l=l.map(f=>({path:f.path.slice(first.length+1),size:f.size,read:f.read}))}
+  }
+  const pre=gPrefix(),m=new Map();
+  l.forEach(f=>m.set(pre+f.path,{path:f.path,target:pre+f.path,size:f.size,read:f.read}));
+  return [...m.values()].sort((a,b)=>a.target<b.target?-1:1);
+}
+
+/* ---- Affichage ---- */
+const ORD={mod:0,new:1,del:2,same:3},LAB={new:'nouveau',mod:'modifié',del:'supprimé',same:'identique'};
+function gRefresh(){
+  const f=gFiles(),tot=f.reduce((s,x)=>s+(x.size||0),0);
+  $('gSrc').textContent=!G.raw.length?'Aucun fichier choisi':f.length?G.src:'Tous les fichiers ont été ignorés';
+  const sums=$('gSums');sums.innerHTML='';
+  const chip=(c,t)=>{const s=document.createElement('span');s.className='tag '+c;s.textContent=t;sums.appendChild(s)};
+  if(G.raw.length){
+    chip('same',f.length+' fichier'+(f.length>1?'s':'')+(tot?' · '+fmt(tot):''));
+    if(G.stripped)chip('same','racine : intérieur de « '+G.stripped+' »');
+  }
+  let rows=f.map(x=>({p:x.target,s:''}));
+  if(G.plan){
+    const c={new:0,mod:0,same:0,del:0};
+    G.plan.list.forEach(x=>c[x.st]++);c.del=G.plan.del.length;
+    sums.innerHTML='';
+    if(c.new)chip('new',c.new+' nouveau'+(c.new>1?'x':''));
+    if(c.mod)chip('mod',c.mod+' modifié'+(c.mod>1?'s':''));
+    if(c.del)chip('del',c.del+' supprimé'+(c.del>1?'s':''));
+    chip('same',c.same+' identique'+(c.same>1?'s':''));
+    rows=G.plan.list.map(x=>({p:x.target,s:x.st})).concat(G.plan.del.map(x=>({p:x.path,s:'del'})));
+    rows.sort((a,b)=>ORD[a.s]-ORD[b.s]||(a.p<b.p?-1:1));
+  }
+  const ul=$('gList');ul.innerHTML='';ul.style.display=rows.length?'block':'none';
+  rows.slice(0,200).forEach(r=>{
+    const li=document.createElement('li'),p=document.createElement('span');p.className='p';
+    const i=r.p.lastIndexOf('/');
+    if(i>=0){const e=document.createElement('em');e.textContent=r.p.slice(0,i+1);p.appendChild(e)}
+    p.appendChild(document.createTextNode(r.p.slice(i+1)));li.appendChild(p);
+    if(r.s){const t=document.createElement('span');t.className='tag '+r.s;t.textContent=LAB[r.s];li.appendChild(t)}
+    ul.appendChild(li);
+  });
+  if(rows.length>200){const li=document.createElement('li');li.className='more';li.textContent='… et '+(rows.length-200)+' autres';ul.appendChild(li)}
+  gBtn();
+}
+function gChanges(){return G.plan?G.plan.list.filter(x=>x.st!=='same').length+G.plan.del.length:0}
+function gBtn(){
+  const b=$('gGo'),nouveau=gMode()==='new',has=gFiles().length>0,k=gChanges();
+  if(nouveau)b.textContent='Créer le dépôt et publier';
+  else if(G.empty)b.textContent='Publier dans le dépôt vide';
+  else if(!G.plan)b.textContent='Comparer avec le dépôt';
+  else b.textContent=k?'Publier '+k+' changement'+(k>1?'s':''):'Rien à publier';
+  b.disabled=!has||G.busy||(!nouveau&&!G.empty&&!!G.plan&&!k);
+}
+function gInval(){G.plan=null;$('gErr').textContent='';gRefresh()}
+['gStrip','gIgn','gPre','gSync','gBr','gNb','gNbName'].forEach(i=>$(i).addEventListener('input',gInval));
+$('gSync').addEventListener('change',()=>{
+  $('gSyncH').textContent=$('gSync').checked?'Activé : les fichiers du dépôt (dans le dossier de destination) absents de ton envoi seront supprimés.':'Désactivé : les fichiers du dépôt qui ne sont pas dans ton dossier restent en place.';
+});
+$('gNb').addEventListener('change',()=>{$('gNbBox').style.display=$('gNb').checked?'block':'none'});
+document.querySelectorAll('input[name=gmode]').forEach(r=>r.addEventListener('change',()=>{
+  const n=gMode()==='new';$('gExist').style.display=n?'none':'block';$('gNew').style.display=n?'block':'none';
+  $('gSyncSw').style.display=$('gSyncH').style.display=n?'none':'';gInval();
+}));
+
+/* ---- Informations sur le dépôt, branches, liste des dépôts ---- */
+function gInfoTxt(t,bad){const e=$('gInfo');e.textContent=t;e.style.color=bad?'var(--err)':''}
+let tInfo;
+$('gRepo').addEventListener('input',()=>{clearTimeout(tInfo);G.info=null;G.plan=null;tInfo=setTimeout(gInfo,500)});
+async function gInfo(){
+  const r=$('gRepo').value.trim(),n=++G.seq;
+  G.empty=false;gBtn();
+  if(!/^[\w.-]+\/[\w.-]+$/.test(r)){gInfoTxt('Choisis dans la liste ou saisis propriétaire/nom.');return}
+  if(!tok()){gInfoTxt('Ajoute ton jeton dans Réglages.',true);return}
+  gInfoTxt('Vérification…');
+  try{
+    const [i,b]=await Promise.all([gh('/repos/'+r),gh('/repos/'+r+'/branches?per_page=100').catch(e=>e.status===409?[]:Promise.reject(e))]);
+    if(n!==G.seq)return;
+    G.info=i;G.empty=!b.length;
+    const sel=$('gBr');sel.innerHTML='';
+    (G.empty?[{name:i.default_branch}]:b).forEach(x=>{const o=document.createElement('option');o.value=x.name;o.textContent=x.name+(x.name===i.default_branch?' (par défaut)':'');sel.appendChild(o)});
+    sel.value=i.default_branch;
+    const droit=!i.permissions||i.permissions.push;
+    gInfoTxt((droit?'Dépôt trouvé':'Lecture seule : tu ne peux pas publier ici')+' · '+(i.private?'privé':'public')+(G.empty?' · vide':''),!droit);
+    $('gNbSw').style.display=G.empty?'none':'';if(G.empty){$('gNb').checked=false;$('gNbBox').style.display='none'}
+    try{localStorage.setItem('apk-git-repo',r)}catch(_){}
+    gBtn();
+  }catch(e){if(n!==G.seq)return;gInfoTxt(e.message,true);G.empty=false;gBtn()}
+}
+async function gLoadRepos(){
+  if(!tok()||G.reposTok===tok())return;
+  G.reposTok=tok();
+  try{
+    const l=await gh('/user/repos?per_page=100&sort=pushed');
+    $('gRepos').innerHTML='';
+    l.filter(x=>!x.archived).forEach(x=>{const o=document.createElement('option');o.value=x.full_name;$('gRepos').appendChild(o)});
+  }catch(e){G.reposTok=''}
+}
+function gOpen(){gLoadRepos();if($('gRepo').value&&!G.info&&!$('gBr').value)gInfo();gRefresh()}
+
+/* ---- Progression ---- */
+function gRun(on){
+  $('gRun').style.display=on?'block':'none';$('gMeter').className='meter';
+  $('gAct').innerHTML='';$('gStat').textContent='';$('gBar').style.width='0%';
+}
+function gP(pct,txt){$('gBar').style.width=Math.min(100,pct)+'%';if(txt)$('gStat').textContent=txt}
+
+/* ---- Comparaison avec la branche (équivalent de « git status ») ---- */
+async function gAnalyze(r,br,files,onp){
+  const ref=await gh('/repos/'+r+'/git/ref/heads/'+encPath(br)),head=ref.object.sha;
+  const cm=await gh('/repos/'+r+'/git/commits/'+head),baseTree=cm.tree.sha;
+  const tr=await gh('/repos/'+r+'/git/trees/'+baseTree+'?recursive=1');
+  const remote=new Map();tr.tree.forEach(t=>{if(t.type==='blob')remote.set(t.path,t)});
+  let n=0,canHash=!!(window.crypto&&crypto.subtle);
+  const list=files.map(f=>({path:f.path,target:f.target,read:f.read,size:f.size,st:'new',sha:'',mode:'100644'}));
+  await pool(list,3,async f=>{
+    const u8=await f.read();f.size=u8.length;
+    if(canHash)try{f.sha=await gitSha(u8)}catch(_){canHash=false}
+    if(onp)onp(++n,list.length);
+  });
+  list.forEach(f=>{
+    const x=remote.get(f.target);
+    if(x){f.st=f.sha&&x.sha===f.sha?'same':'mod';if(x.mode==='100755')f.mode='100755'}
+  });
+  const pre=gPrefix(),mine=new Set(list.map(f=>f.target));
+  const del=($('gSync').checked&&!tr.truncated)?[...remote.keys()].filter(p=>(!pre||p.startsWith(pre))&&!mine.has(p)).map(p=>({path:p,target:p})):[];
+  return{list,del,head,baseTree,truncated:!!tr.truncated,repo:r,branch:br};
+}
+
+/* ---- Premier commit d'un dépôt vide (API Contents) ---- */
+async function gBootstrap(r,files,msg){
+  const f=[...files].sort((a,b)=>(a.size||0)-(b.size||0))[0],u8=await f.read();
+  const res=await retry(()=>gh('/repos/'+r+'/contents/'+encPath(f.target),{method:'PUT',body:{message:msg,content:b64(u8)}}));
+  return res.commit.sha;
+}
+
+/* ---- Commit + push (blobs -> arbre -> commit -> référence) ---- */
+async function gPublish(r,br,newBr,files,msg,plan,empty){
+  let boot=null;
+  if(empty){gP(6,'Création du premier commit…');boot=await gBootstrap(r,files,msg);br=(await gh('/repos/'+r)).default_branch;newBr='';plan=null}
+  if(!plan){gP(10,'Lecture du dépôt…');plan=await gAnalyze(r,br,files,(i,n)=>gP(10+i/n*20,'Analyse des fichiers '+i+'/'+n+'…'))}
+  const todo=plan.list.filter(f=>f.st!=='same');
+  if(!todo.length&&!plan.del.length){
+    if(boot)return{sha:boot,br,newBr:''};
+    throw new Error('Rien à publier : le dépôt est déjà identique.');
+  }
+  const entries=[];let n=0;
+  await pool(todo,2,async f=>{
+    const u8=await f.read();
+    const j=await retry(()=>gh('/repos/'+r+'/git/blobs',{method:'POST',body:{content:b64(u8),encoding:'base64'}}));
+    entries.push({path:f.target,mode:f.mode,type:'blob',sha:j.sha});
+    n++;gP(30+n/todo.length*50,'Envoi des fichiers '+n+'/'+todo.length+'…');
+  });
+  plan.del.forEach(d=>entries.push({path:d.path,mode:'100644',type:'blob',sha:null}));
+  gP(84,'Création de l\'arbre…');
+  const tree=await retry(()=>gh('/repos/'+r+'/git/trees',{method:'POST',body:{base_tree:plan.baseTree,tree:entries}}));
+  gP(90,'Création du commit…');
+  const cm=await retry(()=>gh('/repos/'+r+'/git/commits',{method:'POST',body:{message:msg,tree:tree.sha,parents:[plan.head]}}));
+  gP(95,newBr?'Création de la branche…':'Mise à jour de la branche…');
+  if(newBr)await gh('/repos/'+r+'/git/refs',{method:'POST',body:{ref:'refs/heads/'+newBr,sha:cm.sha}});
+  else try{await gh('/repos/'+r+'/git/refs/heads/'+encPath(br),{method:'PATCH',body:{sha:cm.sha,force:false}})}
+  catch(e){if(e.status===422)throw new Error('La branche a changé depuis la comparaison. Relance la comparaison puis publie à nouveau.');throw e}
+  return{sha:cm.sha,br,newBr,count:todo.length+plan.del.length};
+}
+
+$('gGo').onclick=async()=>{
+  if(G.busy)return;
+  const nouveau=gMode()==='new';
+  $('gErr').textContent='';
+  try{
+    if(!tok()){goTab('set');throw new Error('Ajoute ton jeton dans Réglages.')}
+    const files=gFiles();
+    if(!files.length)throw new Error('Choisis d\'abord un dossier ou un ZIP.');
+    const msg=$('gMsg').value.trim()||'Mise à jour depuis APK Studio';
+    let r,br,newBr='';
+    if(nouveau){
+      const nm=$('gNm').value.trim();
+      if(!/^[A-Za-z0-9._-]{1,100}$/.test(nm)||/^\.+$/.test(nm))throw new Error('Nom de dépôt invalide : lettres, chiffres, tiret, point et souligné.');
+    }else{
+      r=$('gRepo').value.trim();
+      if(!/^[\w.-]+\/[\w.-]+$/.test(r))throw new Error('Saisis le dépôt sous la forme propriétaire/nom.');
+      if(!G.info)await gInfo();
+      if(!G.info)throw new Error('Dépôt introuvable ou inaccessible.');
+      if(G.info.permissions&&!G.info.permissions.push)throw new Error('Ton jeton n\'a pas le droit d\'écrire dans ce dépôt.');
+      br=$('gBr').value;
+      if($('gNb').checked){
+        newBr=$('gNbName').value.trim();
+        if(!/^[A-Za-z0-9._\/-]{1,100}$/.test(newBr)||/\.\.|^[\/.-]|[\/.]$|\/\/|\.lock$/.test(newBr))throw new Error('Nom de branche invalide.');
+      }
+    }
+    G.busy=true;gBtn();gRun(true);
+    try{
+      if(!nouveau&&!G.empty&&!G.plan){
+        gP(5,'Lecture du dépôt…');
+        G.plan=await gAnalyze(r,br,files,(i,k)=>gP(5+i/k*90,'Analyse des fichiers '+i+'/'+k+'…'));
+        gRun(false);gRefresh();
+        if(G.plan.truncated)$('gErr').textContent='Dépôt très volumineux : la comparaison est partielle et la suppression est désactivée.';
+        return;
+      }
+      if(nouveau){
+        gP(4,'Création du dépôt…');
+        const i=await gh('/user/repos',{method:'POST',body:{name:$('gNm').value.trim(),description:$('gDesc').value.trim(),private:gVis()==='priv',auto_init:false}});
+        r=i.full_name;br=i.default_branch;
+        try{localStorage.setItem('apk-git-repo',r)}catch(_){}
+        $('gRepo').value=r;
+        await gPublish(r,br,'',files,msg,null,true).then(res=>fin(res,r));
+        choisir('gmode','exist');G.reposTok='';gLoadRepos();gInfo();
+      }else{
+        const res=await gPublish(r,br,newBr,files,msg,G.empty?null:G.plan,G.empty);
+        fin(res,r);G.plan=null;gInfo();
+      }
+    }finally{G.busy=false;gBtn()}
+  }catch(err){
+    $('gErr').textContent=err.message;
+    if($('gRun').style.display==='block'){$('gMeter').className='meter state-ko';$('gStat').textContent='La publication s\'est arrêtée.'}
+  }
+};
+function fin(res,r){
+  $('gMeter').className='meter state-ok';gP(100,'Publié sur « '+res.br+(res.newBr?' → '+res.newBr:'')+' » · commit '+res.sha.slice(0,7));
+  const A=$('gAct'),add=(t,c,u)=>{const b=document.createElement('button');b.type='button';b.className='btn '+c;b.textContent=t;b.onclick=()=>ouvrirLien(u);A.appendChild(b)};
+  add('Voir le commit','sun','https://github.com/'+r+'/commit/'+res.sha);
+  if(res.newBr)add('Ouvrir une pull request','ghost','https://github.com/'+r+'/compare/'+encPath(res.br)+'...'+encPath(res.newBr)+'?expand=1');
+  else add('Ouvrir le dépôt','ghost','https://github.com/'+r);
+  if(navigator.vibrate)navigator.vibrate([60,40,60]);
+  toast('Publié');
+}
+gBtn();
 </script>
 </body>
 </html>
