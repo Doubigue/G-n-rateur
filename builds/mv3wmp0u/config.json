@@ -1,0 +1,10 @@
+{
+  "name": "Librairie Awoudy",
+  "pkg": "com.doubigue.test",
+  "versionName": "14.1.1",
+  "versionCode": 1,
+  "orientation": "auto",
+  "color": "#ffffff",
+  "fullscreen": false,
+  "icon": true
+}
