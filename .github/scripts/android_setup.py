@@ -3,6 +3,75 @@
 Usage (à la racine du projet) : android_setup.py <capacitor|flutter> <config.json>"""
 import glob, json, os, re, sys
 
+if sys.argv[1] == 'fetch':
+    # Prépare builds/<id>/app.zip (et icon.png) depuis un lien, une application existante ou un site web.
+    import subprocess, urllib.request, zipfile
+    cfgp, d = sys.argv[2], sys.argv[3]
+    flutter = len(sys.argv) > 4 and sys.argv[4] == 'flutter'
+    cfg = json.load(open(cfgp, encoding='utf-8'))
+    dest, icon = os.path.join(d, 'app.zip'), os.path.join(d, 'icon.png')
+    url, frm, kind = cfg.get('sourceUrl', ''), cfg.get('fromRelease', ''), cfg.get('sourceKind', '')
+
+    def telecharger(u, out):
+        req = urllib.request.Request(u, headers={'User-Agent': 'apk-studio'})
+        with urllib.request.urlopen(req, timeout=120) as r, open(out, 'wb') as f:
+            n = 0
+            while True:
+                b = r.read(1 << 16)
+                if not b:
+                    break
+                n += len(b)
+                if n > 200 * 1048576:
+                    sys.exit('Fichier trop volumineux (200 Mo max).')
+                f.write(b)
+
+    if not os.path.exists(dest):
+        if url:
+            if not url.startswith(('https://', 'http://')):
+                sys.exit('Lien invalide.')
+            if kind == 'site':
+                if flutter:
+                    sys.exit("Un lien de site web n'est compatible qu'avec le mode Site web.")
+                with zipfile.ZipFile(dest, 'w') as z:
+                    z.writestr('index.html', '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Chargement</title><body style="font-family:sans-serif;text-align:center;padding:3rem">Chargement…</body>')
+            else:
+                m = re.match(r'https?://github\.com/([^/]+)/([^/#?]+?)(?:\.git)?(?:/tree/([^#?]+))?/?(?:[#?].*)?$', url)
+                if re.search(r'\.zip($|\?)', url, re.I):
+                    telecharger(url, dest)
+                elif m:
+                    o, r, ref = m.groups()
+                    if not ref:
+                        try:
+                            hdr = {'User-Agent': 'apk-studio'}
+                            if os.environ.get('GH_TOKEN'):
+                                hdr['Authorization'] = 'Bearer ' + os.environ['GH_TOKEN']
+                            api = urllib.request.Request('https://api.github.com/repos/%s/%s' % (o, r), headers=hdr)
+                            ref = json.load(urllib.request.urlopen(api, timeout=60))['default_branch']
+                        except Exception:
+                            ref = ''
+                    essais = [ref] if ref else ['main', 'master']
+                    for k, br in enumerate(essais):
+                        try:
+                            telecharger('https://codeload.github.com/%s/%s/zip/%s' % (o, r, br), dest)
+                            break
+                        except Exception as e:
+                            if k == len(essais) - 1:
+                                sys.exit('Téléchargement impossible (dépôt public ?) : %s' % e)
+                else:
+                    sys.exit('Lien non pris en charge : utilise un ZIP, un dépôt GitHub public ou un site web.')
+        elif frm:
+            subprocess.run(['gh', 'release', 'download', frm, '-p', 'source.zip', '-O', dest], check=True)
+        else:
+            sys.exit('Aucune source : ni ZIP, ni lien.')
+    src_icon = cfg.get('iconFrom') or frm
+    if cfg.get('icon') and not os.path.exists(icon) and src_icon:
+        subprocess.run(['gh', 'release', 'download', src_icon, '-p', 'icon.png', '-O', icon])
+    if cfg.get('icon') and not os.path.exists(icon):
+        cfg['icon'] = False
+        json.dump(cfg, open(cfgp, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
+    print('Source prête :', dest, '| icône :', os.path.exists(icon))
+    sys.exit(0)
+
 kind, cfgpath = sys.argv[1], sys.argv[2]
 cfg = json.load(open(cfgpath, encoding='utf-8'))
 groups = cfg.get('permissions') or []
