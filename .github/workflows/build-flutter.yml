@@ -1,0 +1,124 @@
+name: Build Flutter APK
+
+on:
+  push:
+    paths:
+      - 'builds/*/flutter.json'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Détecter la demande
+        run: |
+          CFG=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E '^builds/[^/]+/flutter\.json$' | head -n1)
+          test -n "$CFG"
+          echo "DIR=$(dirname "$CFG")" >> "$GITHUB_ENV"
+          echo "ID=$(basename "$(dirname "$CFG")")" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Installer Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Installer ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
+
+      - name: Préparer le projet Flutter
+        run: |
+          set -e
+          CFG="$GITHUB_WORKSPACE/$DIR/flutter.json"
+          export NAME=$(jq -r .name "$CFG") PKG=$(jq -r .pkg "$CFG") ORI=$(jq -r .orientation "$CFG") FULL=$(jq -r .fullscreen "$CFG")
+          VN=$(jq -r .versionName "$CFG"); VC=$(jq -r .versionCode "$CFG")
+          [ "$ORI" = "auto" ] && ORI=unspecified
+
+          SRC=work/src; mkdir -p "$SRC"
+          unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d "$SRC"
+          first(){ find "$SRC" -path '*__MACOSX*' -prune -o -name "$1" -print | awk -F/ '{print NF" "$0}' | sort -n | head -n1 | cut -d' ' -f2-; }
+          PS=$(first pubspec.yaml)
+
+          flutter create --platforms android --project-name apk_app work/app
+          rm -rf work/app/test
+          if [ -n "$PS" ]; then
+            rsync -a --exclude /android --exclude /ios --exclude /web --exclude /linux --exclude /macos --exclude /windows --exclude /build --exclude /.dart_tool --exclude /test "$(dirname "$PS")"/ work/app/
+          else
+            MD=$(first main.dart)
+            test -n "$MD" || { echo "Aucun pubspec.yaml ni main.dart dans le ZIP"; exit 1; }
+            rm -rf work/app/lib && mkdir work/app/lib
+            cp -r "$(dirname "$MD")"/. work/app/lib/
+          fi
+
+          cd work/app
+          if grep -q '^version:' pubspec.yaml; then
+            sed -i -E "s/^version:.*/version: $VN+$VC/" pubspec.yaml
+          else
+            echo "version: $VN+$VC" >> pubspec.yaml
+          fi
+
+          python3 - <<'PY'
+          import os,re,glob,html
+          pkg=os.environ['PKG'];name=html.escape(os.environ['NAME'],quote=True)
+          ori=os.environ['ORI'];full=os.environ['FULL']=='true'
+          m='android/app/src/main/AndroidManifest.xml'
+          s=open(m).read()
+          s=re.sub(r'android:label="[^"]*"',lambda _:'android:label="%s"'%name,s,count=1)
+          s=s.replace('<activity','<activity android:screenOrientation="%s"'%ori,1)
+          open(m,'w').write(s)
+          for f in glob.glob('android/app/build.gradle*'):
+              t=open(f).read()
+              t=re.sub(r'applicationId(\s*=?\s*)"[^"]*"',lambda x:'applicationId%s"%s"'%(x.group(1),pkg),t)
+              open(f,'w').write(t)
+          if full:
+              for f in glob.glob('android/app/src/main/res/values*/styles.xml'):
+                  t=open(f).read()
+                  t=re.sub(r'(<style name="(?:Launch|Normal)Theme"[^>]*>)',r'\1<item name="android:windowFullscreen">true</item>',t)
+                  open(f,'w').write(t)
+          PY
+
+          if [ "$(jq -r .icon "$CFG")" = "true" ]; then
+            IM=$(command -v magick || command -v convert)
+            for p in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
+              d=${p%%:*}; s=${p##*:}
+              "$IM" "$GITHUB_WORKSPACE/$DIR/icon.png" -resize ${s}x${s} "android/app/src/main/res/mipmap-$d/ic_launcher.png"
+            done
+          fi
+
+      - name: Compiler l'APK
+        working-directory: work/app
+        run: |
+          flutter pub get
+          flutter build apk --release
+
+      - name: Publier l'APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NAME=$(jq -r .name "$DIR/flutter.json"); VN=$(jq -r .versionName "$DIR/flutter.json")
+          SLUG=$(echo "$NAME" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cs 'A-Za-z0-9' '-' | sed 's/^-//;s/-$//')
+          [ -n "$SLUG" ] || SLUG=app
+          cp work/app/build/app/outputs/flutter-apk/app-release.apk "$SLUG-$VN.apk"
+          gh release create "apk-$ID" "$SLUG-$VN.apk" --title "$NAME $VN" --notes "APK Flutter généré pour $NAME (version $VN)."
+
+      - name: Nettoyer la demande
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git rm -rq "$DIR"
+          git commit -qm "Nettoyage $ID [skip ci]"
+          git pull --rebase -q || true
+          git push -q || true
+          
