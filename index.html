@@ -4,186 +4,159 @@
 <meta charset="utf-8">
 <title>APK Studio</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#2338F0" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#4A5BFF" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#080a18">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
-/* ---------- Jetons : papier bleuté, encre marine, cobalt, jaune surligneur ---------- */
-:root{
-  --paper:#E9EDF7;--card:#fff;--field:#F5F7FC;--soft:#D9DFF0;
-  --ink:#0F1B4C;--mut:#56628F;--line:#0F1B4C;--edge:#0F1B4C;
-  --pri:#2338F0;--onpri:#fff;--sun:#FFD23F;--onsun:#0F1B4C;
-  --ok:#0B8A5F;--err:#C8223E;
-  box-sizing:border-box;color-scheme:light dark;
-}
-@media (prefers-color-scheme:dark){:root{
-  --paper:#0A1030;--card:#121A47;--field:#0D1439;--soft:#232D69;
-  --ink:#EEF1FF;--mut:#9CA7D8;--line:#4A57A6;--edge:#03061A;
-  --pri:#4A5BFF;--ok:#3DDC9B;--err:#FF7088;
-}}
+:root{--bg:#080a18;--ink:#eef0ff;--mut:#8f95b8;--line:rgba(255,255,255,.09);--glass:rgba(255,255,255,.05);--a:#8b9bff;--b:#5eead4;--err:#ff7a8a;--g:linear-gradient(135deg,#8b9bff,#5eead4);box-sizing:border-box;color-scheme:dark}
 *{box-sizing:inherit;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.5 Figtree,system-ui,sans-serif}
-body{min-height:100vh;padding:0 0 calc(env(safe-area-inset-bottom,0px) + 104px);overflow-x:hidden}
-h1,h2,h3,.pct,.btn,.app b,.preview b{font-family:'Bricolage Grotesque',Figtree,system-ui,sans-serif}
-main{max-width:560px;margin:0 auto;padding:0 16px}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif}
+body{min-height:100vh;padding:calc(env(safe-area-inset-top,0px) + 22px) 16px calc(env(safe-area-inset-bottom,0px) + 48px);overflow-x:hidden}
+.aurora{position:fixed;inset:0;z-index:-1;overflow:hidden}
+.aurora i{position:absolute;width:70vmax;height:70vmax;border-radius:50%;filter:blur(90px);opacity:.28;animation:drift 24s ease-in-out infinite alternate}
+.aurora i:nth-child(1){background:#5b6bff;top:-30vmax;left:-20vmax}
+.aurora i:nth-child(2){background:#18c7b0;bottom:-35vmax;right:-25vmax;animation-delay:-9s}
+@keyframes drift{to{transform:translate(12vmax,8vmax) scale(1.15)}}
+main{max-width:560px;margin:0 auto}
+header{display:flex;gap:14px;align-items:center;margin-bottom:22px}
+.logo{width:48px;height:48px;border-radius:14px;background:var(--g);display:grid;place-items:center;box-shadow:0 8px 28px rgba(139,155,255,.35)}
+h1,h2,.pct{font-family:Sora,Inter,sans-serif}
+h1{font-size:26px;margin:0;letter-spacing:-.01em}
+header p{margin:2px 0 0;color:var(--mut);font-size:14px}
 
-/* ---------- En-tête ---------- */
-.top{background:var(--pri);color:var(--onpri);border-bottom:2px solid var(--edge);border-radius:0 0 28px 28px;padding:calc(env(safe-area-inset-top,0px) + 20px) 16px 26px;margin-bottom:20px}
-.top .in{max-width:560px;margin:0 auto;display:flex;gap:14px;align-items:center}
-.mark{width:50px;height:50px;border-radius:15px;background:var(--sun);border:2px solid var(--edge);box-shadow:0 4px 0 var(--edge);display:grid;place-items:center;flex:none}
-h1{font-size:29px;font-weight:800;margin:0;line-height:1.05;letter-spacing:-.02em}
-.top p{margin:4px 0 0;font-size:14px;opacity:.88}
-
-/* ---------- Surfaces ---------- */
-.panel{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:18px;margin-bottom:16px}
-h2{font-size:19px;font-weight:800;margin:0 0 2px;display:flex;align-items:center;gap:10px;letter-spacing:-.01em}
-h2 span{width:28px;height:28px;border-radius:8px;background:var(--sun);color:var(--onsun);border:2px solid var(--edge);font:800 14px 'Bricolage Grotesque',sans-serif;display:grid;place-items:center;flex:none}
-.pgh{margin:0 0 16px}
-.pgh h2{font-size:24px;margin-bottom:4px}
-.pgh p{margin:0;color:var(--mut);font-size:14px}
-label{display:block;font-size:13.5px;font-weight:600;margin:14px 0 6px}
-input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--field);border:2px solid var(--line);border-radius:12px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 3px var(--sun)}
-input::placeholder{color:var(--mut);opacity:.7}
-input[type=color]{padding:3px;height:48px}
-input[type=file]:not(.hid){padding:9px}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-small.h{display:block;color:var(--mut);font-size:12.5px;margin-top:7px;line-height:1.4}
-.hid{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
-
-/* Interrupteur : piste jaune quand activé */
-.sw{display:flex;align-items:center;gap:12px;margin:15px 0 0;cursor:pointer;font-size:15px;font-weight:500}
-.sw input{position:absolute;opacity:0;width:0}
-.sw i{width:48px;height:28px;border-radius:99px;background:var(--soft);border:2px solid var(--line);position:relative;transition:background .2s;flex:none}
-.sw i::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--card);border:2px solid var(--line);transition:transform .2s,background .2s}
-.sw input:checked+i{background:var(--sun)}
-.sw input:checked+i::after{transform:translateX(20px);background:var(--onsun);border-color:var(--onsun)}
-.sw input:focus-visible+i{outline:3px solid var(--pri);outline-offset:2px}
-
-/* Sélecteur segmenté */
-.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;padding:3px;margin-top:12px;background:var(--card);border:2px solid var(--line);border-radius:14px}
-.seg label{margin:0;font-size:14px;cursor:pointer}
-.seg input{position:absolute;opacity:0;width:0}
-.seg span{display:block;text-align:center;padding:9px 6px;border-radius:10px;font-weight:600;color:var(--mut);transition:background .15s,color .15s}
-.seg input:checked+span{background:var(--ink);color:var(--paper)}
-.seg input:focus-visible+span{outline:3px solid var(--pri);outline-offset:2px}
-
-/* Boutons : touches épaisses qui s'enfoncent */
-.btn{display:block;width:100%;text-align:center;text-decoration:none;font-weight:700;font-size:17px;padding:15px;border:2px solid var(--edge);border-radius:14px;background:var(--pri);color:var(--onpri);cursor:pointer;box-shadow:0 4px 0 var(--edge);transition:transform .08s,box-shadow .08s}
-.btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 var(--edge)}
-.btn:disabled{opacity:.5;cursor:default}
-.btn.sun{background:var(--sun);color:var(--onsun)}
-.btn.ghost{background:var(--card);color:var(--ink);margin-top:14px}
-.btn.sm{display:inline-block;width:auto;font-size:14px;padding:9px 16px;border-radius:12px;box-shadow:0 3px 0 var(--edge)}
-button:focus-visible,a:focus-visible,summary:focus-visible,label.btn:focus-within{outline:3px solid var(--pri);outline-offset:3px}
-.btn+.btn{margin-top:14px}
-.err{color:var(--err);font-size:14px;font-weight:600;margin:12px 0 0;text-align:center}
-.mini2{background:var(--card);border:2px solid var(--line);color:var(--ink);border-radius:10px;padding:7px 13px;font:600 13px Figtree,sans-serif;cursor:pointer}
-.mini2:active{background:var(--soft)}
-
-/* ---------- Aperçu de l'application ---------- */
-.preview{display:flex;gap:16px;align-items:center;padding:16px;border:2px solid var(--line);border-radius:20px;background:var(--card);margin-bottom:16px}
-.tile{width:76px;height:76px;border-radius:22px;flex:none;display:grid;place-items:center;overflow:hidden;font:800 32px 'Bricolage Grotesque',sans-serif;color:#fff;border:2px solid var(--edge);box-shadow:0 4px 0 var(--edge);transition:background .25s}
+.preview{display:flex;gap:16px;align-items:center;padding:18px;border-radius:22px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(14px);margin-bottom:16px}
+.tile{width:72px;height:72px;border-radius:20px;flex:none;display:grid;place-items:center;overflow:hidden;font:700 30px Sora,sans-serif;color:#fff;box-shadow:0 10px 30px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.15);transition:background .3s}
 .tile img{width:100%;height:100%;object-fit:cover;display:none}
-.preview b{display:block;font-weight:800;font-size:20px;line-height:1.15}
-.preview small{display:block;color:var(--mut);font-size:13px;margin-top:2px}
+.preview b{display:block;font:600 18px Sora,sans-serif}
+.preview small{display:block;color:var(--mut);font-size:13px}
 
-/* ---------- Dépôt de fichiers ---------- */
-.drop{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:22px 14px;margin-top:14px;border:2px dashed var(--pri);border-radius:16px;background:var(--field);color:var(--mut);font-size:14px;cursor:pointer;transition:background .15s}
-.drop:hover,.drop.on{background:var(--sun);border-style:solid;border-color:var(--edge)}
-.drop.on b,.drop.on span,.drop:hover b,.drop:hover span{color:var(--onsun)}
-.drop b{color:var(--ink);font-weight:700;word-break:break-all;font-size:15px}
-.drop .ic{width:46px;height:46px;border-radius:50%;background:var(--sun);border:2px solid var(--edge);display:grid;place-items:center;margin-bottom:4px}
+.panel{background:var(--glass);border:1px solid var(--line);border-radius:22px;padding:20px;margin-bottom:16px;backdrop-filter:blur(14px)}
+h2{font-size:16px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+h2 span{width:26px;height:26px;border-radius:50%;background:var(--g);color:#08101c;font-size:13px;display:grid;place-items:center;font-weight:700}
+label{display:block;font-size:13px;color:var(--mut);margin:14px 0 6px}
+input,select{width:100%;font:inherit;color:var(--ink);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:border-color .2s,background .2s}
+input:focus,select:focus{outline:none;border-color:var(--a);background:rgba(139,155,255,.1)}
+select option{background:#14172b}
+input[type=color]{padding:3px;height:48px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.sw{display:flex;align-items:center;gap:12px;margin-top:16px;cursor:pointer;color:var(--ink);font-size:15px}
+.sw input{position:absolute;opacity:0;width:0}
+.sw i{width:44px;height:26px;border-radius:99px;background:rgba(255,255,255,.14);position:relative;transition:.25s;flex:none}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.25s}
+.sw input:checked+i{background:var(--g)}
+.sw input:checked+i::after{transform:translateX(18px)}
+.sw input:focus-visible+i{outline:2px solid var(--a);outline-offset:2px}
+.drop{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:26px 14px;margin-top:14px;border:1.5px dashed rgba(139,155,255,.5);border-radius:16px;cursor:pointer;color:var(--mut);transition:.2s;font-size:14px}
+.drop:hover,.drop.on{background:rgba(139,155,255,.1);border-color:var(--b)}
+.drop b{color:var(--ink);font-weight:600;word-break:break-all}
 .drop input{display:none}
-.picks{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:center}
-details.opts{margin-top:16px;border-top:2px solid var(--soft);padding-top:4px}
-summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:14px;padding:10px 0}
+.mini{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mut);cursor:pointer}
+summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
 summary::-webkit-details-marker{display:none}
-summary::after{content:"+";font:800 20px 'Bricolage Grotesque',sans-serif;line-height:1}
-details[open]>summary::after{content:"−"}
+summary em{font-style:normal;color:var(--b);font-size:13px}
+small.h{display:block;color:var(--mut);font-size:12px;margin-top:6px}
 
-/* ---------- Progression ---------- */
+.btn{display:block;width:100%;text-align:center;text-decoration:none;font:600 17px Sora,sans-serif;padding:16px;border:0;border-radius:16px;background:var(--g);color:#06111c;cursor:pointer;box-shadow:0 12px 34px rgba(94,234,212,.28);transition:transform .15s,box-shadow .2s}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:var(--glass);color:var(--ink);box-shadow:none;border:1px solid var(--line);margin-top:12px}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--a);outline-offset:3px}
+.err{color:var(--err);font-size:14px;margin-top:12px;text-align:center}
+
 #vProg{display:none;text-align:center}
-.meter{padding:20px 18px 22px;background:var(--card);border:2px solid var(--line);border-radius:20px}
-.big{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
-.pct{font-size:64px;font-weight:800;line-height:1;letter-spacing:-.03em}
-.pct sup{font-size:22px;color:var(--mut);margin-left:3px;vertical-align:baseline;position:relative;top:-.9em}
-#clock{color:var(--mut);font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
-.track{height:24px;border:2px solid var(--line);border-radius:99px;background:var(--field);overflow:hidden}
-.track i{display:block;height:100%;width:0;min-width:0;background:var(--pri);border-right:2px solid var(--edge);border-radius:0 99px 99px 0;transition:width .25s}
-.track i[style*="width: 0%"]{border-right:0}
-.state-ok .track i{background:var(--ok)}
-.state-ko .track i{background:var(--err)}
-#phases{list-style:none;margin:16px 0 0;padding:16px 18px;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:20px}
-#phases li{display:flex;align-items:center;gap:14px;padding:9px 0;color:var(--mut);font-size:15px;position:relative;transition:color .2s}
-#phases li+li::before{content:"";position:absolute;left:12px;top:-11px;height:20px;width:2px;background:var(--soft)}
-.dot{width:26px;height:26px;border-radius:9px;border:2px solid var(--line);flex:none;display:grid;place-items:center;background:var(--field)}
-#phases li.act{color:var(--ink);font-weight:600}
-#phases li.act .dot{border-radius:50%;border-color:var(--soft);border-top-color:var(--pri);border-right-color:var(--pri);animation:spin .9s linear infinite}
+.ringbox{position:relative;width:230px;height:230px;margin:10px auto 6px}
+.ringbox svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ringbox circle{fill:none;stroke-width:12;stroke-linecap:round}
+.trk{stroke:rgba(255,255,255,.08)}
+#arc{stroke:url(#gr);filter:drop-shadow(0 0 10px rgba(139,155,255,.55))}
+.ringc{position:absolute;inset:0;display:grid;place-content:center}
+.pct{font-size:52px;font-weight:700;line-height:1}
+.pct sup{font-size:20px;color:var(--mut);margin-left:2px}
+#clock{color:var(--mut);font-size:13px;margin-top:6px;font-variant-numeric:tabular-nums}
+.state-ok #arc{stroke:var(--b);filter:drop-shadow(0 0 14px rgba(94,234,212,.7))}
+.state-ko #arc{stroke:var(--err);filter:drop-shadow(0 0 14px rgba(255,122,138,.6))}
+#phases{list-style:none;margin:22px 0 0;padding:18px;text-align:left;background:var(--glass);border:1px solid var(--line);border-radius:22px}
+#phases li{display:flex;align-items:center;gap:14px;padding:9px 0;color:var(--mut);font-size:15px;position:relative;transition:color .3s}
+#phases li+li::before{content:"";position:absolute;left:11px;top:-11px;height:20px;width:2px;background:var(--line)}
+.dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--line);flex:none;display:grid;place-items:center;transition:.3s}
+#phases li.act{color:var(--ink)}
+#phases li.act .dot{border-color:transparent;border-top-color:var(--b);border-right-color:var(--a);animation:spin .9s linear infinite}
 #phases li.ok{color:var(--ink)}
-#phases li.ok .dot{background:var(--pri);border-color:var(--edge)}
-#phases li.ok .dot::after{content:"";width:6px;height:11px;border:solid var(--onpri);border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
-#phases li.ko .dot{border-color:var(--err);background:var(--err)}
+#phases li.ok .dot{background:var(--g);border-color:transparent}
+#phases li.ok .dot::after{content:"";width:6px;height:11px;border:solid #06111c;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) translate(-1px,-1px)}
+#phases li.ko .dot{border-color:var(--err)}
 @keyframes spin{to{transform:rotate(360deg)}}
-#stat,#gStat{margin:16px 0;color:var(--mut);font-size:14px;min-height:21px;font-weight:500}
+#stat{margin:16px 0;color:var(--mut);font-size:14px;min-height:21px}
 #act{margin-top:6px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-
-/* ---------- Navigation basse ---------- */
-.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;padding:6px 8px calc(env(safe-area-inset-bottom,0px) + 6px);background:var(--card);border-top:2px solid var(--line);z-index:5}
-.tabs button{flex:1;background:none;border:0;color:var(--mut);font:600 11.5px Figtree,sans-serif;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px;cursor:pointer}
-.tabs .ic{width:52px;height:30px;border-radius:99px;display:grid;place-items:center;transition:background .15s}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin-top:12px;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:14px}
+.seg label{margin:0;color:var(--mut);font-size:14px;cursor:pointer}
+.seg input{position:absolute;opacity:0;width:0}
+.seg span{display:block;text-align:center;padding:10px;border-radius:10px;font-weight:600;transition:.2s}
+.seg input:checked+span{background:var(--g);color:#06111c}
+.seg input:focus-visible+span{outline:2px solid var(--a);outline-offset:2px}
+body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;padding:6px 8px calc(env(safe-area-inset-bottom,0px) + 6px);background:rgba(8,10,24,.88);backdrop-filter:blur(16px);border-top:1px solid var(--line);z-index:5}
+.tabs button{flex:1;background:none;border:0;color:var(--mut);font:500 12px Inter,sans-serif;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;cursor:pointer;transition:color .2s}
+.tabs button.on{color:var(--b)}
 .tabs svg{width:23px;height:23px}
-.tabs button.on{color:var(--ink)}
-.tabs button.on .ic{background:var(--sun);color:var(--onsun);box-shadow:inset 0 0 0 2px var(--edge)}
-
-/* ---------- Mes applications ---------- */
-.app{display:flex;gap:14px;align-items:center;padding:14px;margin-bottom:12px;background:var(--card);border:2px solid var(--line);border-radius:18px}
-.app .ico{width:54px;height:54px;border-radius:16px;background:var(--sun);color:var(--onsun);border:2px solid var(--edge);display:grid;place-items:center;font:800 23px 'Bricolage Grotesque',sans-serif;flex:none}
+.apps-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.apps-head h2{margin:0;font-size:20px}
+.mini2{background:var(--glass);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:8px 14px;font:500 13px Inter,sans-serif;cursor:pointer}
+.app{display:flex;gap:14px;align-items:center;padding:14px;margin-bottom:12px;background:var(--glass);border:1px solid var(--line);border-radius:18px;backdrop-filter:blur(14px)}
+.app .ico{width:52px;height:52px;border-radius:15px;background:var(--g);color:#06111c;display:grid;place-items:center;font:700 22px Sora,sans-serif;flex:none}
 .app .inf{flex:1;min-width:0}
-.app .inf b{display:block;font-weight:800;font-size:16.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.app .inf small{color:var(--mut);font-size:12.5px;display:block}
+.app .inf b{display:block;font:600 16px Sora,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app .inf small{color:var(--mut);font-size:12px;display:block}
 .app .acts{display:flex;flex-direction:column;gap:6px}
-.app .dl{background:var(--pri);color:var(--onpri);border:2px solid var(--edge);border-radius:10px;padding:8px 12px;font:700 13px 'Bricolage Grotesque',sans-serif;cursor:pointer;box-shadow:0 2px 0 var(--edge)}
-.app .ed,.app .rm{background:var(--card);border:2px solid var(--line);color:var(--ink);border-radius:10px;padding:6px;font:600 12px Figtree,sans-serif;cursor:pointer}
-.app .rm{color:var(--mut)}
+.app .dl{background:var(--g);color:#06111c;border:0;border-radius:10px;padding:9px 12px;font:600 13px Sora,sans-serif;cursor:pointer}
+.app .rm{background:none;border:1px solid var(--line);color:var(--mut);border-radius:10px;padding:6px;font:500 12px Inter,sans-serif;cursor:pointer}
 .vide{color:var(--mut);text-align:center;padding:32px 12px}
-.apps-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-.apps-head h2{margin:0;font-size:24px}
-#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 90px);transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:12px;opacity:0;transition:.25s;z-index:9;pointer-events:none;font-size:14px;font-weight:600;max-width:90vw;text-align:center}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);transform:translateX(-50%) translateY(20px);background:#1d2140;color:#eef0ff;padding:10px 18px;border-radius:99px;border:1px solid var(--line);opacity:0;transition:.3s;z-index:9;pointer-events:none;font-size:14px}
 #toast.on{opacity:1;transform:translateX(-50%)}
 .cstat{color:var(--mut);font-size:14px;margin:4px 0 0}
-.edbar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;margin-bottom:16px;border-radius:14px;background:var(--sun);color:var(--onsun);border:2px solid var(--edge);font-size:14px;font-weight:500;line-height:1.4}
-.edbar .mini2{background:#fff;color:#0F1B4C;border-color:#0F1B4C}
+.edbar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;margin-bottom:16px;border-radius:16px;background:rgba(94,234,212,.12);border:1px solid rgba(94,234,212,.35);font-size:14px;line-height:1.4}
+.app .ed{background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:7px;font:500 12px Inter,sans-serif;cursor:pointer}
 
 /* ---------- Dépôts GitHub ---------- */
+.hid{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+.pgh{margin:0 0 16px}.pgh h2{font-size:22px;margin-bottom:4px}.pgh p{margin:0;color:var(--mut);font-size:14px}
+.btn.sm{display:inline-block;width:auto;font-size:14px;padding:11px 18px;border-radius:12px;box-shadow:none}
+.picks{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.picks .btn.sm{margin:0}
+details.opts{margin-top:16px;border-top:1px solid var(--line);padding-top:4px}
+details.opts summary{font-weight:500;font-size:14px;padding:10px 0}
+details.opts summary::after{content:"+";color:var(--b);font:600 18px Sora,sans-serif}
+details.opts[open] summary::after{content:"−"}
 .sums{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 4px}
-.tag{display:inline-block;font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px;border:2px solid var(--line);white-space:nowrap;flex:none}
-.tag.new{background:var(--sun);color:var(--onsun);border-color:var(--edge)}
-.tag.mod{background:var(--pri);color:var(--onpri);border-color:var(--edge)}
-.tag.del{background:var(--err);color:#fff;border-color:var(--edge)}
-.tag.same{background:var(--field);color:var(--mut);border-color:var(--soft)}
-.files{margin:10px 0 0;padding:0;list-style:none;border:2px solid var(--line);border-radius:14px;max-height:300px;overflow:auto;background:var(--field)}
-.files li{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:7px 12px;font-size:13px;border-bottom:1px solid var(--soft)}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;border:1px solid var(--line);background:var(--glass);color:var(--mut);white-space:nowrap;flex:none}
+.tag.new{background:rgba(94,234,212,.14);color:var(--b);border-color:rgba(94,234,212,.4)}
+.tag.mod{background:rgba(139,155,255,.16);color:var(--a);border-color:rgba(139,155,255,.45)}
+.tag.del{background:rgba(255,122,138,.14);color:var(--err);border-color:rgba(255,122,138,.4)}
+.files{margin:10px 0 0;padding:0;list-style:none;border:1px solid var(--line);border-radius:14px;max-height:300px;overflow:auto;background:rgba(255,255,255,.03)}
+.files li{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:8px 12px;font-size:13px;border-bottom:1px solid var(--line)}
 .files li:last-child{border-bottom:0}
 .files .p{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .files .p em{font-style:normal;color:var(--mut)}
 .files .more{justify-content:center;color:var(--mut)}
-#gRun{display:none;margin-top:18px}
-.gok{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.track{height:10px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}
+.track i{display:block;height:100%;width:0;background:var(--g);border-radius:99px;transition:width .25s}
+.state-ok .track i{background:var(--b)}
+.state-ko .track i{background:var(--err)}
+#gRun{display:none;margin-top:18px;text-align:center}
+#gStat{margin:14px 0;color:var(--mut);font-size:14px;min-height:21px}
+.gok{display:flex;gap:10px;flex-wrap:wrap}
 .gok .btn{flex:1;min-width:150px;margin:0}
-.warn{margin:12px 0 0;padding:10px 12px;border-radius:12px;background:var(--field);border:2px solid var(--line);font-size:13px;color:var(--ink)}
 </style>
 </head>
 <body>
-<header class="top"><div class="in">
-  <div class="mark"><svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="#0F1B4C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg></div>
-  <div><h1>APK Studio</h1><p>Applications Android et dépôts GitHub</p></div>
-</div></header>
+<div class="aurora" aria-hidden="true"><i></i><i></i></div>
 <main>
+<header>
+  <div class="logo"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#06111c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4.5-4.5M12 15l4.5-4.5M4 20h16"/></svg></div>
+  <div><h1>APK Studio</h1><p>Applications Android et dépôts GitHub</p></div>
+</header>
 
 <div id="tCreate">
 <section id="vForm">
@@ -215,7 +188,7 @@ details[open]>summary::after{content:"−"}
       <h2><span>2</span>Fichiers</h2>
       <div class="seg" role="radiogroup" aria-label="Type de projet"><label><input type="radio" name="mode" value="web" checked><span>Site web</span></label><label><input type="radio" name="mode" value="flutter"><span>Flutter</span></label></div>
       <div id="zipBox"><div class="seg" role="radiogroup" aria-label="Source du projet" style="margin-bottom:6px"><label><input type="radio" name="src" value="zip" checked><span>ZIP</span></label><label><input type="radio" name="src" value="link"><span>Lien</span></label></div>
-      <label class="drop" id="dz" for="zip"><span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F1B4C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg></span><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,application/zip"></label></div>
+      <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8b9bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,application/zip"></label></div>
       <div id="lnkBox" style="display:none"><label for="url">Lien source</label><input id="url" type="url" inputmode="url" autocapitalize="none" autocorrect="off" placeholder="https://…"><small class="h" id="lnkHint"></small></div>
       <label for="icon">Icône PNG (optionnelle, carrée)</label>
       <input id="icon" type="file" accept="image/png">
@@ -237,9 +210,10 @@ details[open]>summary::after{content:"−"}
 </section>
 
 <section id="vProg" aria-live="polite">
-  <div class="meter" id="rb">
-    <div class="big"><div class="pct"><span id="pv">0</span><sup>%</sup></div><div id="clock">00:00</div></div>
-    <div class="track"><i id="bar"></i></div>
+  <div class="ringbox" id="rb">
+    <svg viewBox="0 0 200 200"><defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b9bff"/><stop offset="1" stop-color="#5eead4"/></linearGradient></defs>
+    <circle class="trk" cx="100" cy="100" r="90"/><circle id="arc" cx="100" cy="100" r="90" stroke-dasharray="565.49" stroke-dashoffset="565.49"/></svg>
+    <div class="ringc"><div class="pct"><span id="pv">0</span><sup>%</sup></div><div id="clock">00:00</div></div>
   </div>
   <ul id="phases"></ul>
   <p id="stat"></p>
@@ -284,11 +258,11 @@ details[open]>summary::after{content:"−"}
   <div class="panel">
     <h2><span>2</span>Fichiers</h2>
     <div class="drop" id="gDz">
-      <span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0F1B4C" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg></span>
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8b9bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
       <b id="gSrc">Aucun fichier choisi</b>
       <span>Glisse un dossier ou un ZIP ici, ou utilise les boutons.</span>
       <div class="picks">
-        <label class="btn sm" for="gDir">Choisir un dossier</label>
+        <label class="btn sm ghost" for="gDir">Choisir un dossier</label>
         <label class="btn sm sun" for="gZip">Choisir un ZIP</label>
       </div>
     </div>
@@ -328,7 +302,7 @@ details[open]>summary::after{content:"−"}
   <div class="panel">
     <h2>Connexion GitHub</h2>
     <p class="cstat" id="cstat"></p>
-    <label for="repo">Dépôt des compilations</label>
+    <label for="repo">Dépôt</label>
     <input id="repo" value="Doubigue/G-n-rateur" autocapitalize="none" autocorrect="off">
     <label for="token">Jeton d'accès</label>
     <input id="token" type="password" autocomplete="off" placeholder="github_pat_…">
@@ -336,7 +310,7 @@ details[open]>summary::after{content:"−"}
     <input id="gtoken" type="password" autocomplete="off" placeholder="ghp_…">
     <small class="h">Utilisé par l'onglet Dépôts. S'il est vide, le jeton ci-dessus sert aussi pour les dépôts.</small>
     <label class="sw"><input id="rem" type="checkbox" checked><i></i>Mémoriser sur cet appareil</label>
-    <small class="h">Le jeton reste dans ton navigateur et n'est envoyé qu'à api.github.com. Pour publier dans des dépôts, il lui faut le droit « Contents » en écriture (ou la portée « repo »). Pousser un fichier de .github/workflows demande aussi la portée « workflow ».</small>
+    <small class="h">Le jeton reste dans ton navigateur et n'est envoyé qu'à api.github.com. Pour publier dans des dépôts, il lui faut le droit « Contents » en écriture (ou la portée « repo »), et la portée « workflow » pour pousser .github/workflows.</small>
     <button type="button" class="btn" id="saveCx" style="margin-top:18px">Enregistrer</button>
     <button type="button" class="btn ghost" id="clrCx">Effacer le jeton de cet appareil</button>
   </div>
@@ -344,10 +318,10 @@ details[open]>summary::after{content:"−"}
 </main>
 <div id="toast" role="status"></div>
 <nav class="tabs" aria-label="Navigation">
-  <button type="button" data-t="create" class="on"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg></span>Créer</button>
-  <button type="button" data-t="apps"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg></span>Mes applis</button>
-  <button type="button" data-t="git"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="9" r="2"/><path d="M6 7v10M18 11c0 4-6 3-12 6"/></svg></span>Dépôts</button>
-  <button type="button" data-t="set"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg></span>Réglages</button>
+  <button type="button" data-t="create" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Créer</button>
+  <button type="button" data-t="apps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>Mes applis</button>
+  <button type="button" data-t="git"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="9" r="2"/><path d="M6 7v10M18 11c0 4-6 3-12 6"/></svg>Dépôts</button>
+  <button type="button" data-t="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Réglages</button>
 </nav>
 
 <script>
@@ -375,8 +349,7 @@ function prev(){
   $('pName').textContent=n;$('pPkg').textContent=$('pkg').value||'com.doubigue.app';
   $('pVer').textContent='Version '+($('vname').value||'1.0.0')+' ('+($('vcode').value||1)+')';
   $('tLet').textContent=n[0].toUpperCase();
-  const c=$('color').value,v=parseInt(c.slice(1),16),L=.299*(v>>16)+.587*(v>>8&255)+.114*(v&255);
-  $('tile').style.background=c;$('tile').style.color=L>165?'#0F1B4C':'#fff';
+  const c=$('color').value;$('tile').style.background='linear-gradient(135deg,'+c+',#0b0d1c)';
 }
 ['name','pkg','vname','vcode','color'].forEach(i=>$(i).addEventListener('input',prev));prev();
 $('icon').addEventListener('change',e=>{
@@ -409,25 +382,25 @@ async function put(path,content,message){
   if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error('GitHub ('+r.status+') : '+(e.message||'erreur')+(r.status==401||r.status==404?' — vérifie le dépôt et les droits du jeton.':''))}
   return r.json()}
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-const fmt=n=>n<1024?n+' o':n<1048576?(n/1024).toFixed(0)+' Ko':(n/1048576).toFixed(1)+' Mo';
 
-/* ---------- Moteur de progression (APK) ---------- */
+/* ---------- Moteur de progression ---------- */
 const PH=[
  {t:'Envoi des fichiers',w:10,exp:20},
  {t:'Démarrage du serveur',w:15,exp:45,m:['Set up job','Run actions/','Détecter','Installer']},
  {t:'Préparation du projet Android',w:25,exp:90,m:['Préparer']},
  {t:"Compilation de l'APK",w:40,exp:210,m:['Compiler']},
  {t:'Publication',w:10,exp:25,m:['Publier','Nettoyer']}];
+const C=565.49;
 let st,tgt,shown,t0,raf,final;
 function initProg(){
   st=PH.map(()=>0);st[0]=1;tgt=0;shown=0;final=null;t0=Date.now();
   st.start=PH.map(()=>0);st.start[0]=t0;
   $('phases').innerHTML=PH.map(p=>'<li><span class="dot"></span>'+p.t+'</li>').join('');
-  $('rb').className='meter';$('act').innerHTML='';$('stat').textContent='';
+  $('rb').className='ringbox';$('act').innerHTML='';$('stat').textContent='';
   fv.style.display='none';pv.style.display='block';scrollTo(0,0);
   cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
 }
-function setPhase(i){
+function setPhase(i){ // marque les phases < i comme terminées et i comme active
   for(let k=0;k<PH.length;k++){const n=k<i?2:k==i?1:0;if(st[k]!=n){st[k]=n;if(n==1&&!st.start[k])st.start[k]=Date.now()}}
 }
 function upProg(f){tgt=Math.max(tgt,PH[0].w*f)}
@@ -440,7 +413,7 @@ function loop(){
   const now=Date.now();
   if(final==null)tgt=Math.max(tgt,Math.min(99,calc()));else tgt=final;
   shown+=(tgt-shown)*.06;if(Math.abs(tgt-shown)<.05)shown=tgt;
-  $('bar').style.width=shown+'%';
+  $('arc').style.strokeDashoffset=C*(1-shown/100);
   $('pv').textContent=Math.round(shown);
   const s=Math.floor((now-t0)/1000);$('clock').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
   [...$('phases').children].forEach((li,k)=>{li.className=final===0?(st[k]==1?'ko':st[k]==2?'ok':''):st[k]==2?'ok':st[k]==1?'act':''});
@@ -457,14 +430,14 @@ function steps2phase(steps){
 }
 function succeed(asset){edition=null;$('edBar').style.display='none';
   final=100;for(let k=0;k<PH.length;k++)st[k]=2;
-  $('rb').className='meter state-ok';$('stat').textContent='Ton application est prête.';
-  $('act').innerHTML='<a class="btn sun" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a><button class="btn ghost" id="toApps">Mes applications</button><button class="btn ghost" id="again">Nouvelle application</button>';
+  $('rb').className='ringbox state-ok';$('stat').textContent='Ton application est prête.';
+  $('act').innerHTML='<a class="btn" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a><button class="btn ghost" id="toApps">Mes applications</button><button class="btn ghost" id="again">Nouvelle application</button>';
   $('again').onclick=reset;$('toApps').onclick=()=>goTab('apps');cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
   const dl=$('act').querySelector('a');dl.onclick=e=>{e.preventDefault();ouvrirLien(asset.browser_download_url)};
   if(navigator.vibrate)navigator.vibrate([60,40,60]);
 }
 function fail(msg,url){
-  final=0;tgt=shown;$('rb').className='meter state-ko';$('stat').textContent=msg;
+  final=0;tgt=shown;$('rb').className='ringbox state-ko';$('stat').textContent=msg;
   $('act').innerHTML=(url?'<a class="btn ghost" target="_blank" rel="noopener" href="'+url+'">Voir le journal de compilation</a>':'')+'<button class="btn ghost" id="again">Réessayer</button>';
   $('again').onclick=reset;
 }
@@ -664,12 +637,12 @@ $('clrCx').onclick=()=>{
   try{localStorage.removeItem('apk-repo');localStorage.removeItem('apk-token');localStorage.removeItem('apk-git-token')}catch(_){}
   $('token').value='';$('gtoken').value='';$('repo').value='Doubigue/G-n-rateur';cxState();toast('Jeton effacé de cet appareil');
 };
-
 /* =====================================================================
    Dépôts GitHub : dossier ou ZIP  ->  comparaison  ->  commit + push
    (API Git Data : blobs, arbre, commit, référence = un seul commit)
    ===================================================================== */
 const G={raw:[],src:'',stripped:'',plan:null,info:null,empty:false,busy:false,reposTok:'',seq:0};
+const fmt=n=>n<1024?n+' o':n<1048576?(n/1024).toFixed(0)+' Ko':(n/1048576).toFixed(1)+' Mo';
 const tok=()=>$('gtoken').value.trim()||$('token').value.trim();
 $('gtoken').addEventListener('input',()=>{G.reposTok='';G.info=null;G.plan=null});
 const gMode=()=>document.querySelector('input[name=gmode]:checked').value;
