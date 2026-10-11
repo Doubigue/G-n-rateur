@@ -1,0 +1,11 @@
+{
+  "name": "Générateur App",
+  "pkg": "com.doubigue.generateur",
+  "versionName": "10.1.1",
+  "versionCode": 1,
+  "orientation": "auto",
+  "color": "#ffffff",
+  "fullscreen": false,
+  "icon": true,
+  "type": "web"
+}
