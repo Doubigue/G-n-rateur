@@ -1,0 +1,103 @@
+name: Build APK
+
+on:
+  push:
+    paths:
+      - 'builds/*/config.json'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: DÃ©tecter la demande
+        run: |
+          CFG=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E '^builds/[^/]+/config\.json$' | head -n1)
+          test -n "$CFG"
+          echo "DIR=$(dirname "$CFG")" >> "$GITHUB_ENV"
+          echo "ID=$(basename "$(dirname "$CFG")")" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: PrÃ©parer le projet Android
+        run: |
+          set -e
+          CFG="$GITHUB_WORKSPACE/$DIR/config.json"
+          NAME=$(jq -r .name "$CFG");  PKG=$(jq -r .pkg "$CFG")
+          VN=$(jq -r .versionName "$CFG"); VC=$(jq -r .versionCode "$CFG")
+          ORI=$(jq -r .orientation "$CFG"); COLOR=$(jq -r .color "$CFG")
+          FULL=$(jq -r .fullscreen "$CFG")
+          [ "$ORI" = "auto" ] && ORI=unspecified
+
+          mkdir -p work/www
+          unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d work/www
+          if [ ! -f work/www/index.html ]; then
+            SUB=$(find work/www -path '*__MACOSX*' -prune -o -name index.html -print | head -n1)
+            test -n "$SUB" || { echo "index.html introuvable"; exit 1; }
+            mv "$(dirname "$SUB")" work/www2
+            rm -rf work/www && mv work/www2 work/www
+          fi
+
+          cd work
+          npm init -y >/dev/null
+          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+          npx cap init "$NAME" "$PKG" --web-dir www
+          jq --arg c "$COLOR" '.backgroundColor=$c' capacitor.config.json > c.tmp && mv c.tmp capacitor.config.json
+          npx cap add android
+
+          sed -i "s/versionCode 1/versionCode $VC/; s/versionName \"1.0\"/versionName \"$VN\"/" android/app/build.gradle
+          sed -i "s/<activity/<activity android:screenOrientation=\"$ORI\"/" android/app/src/main/AndroidManifest.xml
+          if [ "$FULL" = "true" ]; then
+            sed -i 's|<style name="AppTheme.NoActionBar"[^>]*>|&<item name="android:windowFullscreen">true</item>|' android/app/src/main/res/values/styles.xml
+          fi
+
+          if [ "$(jq -r .icon "$CFG")" = "true" ]; then
+            RES=android/app/src/main/res
+            rm -rf $RES/mipmap-anydpi-v26
+            for p in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
+              d=${p%%:*}; s=${p##*:}
+              for n in ic_launcher ic_launcher_round ic_launcher_foreground; do
+                convert "$GITHUB_WORKSPACE/$DIR/icon.png" -resize ${s}x${s} "$RES/mipmap-$d/$n.png"
+              done
+            done
+          fi
+          npx cap sync android
+
+      - name: Compiler l'APK
+        working-directory: work/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Publier l'APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NAME=$(jq -r .name "$DIR/config.json"); VN=$(jq -r .versionName "$DIR/config.json")
+          SLUG=$(echo "$NAME" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cs 'A-Za-z0-9' '-' | sed 's/^-//;s/-$//')
+          [ -n "$SLUG" ] || SLUG=app
+          cp work/android/app/build/outputs/apk/debug/app-debug.apk "$SLUG-$VN.apk"
+          gh release create "apk-$ID" "$SLUG-$VN.apk" --title "$NAME $VN" --notes "APK gÃ©nÃ©rÃ© pour $NAME (version $VN)."
+
+      - name: Nettoyer la demande
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git rm -rq "$DIR"
+          git commit -qm "Nettoyage $ID [skip ci]"
+          git pull --rebase -q || true
+          git push -q || true
