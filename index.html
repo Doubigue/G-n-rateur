@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Générateur d'APK</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--txt:#1b1f27;--mut:#66707f;--line:#d9dde4;--acc:#1f6feb;--ok:#1a7f37;--err:#cf222e;box-sizing:border-box}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1218;--card:#181c24;--txt:#e8ebf0;--mut:#8b94a3;--line:#2b313c;--acc:#4c8dff;--ok:#3fb950;--err:#ff6b72}}
+*{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;padding:20px 14px 60px}
+main{max-width:640px;margin:0 auto}
+h1{font-size:26px;margin:8px 0 4px}
+.sub{color:var(--mut);margin:0 0 20px}
+fieldset{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 16px}
+legend{font-weight:600;padding:0 6px}
+label{display:block;font-size:14px;color:var(--mut);margin:12px 0 4px}
+input,select{width:100%;font:inherit;color:var(--txt);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px}
+input[type=color]{padding:2px;height:42px}
+input[type=checkbox]{width:auto;margin-right:8px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.chk{display:flex;align-items:center;color:var(--txt);font-size:15px}
+small{color:var(--mut);display:block;margin-top:4px}
+button{font:inherit;font-weight:600;width:100%;padding:13px;border:0;border-radius:10px;background:var(--acc);color:#fff;cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+#log{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;display:none}
+#log p{margin:4px 0;font-size:14px}
+.ok{color:var(--ok)}.err{color:var(--err)}
+#dl{display:inline-block;margin-top:8px;padding:10px 18px;background:var(--ok);color:#fff;border-radius:8px;text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+<main>
+<h1>Générateur d'APK</h1>
+<p class="sub">Envoie un ZIP (index.html + ressources), renseigne l'application, récupère l'APK.</p>
+
+<form id="f">
+<fieldset><legend>Application</legend>
+<label for="name">Nom de l'application</label>
+<input id="name" required maxlength="40" placeholder="Mon jeu">
+<label for="pkg">Identifiant du paquet</label>
+<input id="pkg" required placeholder="com.exemple.monjeu" pattern="[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+">
+<div class="row">
+<div><label for="vname">Version</label><input id="vname" required value="1.0.0" pattern="[0-9A-Za-z.\-]+"></div>
+<div><label for="vcode">Code de version</label><input id="vcode" type="number" min="1" required value="1"></div>
+</div>
+<div class="row">
+<div><label for="orient">Orientation</label>
+<select id="orient"><option value="auto">Automatique</option><option value="portrait">Portrait</option><option value="landscape">Paysage</option></select></div>
+<div><label for="color">Couleur de fond</label><input id="color" type="color" value="#000000"></div>
+</div>
+<label class="chk"><input id="full" type="checkbox">Plein écran (masquer la barre d'état)</label>
+</fieldset>
+
+<fieldset><legend>Fichiers</legend>
+<label for="zip">Archive ZIP du site</label>
+<input id="zip" type="file" accept=".zip" required>
+<small>Doit contenir index.html (à la racine ou dans un seul dossier). 40 Mo max.</small>
+<label for="icon">Icône (PNG, optionnelle)</label>
+<input id="icon" type="file" accept="image/png">
+<small>Carrée, 512×512 recommandé.</small>
+</fieldset>
+
+<fieldset><legend>Connexion GitHub</legend>
+<label for="repo">Dépôt (proprietaire/nom)</label>
+<input id="repo" required placeholder="monpseudo/apk-generator">
+<label for="token">Jeton d'accès personnel</label>
+<input id="token" type="password" required autocomplete="off" placeholder="github_pat_…">
+<label class="chk"><input id="rem" type="checkbox" checked>Mémoriser sur cet appareil</label>
+<small>Jeton à portée limitée à ce dépôt (voir le README). Il n'est envoyé qu'à api.github.com.</small>
+</fieldset>
+
+<button id="go" type="submit">Générer l'APK</button>
+</form>
+
+<div id="log" aria-live="polite"></div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const log=$('log');
+function say(t,c){const p=document.createElement('p');p.textContent=t;if(c)p.className=c;log.appendChild(p);log.style.display='block';return p}
+
+// Préremplissage et mémoire
+try{
+  if(location.hostname.endsWith('.github.io')){
+    const o=location.hostname.split('.')[0],r=location.pathname.split('/')[1];
+    $('repo').value=o+'/'+(r||o+'.github.io');
+  }
+  $('repo').value=localStorage.getItem('apk-repo')||$('repo').value;
+  $('token').value=localStorage.getItem('apk-token')||'';
+}catch(e){}
+
+function b64(bytes){
+  let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));
+  return btoa(s);
+}
+async function fileB64(file){return b64(new Uint8Array(await file.arrayBuffer()))}
+
+function iconPng(file){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{const c=document.createElement('canvas');c.width=c.height=512;
+      c.getContext('2d').drawImage(img,0,0,512,512);
+      c.toBlob(b=>b.arrayBuffer().then(a=>res(b64(new Uint8Array(a)))),'image/png')};
+    img.onerror=()=>rej(new Error("Icône illisible."));
+    img.src=URL.createObjectURL(file);
+  });
+}
+
+let repo,token;
+async function api(path,opts={}){
+  return fetch('https://api.github.com/repos/'+repo+path,{...opts,headers:{
+    Accept:'application/vnd.github+json',Authorization:'Bearer '+token,
+    'Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'}});
+}
+async function put(path,content,message){
+  const r=await api('/contents/'+path,{method:'PUT',body:JSON.stringify({message,content})});
+  if(!r.ok){
+    const e=await r.json().catch(()=>({}));
+    throw new Error('GitHub ('+r.status+') : '+(e.message||'erreur')+(r.status==401||r.status==404?' — vérifie le dépôt et les droits du jeton.':''));
+  }
+  return r.json();
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+$('f').addEventListener('submit',async e=>{
+  e.preventDefault();
+  log.innerHTML='';
+  const btn=$('go');btn.disabled=true;
+  try{
+    repo=$('repo').value.trim();token=$('token').value.trim();
+    try{
+      if($('rem').checked){localStorage.setItem('apk-repo',repo);localStorage.setItem('apk-token',token)}
+      else{localStorage.removeItem('apk-repo');localStorage.removeItem('apk-token')}
+    }catch(_){}
+
+    const zip=$('zip').files[0];
+    if(!zip)throw new Error('Choisis un fichier ZIP.');
+    if(zip.size>40*1024*1024)throw new Error('ZIP trop volumineux (40 Mo max).');
+    say('Vérification du ZIP…');
+    const z=await JSZip.loadAsync(zip).catch(()=>{throw new Error('ZIP invalide.')});
+    if(!Object.keys(z.files).some(n=>!n.startsWith('__MACOSX')&&/(^|\/)index\.html$/i.test(n)))
+      throw new Error('index.html est introuvable dans le ZIP.');
+
+    const id=Date.now().toString(36);
+    const dir='builds/'+id+'/';
+    const cfg={
+      name:$('name').value.trim(),pkg:$('pkg').value.trim().toLowerCase(),
+      versionName:$('vname').value.trim(),versionCode:+$('vcode').value,
+      orientation:$('orient').value,color:$('color').value,fullscreen:$('full').checked,
+      icon:!!$('icon').files[0]
+    };
+
+    say('Envoi du ZIP…');
+    await put(dir+'app.zip',await fileB64(zip),'Build '+id+' : archive');
+    if(cfg.icon){say("Envoi de l'icône…");await put(dir+'icon.png',await iconPng($('icon').files[0]),'Build '+id+' : icône')}
+
+    say('Lancement de la compilation…');
+    const bytes=new TextEncoder().encode(JSON.stringify(cfg,null,2));
+    const res=await put(dir+'config.json',b64(bytes),'Build '+id+' : '+cfg.name);
+    const sha=res.commit.sha;
+
+    const st=say('Compilation en cours (3 à 8 minutes)…');
+    const start=Date.now();
+    while(Date.now()-start<35*60*1000){
+      await sleep(8000);
+      const rel=await api('/releases/tags/apk-'+id);
+      if(rel.ok){
+        const j=await rel.json();
+        const a=j.assets&&j.assets[0];
+        st.textContent='APK prêt.';st.className='ok';
+        if(a){const l=document.createElement('a');l.id='dl';l.href=a.browser_download_url;l.textContent='Télécharger '+a.name;log.appendChild(l)}
+        return;
+      }
+      const runs=await api('/actions/runs?head_sha='+sha);
+      if(runs.ok){
+        const r=(await runs.json()).workflow_runs[0];
+        if(r){
+          st.textContent='Compilation : '+(r.status==='completed'?'terminée':r.status==='in_progress'?'en cours…':'en attente…');
+          if(r.status==='completed'&&r.conclusion!=='success'){
+            st.className='err';
+            const l=document.createElement('a');l.href=r.html_url;l.target='_blank';l.rel='noopener';l.textContent="Échec : voir le journal de compilation";
+            log.appendChild(l);return;
+          }
+        }
+      }
+    }
+    throw new Error('Délai dépassé. Consulte l’onglet Actions du dépôt.');
+  }catch(err){say(err.message,'err')}
+  finally{btn.disabled=false}
+});
+</script>
+</body>
+</html>
