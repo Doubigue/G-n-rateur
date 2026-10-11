@@ -39,6 +39,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y imagemagick
 
       - name: PrÃ©parer le projet Flutter
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -e
           CFG="$GITHUB_WORKSPACE/$DIR/flutter.json"
@@ -46,6 +48,7 @@ jobs:
           VN=$(jq -r .versionName "$CFG"); VC=$(jq -r .versionCode "$CFG")
           [ "$ORI" = "auto" ] && ORI=unspecified
 
+          python3 "$GITHUB_WORKSPACE/.github/scripts/android_setup.py" fetch "$CFG" "$GITHUB_WORKSPACE/$DIR" flutter
           SRC=work/src; mkdir -p "$SRC"
           unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d "$SRC"
           first(){ find "$SRC" -path '*__MACOSX*' -prune -o -name "$1" -print | awk -F/ '{print NF" "$0}' | sort -n | head -n1 | cut -d' ' -f2-; }
@@ -115,8 +118,15 @@ jobs:
           SLUG=$(echo "$NAME" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cs 'A-Za-z0-9' '-' | sed 's/^-//;s/-$//')
           [ -n "$SLUG" ] || SLUG=app
           cp work/app/build/app/outputs/flutter-apk/app-release.apk "$SLUG-$VN.apk"
-          NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : flutter' "$VN" "$(jq -r .versionCode "$DIR/flutter.json")" "$(jq -r .pkg "$DIR/flutter.json")")
-          gh release create "apk-$ID" "$SLUG-$VN.apk" --title "$NAME" --notes "$NOTES"
+          CF="$DIR/flutter.json"
+          CFGJ=$(jq -c 'del(.fromRelease,.replaces,.iconFrom)' "$CF")
+          NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : flutter\nConfig : %s' "$VN" "$(jq -r .versionCode "$CF")" "$(jq -r .pkg "$CF")" "$CFGJ")
+          FILES=("$SLUG-$VN.apk")
+          if [ -f "$DIR/app.zip" ] && [ "$(jq -r '.sourceKind // ""' "$CF")" != "site" ]; then cp "$DIR/app.zip" source.zip; FILES+=(source.zip); fi
+          if [ -f "$DIR/icon.png" ]; then FILES+=("$DIR/icon.png"); fi
+          gh release create "apk-$ID" "${FILES[@]}" --title "$NAME" --notes "$NOTES"
+          OLD=$(jq -r '.replaces // ""' "$CF")
+          if [ -n "$OLD" ]; then gh release delete "$OLD" --cleanup-tag -y || true; fi
 
       - name: Nettoyer la demande
         run: |
