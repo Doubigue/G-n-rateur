@@ -37,6 +37,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y imagemagick
 
       - name: PrÃ©parer le projet Android
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -e
           CFG="$GITHUB_WORKSPACE/$DIR/config.json"
@@ -46,6 +48,7 @@ jobs:
           FULL=$(jq -r .fullscreen "$CFG")
           [ "$ORI" = "auto" ] && ORI=unspecified
 
+          python3 "$GITHUB_WORKSPACE/.github/scripts/android_setup.py" fetch "$CFG" "$GITHUB_WORKSPACE/$DIR"
           mkdir -p work/www
           unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d work/www
           if [ ! -f work/www/index.html ]; then
@@ -57,9 +60,18 @@ jobs:
 
           cd work
           npm init -y >/dev/null
-          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6
+          has(){ jq -e --arg k "$1" '(.permissions // []) | index($k)' "$CFG" >/dev/null; }
+          PLUG="@capacitor/share@6 @capacitor/browser@6 @capacitor/clipboard@6 @capacitor/network@6 @capacitor/device@6 @capacitor/app@6 @capacitor/haptics@6 @capacitor/preferences@6"
+          if has storage || has media || has allfiles; then PLUG="$PLUG @capacitor/filesystem@6"; fi
+          if has camera; then PLUG="$PLUG @capacitor/camera@6"; fi
+          if has location; then PLUG="$PLUG @capacitor/geolocation@6"; fi
+          if has notifications; then PLUG="$PLUG @capacitor/local-notifications@6"; fi
+          npm i @capacitor/core@6 @capacitor/cli@6 @capacitor/android@6 $PLUG
           npx cap init "$NAME" "$PKG" --web-dir www
           jq --arg c "$COLOR" '.backgroundColor=$c' capacitor.config.json > c.tmp && mv c.tmp capacitor.config.json
+          if [ "$(jq -r '.sourceKind // ""' "$CFG")" = "site" ]; then
+            jq --arg u "$(jq -r .sourceUrl "$CFG")" '.server={url:$u,cleartext:true,allowNavigation:["*"]}' capacitor.config.json > c.tmp && mv c.tmp capacitor.config.json
+          fi
           npx cap add android
 
           sed -i "s/versionCode 1/versionCode $VC/; s/versionName \"1.0\"/versionName \"$VN\"/" android/app/build.gradle
@@ -79,6 +91,7 @@ jobs:
               done
             done
           fi
+          python3 "$GITHUB_WORKSPACE/.github/scripts/android_setup.py" capacitor "$CFG"
           npx cap sync android
 
       - name: Compiler l'APK
@@ -95,7 +108,15 @@ jobs:
           SLUG=$(echo "$NAME" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cs 'A-Za-z0-9' '-' | sed 's/^-//;s/-$//')
           [ -n "$SLUG" ] || SLUG=app
           cp work/android/app/build/outputs/apk/debug/app-debug.apk "$SLUG-$VN.apk"
-          gh release create "apk-$ID" "$SLUG-$VN.apk" --title "$NAME $VN" --notes "APK gÃ©nÃ©rÃ© pour $NAME (version $VN)."
+          CF="$DIR/config.json"
+          CFGJ=$(jq -c 'del(.fromRelease,.replaces,.iconFrom)' "$CF")
+          NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : web\nConfig : %s' "$VN" "$(jq -r .versionCode "$CF")" "$(jq -r .pkg "$CF")" "$CFGJ")
+          FILES=("$SLUG-$VN.apk")
+          if [ -f "$DIR/app.zip" ] && [ "$(jq -r '.sourceKind // ""' "$CF")" != "site" ]; then cp "$DIR/app.zip" source.zip; FILES+=(source.zip); fi
+          if [ -f "$DIR/icon.png" ]; then FILES+=("$DIR/icon.png"); fi
+          gh release create "apk-$ID" "${FILES[@]}" --title "$NAME" --notes "$NOTES"
+          OLD=$(jq -r '.replaces // ""' "$CF")
+          if [ -n "$OLD" ]; then gh release delete "$OLD" --cleanup-tag -y || true; fi
 
       - name: Nettoyer la demande
         run: |
