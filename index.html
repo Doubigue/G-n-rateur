@@ -116,6 +116,8 @@ body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
 #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);transform:translateX(-50%) translateY(20px);background:#1d2140;color:#eef0ff;padding:10px 18px;border-radius:99px;border:1px solid var(--line);opacity:0;transition:.3s;z-index:9;pointer-events:none;font-size:14px}
 #toast.on{opacity:1;transform:translateX(-50%)}
 .cstat{color:var(--mut);font-size:14px;margin:4px 0 0}
+.edbar{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;margin-bottom:16px;border-radius:16px;background:rgba(94,234,212,.12);border:1px solid rgba(94,234,212,.35);font-size:14px;line-height:1.4}
+.app .ed{background:var(--field);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:7px;font:500 12px Inter,sans-serif;cursor:pointer}
 </style>
 </head>
 <body>
@@ -128,6 +130,7 @@ body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
 
 <div id="tCreate">
 <section id="vForm">
+  <div id="edBar" class="edbar" style="display:none"><span id="edTxt"></span><button type="button" class="mini2" id="edX">Annuler</button></div>
   <div class="preview" aria-label="Aperçu de l'application">
     <div class="tile" id="tile"><img id="tImg" alt=""><span id="tLet">M</span></div>
     <div><b id="pName">Mon application</b><small id="pPkg">com.doubigue.app</small><small id="pVer">Version 1.0.0 (1)</small></div>
@@ -154,7 +157,9 @@ body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
     <div class="panel">
       <h2><span>2</span>Fichiers</h2>
       <div class="seg" role="radiogroup" aria-label="Type de projet"><label><input type="radio" name="mode" value="web" checked><span>Site web</span></label><label><input type="radio" name="mode" value="flutter"><span>Flutter</span></label></div>
-      <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8b9bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,application/zip" required></label>
+      <div id="zipBox"><div class="seg" role="radiogroup" aria-label="Source du projet" style="margin-bottom:6px"><label><input type="radio" name="src" value="zip" checked><span>ZIP</span></label><label><input type="radio" name="src" value="link"><span>Lien</span></label></div>
+      <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#8b9bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,application/zip"></label></div>
+      <div id="lnkBox" style="display:none"><label for="url">Lien source</label><input id="url" type="url" inputmode="url" autocapitalize="none" autocorrect="off" placeholder="https://…"><small class="h" id="lnkHint"></small></div>
       <label for="icon">Icône PNG (optionnelle, carrée)</label>
       <input id="icon" type="file" accept="image/png">
     </div>
@@ -169,6 +174,7 @@ body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
     </div>
 
     <button class="btn" id="go" type="submit">Générer l'APK</button>
+    <button class="btn ghost" id="rst" type="button">Réinitialiser les options</button>
     <p class="err" id="err" role="alert"></p>
   </form>
 </section>
@@ -201,6 +207,7 @@ body{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
     <label class="sw"><input id="rem" type="checkbox" checked><i></i>Mémoriser sur cet appareil</label>
     <small class="h">Le jeton reste dans ton navigateur et n'est envoyé qu'à api.github.com.</small>
     <button type="button" class="btn" id="saveCx" style="margin-top:18px">Enregistrer</button>
+    <button type="button" class="btn ghost" id="clrCx">Effacer le jeton de cet appareil</button>
   </div>
 </section>
 </main>
@@ -313,7 +320,7 @@ function steps2phase(steps){
   setPhase(Math.min(a,PH.length-1));
   if(a>=PH.length)setPhase(PH.length-1);
 }
-function succeed(asset){
+function succeed(asset){edition=null;$('edBar').style.display='none';
   final=100;for(let k=0;k<PH.length;k++)st[k]=2;
   $('rb').className='ringbox state-ok';$('stat').textContent='Ton application est prête.';
   $('act').innerHTML='<a class="btn" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a><button class="btn ghost" id="toApps">Mes applications</button><button class="btn ghost" id="again">Nouvelle application</button>';
@@ -336,20 +343,28 @@ $('f').addEventListener('submit',async e=>{
     if(!repo||!token){goTab('set');throw new Error('Renseigne ton dépôt et ton jeton dans Réglages.')}
     try{if($('rem').checked){localStorage.setItem('apk-repo',repo);localStorage.setItem('apk-token',token)}else{localStorage.removeItem('apk-repo');localStorage.removeItem('apk-token')}}catch(_){}
     cxState();
-    const zip=$('zip').files[0];
-    if(!zip)throw new Error('Choisis un fichier ZIP.');
-    if(zip.size>40*1048576)throw new Error('ZIP trop volumineux (40 Mo max).');
-    const z=await JSZip.loadAsync(zip).catch(()=>{throw new Error('ZIP invalide.')});
-    const ok=Object.keys(z.files).filter(n=>!n.startsWith('__MACOSX'));
-    if(mode()==='flutter'){if(!ok.some(n=>/(^|\/)pubspec\.yaml$/i.test(n)||/\.dart$/i.test(n)))throw new Error('Aucun pubspec.yaml ni fichier .dart dans le ZIP.')}
-    else if(!ok.some(n=>/(^|\/)index\.html$/i.test(n)))throw new Error('index.html est introuvable dans le ZIP.');
+    const lien=src()==='link',zip=lien?null:$('zip').files[0],url=$('url').value.trim();
+    let sourceKind='';
+    if(lien){
+      if(!/^https?:\/\//i.test(url))throw new Error('Entre un lien valide (https://…).');
+      sourceKind=kindUrl(url);
+      if(sourceKind==='site'&&mode()==='flutter')throw new Error('Un lien de site web fonctionne seulement en mode Site web.');
+    }else if(zip){
+      if(zip.size>40*1048576)throw new Error('ZIP trop volumineux (40 Mo max).');
+      const z=await JSZip.loadAsync(zip).catch(()=>{throw new Error('ZIP invalide.')});
+      const ok=Object.keys(z.files).filter(n=>!n.startsWith('__MACOSX'));
+      if(mode()==='flutter'){if(!ok.some(n=>/(^|\/)pubspec\.yaml$/i.test(n)||/\.dart$/i.test(n)))throw new Error('Aucun pubspec.yaml ni fichier .dart dans le ZIP.')}
+      else if(!ok.some(n=>/(^|\/)index\.html$/i.test(n)))throw new Error('index.html est introuvable dans le ZIP.');
+    }else if(!(edition&&edition.source))throw new Error('Choisis un fichier ZIP ou entre un lien.');
 
     initProg();
     const id=Date.now().toString(36),dir='builds/'+id+'/';
     const cfg={name:$('name').value.trim(),pkg:$('pkg').value.trim().toLowerCase(),versionName:$('vname').value.trim(),versionCode:+$('vcode').value,orientation:$('orient').value,color:$('color').value,fullscreen:$('full').checked,icon:!!$('icon').files[0],type:mode(),permissions:permsChoisies(),share:$('share').checked,askStart:$('ask').checked};
-    $('stat').textContent='Envoi de l\'archive…';
-    await put(dir+'app.zip',await fileB64(zip),'Build '+id+' : archive');upProg(.5);
-    if(cfg.icon){$('stat').textContent="Envoi de l'icône…";await put(dir+'icon.png',await iconPng($('icon').files[0]),'Build '+id+' : icône')}
+    if(lien){cfg.sourceUrl=url;cfg.sourceKind=sourceKind}else if(!zip)cfg.fromRelease=edition.tag;
+    if(edition){cfg.replaces=edition.tag;if(!cfg.icon&&edition.cfg.icon){cfg.icon=true;cfg.iconFrom=edition.tag}}
+    if(zip){$('stat').textContent='Envoi de l\'archive…';await put(dir+'app.zip',await fileB64(zip),'Build '+id+' : archive')}
+    upProg(.5);
+    if($('icon').files[0]){$('stat').textContent="Envoi de l'icône…";await put(dir+'icon.png',await iconPng($('icon').files[0]),'Build '+id+' : icône')}
     upProg(.8);$('stat').textContent='Lancement de la compilation…';
     const res=await put(dir+(mode()==='flutter'?'flutter.json':'config.json'),b64(new TextEncoder().encode(JSON.stringify(cfg,null,2))),'Build '+id+' : '+cfg.name);
     const sha=res.commit.sha;setPhase(1);
@@ -359,7 +374,7 @@ $('f').addEventListener('submit',async e=>{
     while(Date.now()-start<35*60*1000){
       await sleep(4000);
       const rel=await api('/releases/tags/apk-'+id);
-      if(rel.ok){const a=((await rel.json()).assets||[])[0];if(a)return succeed(a)}
+      if(rel.ok){const a=((await rel.json()).assets||[]).find(a=>/\.apk$/i.test(a.name));if(a)return succeed(a)}
       const rr=await api('/actions/runs?head_sha='+sha);
       if(rr.ok){
         const run=(await rr.json()).workflow_runs[0];
@@ -415,12 +430,13 @@ async function chargerApps(){
     l.forEach(x=>{
       const a=x.assets.find(a=>/\.apk$/i.test(a.name)),m=meta(x);
       const c=document.createElement('article');c.className='app';
-      c.innerHTML='<div class="ico"></div><div class="inf"><b></b><small class="d1"></small><small class="d2"></small></div><div class="acts"><button type="button" class="dl">Télécharger</button><button type="button" class="rm">Supprimer</button></div>';
+      c.innerHTML='<div class="ico"></div><div class="inf"><b></b><small class="d1"></small><small class="d2"></small></div><div class="acts"><button type="button" class="dl">Télécharger</button><button type="button" class="ed">Modifier</button><button type="button" class="rm">Supprimer</button></div>';
       c.querySelector('.ico').textContent=(x.name||'?')[0].toUpperCase();
       c.querySelector('b').textContent=x.name||a.name;
       c.querySelector('.d1').textContent=[m.ver&&'Version '+m.ver,m.type==='flutter'?'Flutter':m.type==='web'?'Site web':''].filter(Boolean).join(' · ');
       c.querySelector('.d2').textContent=new Date(x.published_at||x.created_at).toLocaleDateString('fr-FR')+' · '+(a.size/1048576).toFixed(1)+' Mo';
       c.querySelector('.dl').onclick=()=>ouvrirLien(a.browser_download_url);
+      c.querySelector('.ed').onclick=()=>modifier(x);
       const rm=c.querySelector('.rm');let t2;
       rm.onclick=async()=>{
         if(rm.textContent!=='Confirmer'){rm.textContent='Confirmer';clearTimeout(t2);t2=setTimeout(()=>rm.textContent='Supprimer',3000);return}
@@ -450,6 +466,66 @@ async function importPartage(items){
 }
 addEventListener('appshare',e=>importPartage(e.detail));
 try{const sh=window.AndroidShare&&AndroidShare.take();if(sh)importPartage(JSON.parse(sh))}catch(e){}
+
+/* ---------- Source : ZIP ou lien ---------- */
+const src=()=>document.querySelector('input[name=src]:checked').value;
+const kindUrl=u=>/\.zip($|\?)/i.test(u)?'zip':/^https?:\/\/(www\.)?github\.com\/[^\/]+\/[^\/#?]+/i.test(u)?'github':'site';
+function majSource(){
+  const lien=src()==='link';
+  $('zipBox').style.display=lien?'none':'block';$('lnkBox').style.display=lien?'block':'none';
+  const u=$('url').value.trim(),k=u?kindUrl(u):'';
+  $('lnkHint').textContent=!u?'ZIP direct, dépôt GitHub public ou site web.':k==='zip'?'Archive ZIP détectée : elle sera téléchargée à la compilation.':k==='github'?'Dépôt GitHub public détecté (branche par défaut, ou /tree/branche).':mode()==='flutter'?'Un lien de site web fonctionne seulement en mode Site web.':"Site web : l'application affichera cette page (connexion internet requise).";
+}
+document.querySelectorAll('input[name=src],input[name=mode]').forEach(r=>r.addEventListener('change',majSource));
+$('url').addEventListener('input',majSource);majSource();
+
+/* ---------- Modifier une application ---------- */
+let edition=null;
+function cfgDe(x){
+  const b=x.body||'',m=b.match(/Config\s*:\s*(\{.*\})/);
+  if(m){try{return JSON.parse(m[1])}catch(e){}}
+  const me=meta(x),v=me.ver.match(/^(.*?)\s*\((\d+)\)\s*$/)||[];
+  return{name:x.name,pkg:(b.match(/Paquet\s*:\s*(\S+)/)||[])[1]||'',versionName:v[1]||me.ver||'1.0.0',versionCode:+v[2]||1,type:me.type||'web'};
+}
+function choisir(nom,val){const r=document.querySelector('input[name='+nom+'][value='+val+']');r.checked=true;r.dispatchEvent(new Event('change'))}
+function modifier(x){
+  const c=cfgDe(x);
+  edition={tag:x.tag_name,cfg:c,source:(x.assets||[]).some(a=>a.name==='source.zip')||!!c.sourceUrl};
+  choisir('mode',c.type==='flutter'?'flutter':'web');
+  $('name').value=c.name||x.name||'';$('pkg').value=c.pkg||$('pkg').value;
+  $('vname').value=c.versionName||'1.0.0';$('vcode').value=(+c.versionCode||1)+1;
+  $('orient').value=c.orientation||'auto';$('color').value=c.color||'#2a2f6b';$('full').checked=!!c.fullscreen;
+  const set=new Set(c.permissions||[]);pcb().forEach(b=>b.checked=set.has(b.value));$('all').checked=pcb().every(b=>b.checked);
+  $('share').checked=c.share!==false;$('ask').checked=c.askStart!==false;
+  if(c.sourceUrl){choisir('src','link');$('url').value=c.sourceUrl;majSource()}else choisir('src','zip');
+  $('zip').value='';$('icon').value='';$('tImg').style.display='none';$('tLet').style.display='';
+  if(edition.source&&!c.sourceUrl){$('zn').textContent='Source conservée dans l\'application';$('zs').textContent='Dépose un ZIP seulement pour la remplacer'}
+  else if(!edition.source){$('zn').textContent='Dépose le ZIP de l\'application';$('zs').textContent='La source de cette ancienne version n\'a pas été conservée'}
+  $('edTxt').textContent='Modification de « '+(c.name||x.name)+' » : la nouvelle version remplacera l\'ancienne. Garde le même identifiant pour mettre à jour l\'application installée.';
+  $('edBar').style.display='flex';
+  prev();goTab('create');toast('Informations chargées');
+}
+$('edX').onclick=()=>{edition=null;$('edBar').style.display='none';choisir('mode',mode());toast('Modification annulée')};
+
+/* ---------- Réinitialiser ---------- */
+function reinitialiser(){
+  edition=null;$('edBar').style.display='none';
+  $('f').reset();
+  choisir('mode','web');choisir('src','zip');
+  $('tImg').style.display='none';$('tLet').style.display='';
+  $('zn').textContent='Déposer le ZIP du site';$('zs').textContent='index.html + ressources · 40 Mo max';
+  prev();majSource();$('err').textContent='';
+}
+let tr;
+$('rst').onclick=()=>{
+  const b=$('rst');
+  if(b.textContent!=='Confirmer ?'){b.textContent='Confirmer ?';clearTimeout(tr);tr=setTimeout(()=>b.textContent='Réinitialiser les options',3000);return}
+  clearTimeout(tr);b.textContent='Réinitialiser les options';reinitialiser();toast('Options réinitialisées');
+};
+$('clrCx').onclick=()=>{
+  try{localStorage.removeItem('apk-repo');localStorage.removeItem('apk-token')}catch(_){}
+  $('token').value='';$('repo').value='Doubigue/G-n-rateur';cxState();toast('Jeton effacé de cet appareil');
+};
 </script>
 </body>
 </html>
