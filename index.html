@@ -122,7 +122,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible,label.btn:focus-withi
 
 /* ---------- Barre du bas ---------- */
 .tabs{position:fixed;left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);max-width:536px;margin:0 auto;display:flex;padding:8px 6px;background:rgba(255,255,255,.97);backdrop-filter:blur(14px);border-radius:30px;box-shadow:0 10px 34px rgba(60,35,15,.16);z-index:5}
-.tabs button{flex:1;background:none;border:0;color:#4B5260;font:500 11.5px Poppins,sans-serif;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border-radius:24px;cursor:pointer;transition:color .2s,background .2s}
+.tabs button{flex:1;min-width:0;background:none;border:0;color:#4B5260;font:500 11px Poppins,sans-serif;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border-radius:24px;cursor:pointer;transition:color .2s,background .2s}
 .tabs button.on{color:var(--org);background:var(--tint)}
 .tabs svg{width:23px;height:23px}
 
@@ -175,6 +175,48 @@ details.opts[open] summary::after{content:"−"}
 #gStat{margin:14px 0;color:var(--mut);font-size:14px;min-height:21px}
 .gok{display:flex;gap:10px;flex-wrap:wrap}
 .gok .btn{flex:1;min-width:150px;margin:0}
+
+/* ---------- Éditeur de dépôts ---------- */
+.search{margin:0 0 14px}
+.rrow{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:14px;margin-bottom:10px;background:var(--card);box-shadow:var(--sh);border:0;border-radius:20px;color:var(--ink);cursor:pointer;font:inherit}
+.rrow:active{background:var(--chip)}
+.rrow .ico{width:46px;height:46px;border-radius:15px;flex:none;display:grid;place-items:center;background:linear-gradient(145deg,var(--org2),var(--org));color:#fff;font:italic 800 19px 'Exo 2',sans-serif}
+.rrow .inf{flex:1;min-width:0}
+.rrow b{display:block;font:600 15px Poppins,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rrow small{display:block;color:var(--mut);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rrow svg{flex:none;color:var(--mut)}
+.ebar{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+.ebar select{flex:1;min-width:0;padding:9px 12px}
+.crumb{display:flex;flex-wrap:wrap;gap:4px 2px;align-items:center;font-size:13px;color:var(--mut);margin:0 0 12px}
+.crumb button{background:var(--chip);border:0;border-radius:99px;padding:5px 11px;font:500 12.5px Poppins,sans-serif;color:var(--ink);cursor:pointer}
+.crumb button:last-child{background:var(--tint);color:var(--org)}
+.eform{display:flex;flex-direction:column;gap:2px}
+.elist{list-style:none;margin:0;padding:6px;background:var(--card);box-shadow:var(--sh);border-radius:20px}
+.elist li button{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;border-radius:14px;padding:11px 10px;font:inherit;font-size:14.5px;color:var(--ink);text-align:left;cursor:pointer}
+.elist li button:active{background:var(--chip)}
+.elist .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.elist .n em{display:block;font-style:normal;color:var(--mut);font-size:11.5px;overflow:hidden;text-overflow:ellipsis}
+.elist .sz{color:var(--mut);font-size:12px;flex:none}
+.elist .fi{width:34px;height:34px;border-radius:11px;flex:none;display:grid;place-items:center;background:var(--chip);color:var(--mut)}
+.elist .fi.d{background:var(--tint);color:var(--org)}
+.elist .fi.t{color:var(--ink)}
+.eed{position:fixed;inset:0;z-index:30;display:none;flex-direction:column;background:var(--bg);padding:calc(env(safe-area-inset-top,0px) + 10px) 12px calc(env(safe-area-inset-bottom,0px) + 10px)}
+.eed.on{display:flex}
+.eed .eh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.eed .eh .ibtn{flex:none}
+.eed .et{flex:1;min-width:0}
+.eed .et b{display:block;font:600 15px Poppins,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eed .et small{display:block;color:var(--mut);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.eed .et small.dirty{color:var(--org);font-weight:600}
+.eed .esave{flex:none;background:var(--org);color:#fff;border:0;border-radius:14px;padding:10px 16px;font:600 14px Poppins,sans-serif;cursor:pointer;box-shadow:0 8px 18px rgba(255,63,26,.28)}
+.eed .esave:disabled{opacity:.45;box-shadow:none}
+#eTxt{flex:1;min-height:0;width:100%;resize:none;border:0;border-radius:18px;background:var(--card);box-shadow:var(--sh);padding:14px;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--ink);tab-size:2;white-space:pre;overflow:auto}
+#eTxt.wrap{white-space:pre-wrap;word-break:break-word}
+#eTxt:focus{outline:2px solid var(--org);outline-offset:0;background:var(--card)}
+.eed .ef{display:flex;gap:8px;margin-top:10px;align-items:center}
+.eed .ef input{flex:1;min-width:0;padding:10px 12px;font-size:14px}
+.eed .ef .mini2{flex:none}
+.eed .eerr{color:var(--err);font-size:13px;margin:6px 2px 0;min-height:0}
 </style>
 </head>
 <body>
@@ -329,6 +371,22 @@ details.opts[open] summary::after{content:"−"}
   </div>
 </section>
 
+<section id="tEdit" style="display:none">
+  <div class="pgh"><h2>Éditeur</h2><p>Choisis un dépôt, ouvre un fichier, modifie-le et enregistre : la modification part directement sur GitHub.</p></div>
+
+  <div id="eRepos">
+    <input id="eSearchR" class="search" type="search" placeholder="Rechercher un dépôt" autocapitalize="none" autocorrect="off" autocomplete="off">
+    <div id="eRepoList"></div>
+  </div>
+
+  <div id="eFiles" style="display:none">
+    <div class="ebar"><button type="button" class="mini2" id="eBackR">‹ Dépôts</button><select id="eBr" aria-label="Branche"></select><button type="button" class="mini2" id="eRef" aria-label="Actualiser">↻</button></div>
+    <div class="crumb" id="eCrumb"></div>
+    <input id="eSearchF" class="search" type="search" placeholder="Rechercher un fichier" autocapitalize="none" autocorrect="off" autocomplete="off">
+    <ul class="elist" id="eList"></ul>
+  </div>
+</section>
+
 <section id="tSet" style="display:none">
   <div class="panel">
     <h2>Application</h2>
@@ -353,11 +411,22 @@ details.opts[open] summary::after{content:"−"}
   </div>
 </section>
 </main>
+<div class="eed" id="eEd" role="dialog" aria-modal="true" aria-label="Éditeur de fichier">
+  <div class="eh">
+    <button type="button" class="ibtn" id="eClose" aria-label="Fermer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="et"><b id="eName">fichier</b><small id="eMeta"></small></div>
+    <button type="button" class="esave" id="eSave" disabled>Enregistrer</button>
+  </div>
+  <textarea id="eTxt" spellcheck="false" autocapitalize="none" autocorrect="off" autocomplete="off" aria-label="Contenu du fichier"></textarea>
+  <p class="eerr" id="eErr" role="alert"></p>
+  <div class="ef"><input id="eMsg" maxlength="200" aria-label="Message du commit" placeholder="Message du commit"><button type="button" class="mini2" id="eWrap">Retour ligne</button></div>
+</div>
 <div id="toast" role="status"></div>
 <nav class="tabs" aria-label="Navigation">
   <button type="button" data-t="create" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Créer</button>
   <button type="button" data-t="apps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>Mes applis</button>
   <button type="button" data-t="git"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="9" r="2"/><path d="M6 7v10M18 11c0 4-6 3-12 6"/></svg>Dépôts</button>
+  <button type="button" data-t="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 15l5-5 1.5 1.5-5 5H9z"/></svg>Éditeur</button>
   <button type="button" data-t="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Réglages</button>
 </nav>
 
@@ -491,7 +560,7 @@ function succeed(asset){edition=null;$('edBar').style.display='none';
   $('rb').className='ringbox state-ok';$('stat').textContent='Ton application est prête.';
   $('act').innerHTML='<a class="btn" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a><button class="btn ghost" id="toApps">Mes applications</button><button class="btn ghost" id="again">Nouvelle application</button>';
   $('again').onclick=reset;$('toApps').onclick=()=>goTab('apps');cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
-  const dl=$('act').querySelector('a');dl.onclick=e=>{e.preventDefault();ouvrirLien(asset.browser_download_url)};
+  const dl=$('act').querySelector('a');dl.onclick=e=>{e.preventDefault();telecharger(asset,dl)};
   if(navigator.vibrate)navigator.vibrate([60,40,60]);
 }
 function fail(msg,url){
@@ -560,13 +629,14 @@ $('f').addEventListener('submit',async e=>{
 });
 
 /* ---------- Onglets, toast ---------- */
-const TABS={create:'tCreate',apps:'tApps',git:'tGit',set:'tSet'};
+const TABS={create:'tCreate',apps:'tApps',git:'tGit',edit:'tEdit',set:'tSet'};
 function goTab(n){
   curTab=n;
   for(const k in TABS)$(TABS[k]).style.display=k===n?'block':'none';
   document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===n));
   if(n==='apps')chargerApps();
   if(n==='git')gOpen();
+  if(n==='edit')eOpen();
   scrollTo(0,0);
 }
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>goTab(b.dataset.t));
@@ -585,6 +655,71 @@ $('perms').onchange=()=>{$('all').checked=pcb().every(c=>c.checked)};
 
 /* ---------- Mes applications ---------- */
 function ouvrirLien(u){const B=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.Browser;if(B)B.open({url:u});else window.open(u,'_blank','noopener')}
+
+/* ---------- Téléchargement dans l'application → dossier Téléchargements ---------- */
+async function recupererAsset(a,onProg){
+  const url=a.id&&repo&&token?'https://api.github.com/repos/'+repo+'/releases/assets/'+a.id:a.browser_download_url;
+  const h=a.id&&repo&&token?{Accept:'application/octet-stream',Authorization:'Bearer '+token,'X-GitHub-Api-Version':'2022-11-28'}:{};
+  const r=await fetch(url,{headers:h,redirect:'follow'});
+  if(!r.ok)throw new Error('Téléchargement refusé ('+r.status+')');
+  const tot=+r.headers.get('content-length')||a.size||0,parts=[];let got=0;
+  if(r.body&&r.body.getReader){
+    const rd=r.body.getReader();
+    for(;;){const{done,value}=await rd.read();if(done)break;parts.push(value);got+=value.length;if(tot)onProg(Math.min(99,Math.round(got/tot*100)))}
+  }else{parts.push(new Uint8Array(await r.arrayBuffer()))}
+  return new Blob(parts,{type:'application/vnd.android.package-archive'});
+}
+async function enregistrerTelechargements(blob,nom){
+  const AD=window.AndroidDownload;
+  if(AD){
+    try{
+      if(AD.begin(nom,blob.type||'application/octet-stream')){
+        const CH=3*1024*1024;let ok=true;
+        for(let o=0;o<blob.size&&ok;o+=CH)ok=AD.chunk(b64(new Uint8Array(await blob.slice(o,o+CH).arrayBuffer())));
+        if(ok&&AD.end())return'fs';
+        AD.abort();
+      }
+    }catch(e){console.warn('AndroidDownload',e);try{AD.abort()}catch(_){}}
+  }
+  const FS=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.Filesystem;
+  if(FS){
+    try{
+      try{const pm=await FS.checkPermissions();if(pm&&pm.publicStorage&&pm.publicStorage!=='granted')await FS.requestPermissions()}catch(_){}
+      const path='Download/'+nom,CH=3*1024*1024;   /* multiple de 3 : base64 concaténable */
+      try{await FS.deleteFile({path,directory:'EXTERNAL_STORAGE'})}catch(_){}
+      for(let o=0,first=true;o<blob.size||first;o+=CH,first=false){
+        const d=b64(new Uint8Array(await blob.slice(o,o+CH).arrayBuffer()));
+        if(first)await FS.writeFile({path,data:d,directory:'EXTERNAL_STORAGE',recursive:true});
+        else await FS.appendFile({path,data:d,directory:'EXTERNAL_STORAGE'});
+      }
+      return'fs';
+    }catch(e){console.warn('Filesystem',e)}
+  }
+  /* repli : téléchargement du navigateur intégré (WebView), reste dans l'application */
+  const u=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=u;a.download=nom;a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),60000);
+  return'dl';
+}
+let dlBusy=false;
+async function telecharger(a,btn){
+  if(dlBusy)return;dlBusy=true;
+  const t0=btn.textContent,set=v=>{btn.textContent=v};
+  btn.disabled=true;set('Téléchargement… 0 %');
+  try{
+    const blob=await recupererAsset(a,p=>set('Téléchargement… '+p+' %'));
+    set('Enregistrement…');
+    const mode=await enregistrerTelechargements(blob,a.name);
+    set('Enregistré ✓');
+    toast(mode==='fs'?'Enregistré dans Téléchargements : '+a.name:'Téléchargement lancé : '+a.name);
+    if(navigator.vibrate)navigator.vibrate(40);
+  }catch(e){
+    set(t0);toast('Échec : '+(e&&e.message||e));
+    if(!window.AndroidDownload&&!(window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.Filesystem)&&/Failed to fetch|NetworkError/i.test(String(e)))ouvrirLien(a.browser_download_url);
+  }finally{
+    dlBusy=false;btn.disabled=false;setTimeout(()=>{if(btn.textContent==='Enregistré ✓')set(t0)},2500);
+  }
+}
 function meta(x){const b=x.body||'',g=r=>(b.match(r)||[])[1];return{ver:g(/Version\s*:\s*(.+)/)||g(/version ([^)]+)/i)||'',type:g(/Type\s*:\s*(\w+)/)||''}}
 async function apiDel(p){return fetch('https://api.github.com/repos/'+repo+p,{method:'DELETE',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token}})}
 async function chargerApps(){
@@ -605,7 +740,7 @@ async function chargerApps(){
       c.querySelector('b').textContent=x.name||a.name;
       c.querySelector('.d1').textContent=[m.ver&&'Version '+m.ver,m.type==='flutter'?'Flutter':m.type==='web'?'Site web':''].filter(Boolean).join(' · ');
       c.querySelector('.d2').textContent=new Date(x.published_at||x.created_at).toLocaleDateString('fr-FR')+' · '+(a.size/1048576).toFixed(1)+' Mo';
-      c.querySelector('.dl').onclick=()=>ouvrirLien(a.browser_download_url);
+      {const bd=c.querySelector('.dl');bd.onclick=()=>telecharger(a,bd)}
       c.querySelector('.ed').onclick=()=>modifier(x);
       const rm=c.querySelector('.rm');let t2;
       rm.onclick=async()=>{
@@ -893,6 +1028,176 @@ async function gLoadRepos(){
   }catch(e){G.reposTok=''}
 }
 function gOpen(){gLoadRepos();if($('gRepo').value&&!G.info&&!$('gBr').value)gInfo();gRefresh()}
+
+/* =====================================================================
+   Éditeur : liste des dépôts -> fichiers -> modification -> commit
+   ===================================================================== */
+const E={repos:[],tokUsed:'',repo:'',branch:'',tree:[],dir:'',cur:null,orig:'',eol:'\n',dirty:false,busy:false,seq:0,closeArm:0};
+const EDIT_MAX=1500000;
+const ext=n=>(n.match(/\.([^.\/]+)$/)||[])[1]||'';
+const SVG_FILE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/></svg>';
+const SVG_DIR='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>';
+const SVG_GO='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>';
+const eShow=v=>{$('eRepos').style.display=v==='repos'?'':'none';$('eFiles').style.display=v==='files'?'':'none'};
+const eMsgBox=(box,t,bad)=>{box.innerHTML='';const p=document.createElement('p');p.className='vide';p.textContent=t;if(bad)p.style.color='var(--err)';box.appendChild(p)};
+
+/* ---- 1. Liste des dépôts ---- */
+function eOpen(){
+  if(E.repo){eShow('files');return}
+  eShow('repos');eLoadRepos();
+}
+async function eLoadRepos(force){
+  const box=$('eRepoList');
+  if(!tok()){eMsgBox(box,'Ajoute ton jeton dans Réglages.',true);return}
+  if(!force&&E.tokUsed===tok()&&E.repos.length){eDrawRepos();return}
+  eMsgBox(box,'Chargement…');
+  try{
+    let all=[];
+    for(let pg=1;pg<=5;pg++){
+      const l=await gh('/user/repos?per_page=100&sort=pushed&page='+pg);
+      all=all.concat(l);if(l.length<100)break;
+    }
+    E.repos=all.filter(x=>!x.archived);E.tokUsed=tok();eDrawRepos();
+  }catch(e){eMsgBox(box,e.message,true)}
+}
+function eDrawRepos(){
+  const box=$('eRepoList'),q=$('eSearchR').value.trim().toLowerCase();
+  const l=E.repos.filter(x=>!q||x.full_name.toLowerCase().includes(q));
+  box.innerHTML='';
+  if(!l.length){eMsgBox(box,E.repos.length?'Aucun dépôt ne correspond.':'Aucun dépôt trouvé.');return}
+  l.forEach(x=>{
+    const b=document.createElement('button');b.type='button';b.className='rrow';
+    b.innerHTML='<div class="ico"></div><div class="inf"><b></b><small></small></div>'+SVG_GO;
+    b.querySelector('.ico').textContent=x.name[0].toUpperCase();
+    b.querySelector('b').textContent=x.name;
+    b.querySelector('small').textContent=[x.owner.login,x.private?'privé':'public',x.language,x.permissions&&!x.permissions.push?'lecture seule':''].filter(Boolean).join(' · ');
+    b.onclick=()=>eOpenRepo(x);
+    box.appendChild(b);
+  });
+}
+$('eSearchR').addEventListener('input',eDrawRepos);
+$('eBackR').onclick=()=>{E.repo='';E.tree=[];eShow('repos');eLoadRepos();scrollTo(0,0)};
+
+/* ---- 2. Fichiers du dépôt ---- */
+async function eOpenRepo(x){
+  E.repo=x.full_name;E.dir='';E.tree=[];E.branch=x.default_branch;$('eSearchF').value='';
+  eShow('files');scrollTo(0,0);
+  const sel=$('eBr');sel.innerHTML='<option>…</option>';
+  eMsgBox($('eList'),'Chargement…');$('eCrumb').innerHTML='';
+  const n=++E.seq;
+  try{
+    const b=await gh('/repos/'+E.repo+'/branches?per_page=100').catch(e=>e.status===409?[]:Promise.reject(e));
+    if(n!==E.seq)return;
+    if(!b.length){sel.innerHTML='';eMsgBox($('eList'),'Ce dépôt est vide.');return}
+    sel.innerHTML='';
+    b.forEach(y=>{const o=document.createElement('option');o.value=y.name;o.textContent=y.name+(y.name===x.default_branch?' (par défaut)':'');sel.appendChild(o)});
+    sel.value=x.default_branch;
+    await eLoadTree();
+  }catch(e){if(n===E.seq)eMsgBox($('eList'),e.message,true)}
+}
+async function eLoadTree(){
+  const n=++E.seq;E.branch=$('eBr').value;E.dir='';
+  eMsgBox($('eList'),'Chargement…');
+  try{
+    const t=await gh('/repos/'+E.repo+'/git/trees/'+encodeURIComponent(E.branch)+'?recursive=1');
+    if(n!==E.seq)return;
+    E.tree=t.tree||[];E.truncated=!!t.truncated;eDrawFiles();
+  }catch(e){if(n===E.seq)eMsgBox($('eList'),e.message,true)}
+}
+$('eBr').onchange=eLoadTree;$('eRef').onclick=()=>{if(E.repo)eLoadTree()};
+$('eSearchF').addEventListener('input',eDrawFiles);
+function eDrawFiles(){
+  const box=$('eList'),q=$('eSearchF').value.trim().toLowerCase(),cr=$('eCrumb');
+  cr.innerHTML='';
+  const parts=E.dir?E.dir.split('/'):[],mk=(t,d)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{E.dir=d;$('eSearchF').value='';eDrawFiles()};cr.appendChild(b)};
+  mk(E.repo.split('/')[1],'');
+  parts.forEach((p,i)=>{const s=document.createElement('span');s.textContent='›';cr.appendChild(s);mk(p,parts.slice(0,i+1).join('/'))});
+  let rows=[];
+  if(q){
+    rows=E.tree.filter(x=>x.type==='blob'&&x.path.toLowerCase().includes(q)).slice(0,200).map(x=>({f:1,path:x.path,name:x.path.split('/').pop(),sub:x.path.includes('/')?x.path.slice(0,x.path.lastIndexOf('/')):'',size:x.size,sha:x.sha}));
+  }else{
+    const pre=E.dir?E.dir+'/':'',dirs=new Set(),files=[];
+    E.tree.forEach(x=>{
+      if(!x.path.startsWith(pre))return;
+      const r=x.path.slice(pre.length);if(!r)return;
+      const i=r.indexOf('/');
+      if(i>=0)dirs.add(r.slice(0,i));
+      else if(x.type==='blob')files.push({f:1,path:x.path,name:r,sub:'',size:x.size,sha:x.sha});
+      else dirs.add(r);
+    });
+    rows=[...[...dirs].sort((a,b)=>a.localeCompare(b)).map(d=>({f:0,name:d,path:pre+d})),...files.sort((a,b)=>a.name.localeCompare(b.name))];
+  }
+  box.innerHTML='';
+  if(!rows.length){eMsgBox(box,q?'Aucun fichier ne correspond.':'Dossier vide.');return}
+  rows.forEach(r=>{
+    const li=document.createElement('li'),b=document.createElement('button');b.type='button';
+    b.innerHTML='<span class="fi"></span><span class="n"></span><span class="sz"></span>';
+    const fi=b.querySelector('.fi');fi.innerHTML=r.f?SVG_FILE:SVG_DIR;fi.className='fi '+(r.f?'t':'d');
+    const n=b.querySelector('.n');n.textContent=r.name;
+    if(r.sub){const em=document.createElement('em');em.textContent=r.sub;n.appendChild(em)}
+    b.querySelector('.sz').textContent=r.f&&r.size!=null?fmt(r.size):'';
+    b.onclick=r.f?()=>eOpenFile(r):()=>{E.dir=r.path;$('eSearchF').value='';eDrawFiles();scrollTo(0,0)};
+    li.appendChild(b);box.appendChild(li);
+  });
+  if(E.truncated){const li=document.createElement('li');li.className='vide';li.style.padding='10px';li.textContent='Dépôt très volumineux : la liste est incomplète.';box.appendChild(li)}
+}
+
+/* ---- 3. Ouvrir, modifier, enregistrer ---- */
+function b64ToBytes(b){const bin=atob(b.replace(/\s/g,'')),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u}
+async function eOpenFile(r){
+  if(E.busy)return;
+  if(r.size>EDIT_MAX){toast('Fichier trop gros pour être modifié ici ('+fmt(r.size)+').');return}
+  E.busy=true;toast('Ouverture…');
+  try{
+    const j=await gh('/repos/'+E.repo+'/git/blobs/'+r.sha);
+    const u=b64ToBytes(j.content||'');
+    if(u.subarray(0,8000).includes(0))throw new Error('Fichier binaire : modification impossible ici.');
+    let txt;try{txt=new TextDecoder('utf-8',{fatal:true}).decode(u)}catch(_){throw new Error("Ce fichier n'est pas en UTF-8 : modification impossible ici.")}
+    if(txt.charCodeAt(0)===0xFEFF)txt=txt.slice(1);
+    E.eol=txt.includes('\r\n')?'\r\n':'\n';
+    const t=E.eol==='\r\n'?txt.replace(/\r\n/g,'\n'):txt;
+    E.cur={path:r.path,sha:r.sha,name:r.name};E.orig=t;
+    $('eName').textContent=r.name;$('eTxt').value=t;$('eErr').textContent='';
+    $('eMsg').value='Modifier '+r.path;
+    eDirty(false);
+    $('eEd').classList.add('on');$('eTxt').scrollTop=0;
+    toast('');
+  }catch(e){toast(e.message)}
+  finally{E.busy=false}
+}
+function eDirty(d){
+  E.dirty=d;E.closeArm=0;
+  $('eSave').disabled=!d;
+  const m=$('eMeta');m.className=d?'dirty':'';
+  m.textContent=(E.cur?E.cur.path:'')+(d?' · modifié':'');
+  $('eClose').title=d?'Fermer sans enregistrer':'Fermer';
+}
+$('eTxt').addEventListener('input',()=>{const d=$('eTxt').value!==E.orig;if(d!==E.dirty)eDirty(d)});
+$('eWrap').onclick=()=>$('eTxt').classList.toggle('wrap');
+$('eClose').onclick=()=>{
+  if(E.dirty&&!E.closeArm){E.closeArm=1;toast('Modifications non enregistrées. Touche encore pour fermer.');setTimeout(()=>{E.closeArm=0},3000);return}
+  $('eEd').classList.remove('on');E.cur=null;
+};
+$('eSave').onclick=async()=>{
+  if(!E.cur||E.busy||!E.dirty)return;
+  E.busy=true;const b=$('eSave'),t0=b.textContent;b.disabled=true;b.textContent='Envoi…';$('eErr').textContent='';
+  try{
+    let txt=$('eTxt').value;if(E.eol==='\r\n')txt=txt.replace(/\n/g,'\r\n');
+    const body={message:$('eMsg').value.trim()||('Modifier '+E.cur.path),content:b64(new TextEncoder().encode(txt)),sha:E.cur.sha,branch:E.branch};
+    const res=await retry(()=>gh('/repos/'+E.repo+'/contents/'+encPath(E.cur.path),{method:'PUT',body}));
+    const ns=res&&res.content&&res.content.sha;
+    if(ns){E.cur.sha=ns;const it=E.tree.find(x=>x.path===E.cur.path);if(it){it.sha=ns;it.size=new TextEncoder().encode(txt).length}}
+    E.orig=$('eTxt').value;eDirty(false);toast('Enregistré sur GitHub ('+E.branch+')');
+    b.textContent=t0;
+  }catch(e){
+    $('eErr').textContent=e.status===409||e.status===422?'Le fichier a changé sur GitHub depuis son ouverture. Copie ton texte, ferme puis rouvre le fichier.':e.message;
+    b.textContent=t0;b.disabled=false;
+  }finally{E.busy=false}
+};
+document.addEventListener('keydown',e=>{if($('eEd').classList.contains('on')&&(e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();$('eSave').click()}});
+$('eTxt').addEventListener('keydown',e=>{
+  if(e.key==='Tab'){e.preventDefault();const t=e.target,a=t.selectionStart;t.setRangeText('  ',a,t.selectionEnd,'end');t.dispatchEvent(new Event('input'))}
+});
 
 /* ---- Progression ---- */
 function gRun(on){
