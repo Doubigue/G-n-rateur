@@ -1,0 +1,26 @@
+{
+  "name": "Edition Baboab",
+  "pkg": "com.doubigue.edition",
+  "versionName": "1.0.0",
+  "versionCode": 5,
+  "orientation": "auto",
+  "color": "#2a2f6b",
+  "fullscreen": false,
+  "icon": true,
+  "type": "flutter",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true
+}
