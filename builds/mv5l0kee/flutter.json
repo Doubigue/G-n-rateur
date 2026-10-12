@@ -1,0 +1,23 @@
+{
+  "name": "Mon budget",
+  "pkg": "com.doubigue.monbudget",
+  "versionName": "10.1.1",
+  "versionCode": 3,
+  "orientation": "auto",
+  "color": "#ffffff",
+  "fullscreen": false,
+  "icon": true,
+  "type": "flutter",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true
+}
