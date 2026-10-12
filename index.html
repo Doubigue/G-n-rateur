@@ -78,6 +78,8 @@ input[type=color]{padding:4px;height:48px}
 .drop:hover,.drop.on{background:var(--tint);border-color:var(--org)}
 .drop b{color:var(--ink);font-weight:600;word-break:break-all}
 .drop input{display:none}
+.clr{display:none;margin:8px auto 0;padding:7px 14px;border:0;border-radius:999px;background:var(--field);color:var(--ink);font:600 12.5px Poppins,sans-serif;cursor:pointer}
+.clr:active{opacity:.7}
 .mini{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mut);cursor:pointer}
 summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center}
 summary::-webkit-details-marker{display:none}
@@ -235,6 +237,8 @@ details.opts[open] summary::after{content:"−"}
 .eed .ef{display:flex;gap:8px;margin-top:10px;align-items:center}
 .eed .ef input{flex:1;min-width:0;padding:10px 12px;font-size:14px}
 .eed .ef .mini2{flex:none}
+.eed .ef #eClr{color:var(--err)}
+.eed .ef #eClr:disabled{opacity:.4}
 .eed .eerr{color:var(--err);font-size:13px;margin:6px 2px 0;min-height:0}
 </style>
 </head>
@@ -279,7 +283,7 @@ details.opts[open] summary::after{content:"−"}
       <h2><span>2</span>Fichiers</h2>
       <div class="seg" role="radiogroup" aria-label="Type de projet"><label><input type="radio" name="mode" value="web" checked><span>Site web</span></label><label><input type="radio" name="mode" value="flutter"><span>Flutter</span></label></div>
       <div id="zipBox"><div class="seg" role="radiogroup" aria-label="Source du projet" style="margin-bottom:6px"><label><input type="radio" name="src" value="zip" checked><span>ZIP</span></label><label><input type="radio" name="src" value="link"><span>Lien</span></label></div>
-      <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FF3F1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,application/zip"></label></div>
+      <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FF3F1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,application/zip"></label><button type="button" class="clr" id="zipClr">✕ Vider le fichier</button></div>
       <div id="lnkBox" style="display:none"><label for="url">Lien source</label><input id="url" type="url" inputmode="url" autocapitalize="none" autocorrect="off" placeholder="https://…"><small class="h" id="lnkHint"></small></div>
       <label for="icon">Logo (optionnel, tout format conservé) : PNG, JPG, WebP, SVG…</label>
       <input id="icon" type="file" accept="image/*">
@@ -439,7 +443,7 @@ details.opts[open] summary::after{content:"−"}
   </div>
   <textarea id="eTxt" spellcheck="false" autocapitalize="none" autocorrect="off" autocomplete="off" aria-label="Contenu du fichier"></textarea>
   <p class="eerr" id="eErr" role="alert"></p>
-  <div class="ef"><input id="eMsg" maxlength="200" aria-label="Message du commit" placeholder="Message du commit"><button type="button" class="mini2" id="eWrap">Retour ligne</button></div>
+  <div class="ef"><input id="eMsg" maxlength="200" aria-label="Message du commit" placeholder="Message du commit"><button type="button" class="mini2" id="eWrap">Retour ligne</button><button type="button" class="mini2" id="eClr">✕ Vider</button></div>
 </div>
 <div id="toast" role="status"></div>
 <nav class="tabs" aria-label="Navigation">
@@ -503,13 +507,15 @@ async function detecterLogo(){
   iconeAff();
 }
 $('icon').addEventListener('change',iconeAff);iconeAff();
-function zipInfo(){const f=$('zip').files[0];if(!f)return;$('zn').textContent=f.name;$('zs').textContent=(f.size/1048576).toFixed(1)+' Mo';detecterLogo()}
+function zipInfo(){const f=$('zip').files[0];if(!f)return;$('zn').textContent=f.name;$('zs').textContent=(f.size/1048576).toFixed(1)+' Mo';$('zipClr').style.display='block';detecterLogo()}
+function zipTextes(){const fl=mode()==='flutter';
+  $('zn').textContent=fl?'Déposer le projet Flutter (ZIP)':'Déposer le ZIP du site';
+  $('zs').textContent=fl?'pubspec.yaml + lib/, ou simplement main.dart · 40 Mo max':'index.html + ressources · 40 Mo max'}
+$('zipClr').addEventListener('click',()=>{$('zip').value='';$('zipClr').style.display='none';zipTextes();detecterLogo()});
 $('zip').addEventListener('change',zipInfo);
 const mode=()=>document.querySelector('input[name=mode]:checked').value;
 document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',()=>{
-  if($('zip').files[0])return;const fl=mode()==='flutter';
-  $('zn').textContent=fl?'Déposer le projet Flutter (ZIP)':'Déposer le ZIP du site';
-  $('zs').textContent=fl?'pubspec.yaml + lib/, ou simplement main.dart · 40 Mo max':'index.html + ressources · 40 Mo max'}));
+  if($('zip').files[0])return;zipTextes()}));
 const dz=$('dz');
 ['dragenter','dragover'].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.add('on')}));
 ['dragleave','drop'].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.remove('on')}));
@@ -1230,6 +1236,16 @@ function eDirty(d){
 }
 codeEditor.on('change',()=>{const d=codeEditor.getValue()!==E.orig;if(d!==E.dirty)eDirty(d)});
 $('eWrap').onclick=()=>$('eTxt').classList.toggle('wrap');
+let clrArm=0;
+function eClrState(){const b=$('eClr');b.disabled=!codeEditor.getValue();if(b.disabled){clrArm=0;b.textContent='✕ Vider'}}
+codeEditor.on('change',eClrState);
+$('eClr').onclick=()=>{
+  const b=$('eClr');if(!codeEditor.getValue())return;
+  if(!clrArm){clrArm=1;b.textContent='Confirmer ?';setTimeout(()=>{clrArm=0;b.textContent='✕ Vider'},3000);return}
+  clrArm=0;b.textContent='✕ Vider';
+  codeEditor.setValue('');codeEditor.focus();
+  toast('Fichier vidé. Enregistre pour valider (Ctrl+Z pour annuler).');
+};
 $('eClose').onclick=()=>{
   if(E.dirty&&!E.closeArm){E.closeArm=1;toast('Modifications non enregistrées. Touche encore pour fermer.');setTimeout(()=>{E.closeArm=0},3000);return}
   $('eEd').classList.remove('on');E.cur=null;
