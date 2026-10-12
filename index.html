@@ -9,6 +9,17 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@1,800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/meta.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/yaml/yaml.min.js"></script>
 <style>
 :root{--bg:#FAF6F3;--card:#fff;--ink:#141A22;--lab:#3A414C;--mut:#6B7280;--line:#ECE6E1;--chip:#F0EDEA;--field:#F6F3F0;
   --org:#FF3F1A;--org2:#FF6A3D;--tint:#FFE8E0;--dark:#0F1A24;--ok:#12A150;--err:#E5384F;
@@ -212,6 +223,14 @@ details.opts[open] summary::after{content:"−"}
 .eed .esave:disabled{opacity:.45;box-shadow:none}
 #eTxt{flex:1;min-height:0;width:100%;resize:none;border:0;border-radius:18px;background:var(--card);box-shadow:var(--sh);padding:14px;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--ink);tab-size:2;white-space:pre;overflow:auto}
 #eTxt.wrap{white-space:pre-wrap;word-break:break-word}
+/* Éditeur de code coloré */
+.eed .CodeMirror{flex:1;min-height:0;width:100%;border-radius:18px;box-shadow:var(--sh);font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;height:auto;background:#20252d;color:#e6edf3}
+.eed .CodeMirror-gutters{background:#171b22;border-right:1px solid #343b46}.eed .CodeMirror-linenumber{color:#778399}
+.eed .CodeMirror-cursor{border-left:2px solid #ff6a3d}.eed .CodeMirror-selected{background:#384454!important}
+.eed .CodeMirror-focused{outline:2px solid var(--org)}
+.eactions{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap}.eactions button{flex:1;min-width:105px}
+.edelete{background:#FDE3E7!important;color:#B42338!important}.elist li{display:flex;align-items:center;gap:4px}.elist li>button:first-child{flex:1;min-width:0}.elist .edel{border:0;border-radius:10px;background:#FDE3E7;color:#B42338;padding:9px 10px;font-size:12px;cursor:pointer;flex:none}
+.eactions .mini2{padding:10px 9px}
 #eTxt:focus{outline:2px solid var(--org);outline-offset:0;background:var(--card)}
 .eed .ef{display:flex;gap:8px;margin-top:10px;align-items:center}
 .eed .ef input{flex:1;min-width:0;padding:10px 12px;font-size:14px}
@@ -382,6 +401,7 @@ details.opts[open] summary::after{content:"−"}
   <div id="eFiles" style="display:none">
     <div class="ebar"><button type="button" class="mini2" id="eBackR">‹ Dépôts</button><select id="eBr" aria-label="Branche"></select><button type="button" class="mini2" id="eRef" aria-label="Actualiser">↻</button></div>
     <div class="crumb" id="eCrumb"></div>
+    <div class="eactions"><button type="button" class="mini2" id="eNewFile">＋ Fichier</button><button type="button" class="mini2" id="eNewDir">＋ Dossier</button></div>
     <input id="eSearchF" class="search" type="search" placeholder="Rechercher un fichier" autocapitalize="none" autocorrect="off" autocomplete="off">
     <ul class="elist" id="eList"></ul>
   </div>
@@ -1034,6 +1054,9 @@ function gOpen(){gLoadRepos();if($('gRepo').value&&!G.info&&!$('gBr').value)gInf
    ===================================================================== */
 const E={repos:[],tokUsed:'',repo:'',branch:'',tree:[],dir:'',cur:null,orig:'',eol:'\n',dirty:false,busy:false,seq:0,closeArm:0};
 const EDIT_MAX=1500000;
+const codeEditor=CodeMirror.fromTextArea($('eTxt'),{lineNumbers:true,theme:'material-darker',indentUnit:2,tabSize:2,indentWithTabs:false,matchBrackets:true,lineWrapping:false,viewportMargin:20,mode:'javascript',extraKeys:{'Ctrl-S':()=> $('eSave').click(),'Cmd-S':()=> $('eSave').click(),'Tab':cm=>cm.replaceSelection('  ','end')}});
+function eMode(path){const e=ext(path).toLowerCase();const modes={js:'javascript',mjs:'javascript',cjs:'javascript',ts:'javascript',jsx:'javascript',json:{name:'javascript',json:true},html:'htmlmixed',htm:'htmlmixed',xhtml:'htmlmixed',css:'css',scss:'css',xml:'xml',svg:'xml',md:'markdown',markdown:'markdown',yml:'yaml',yaml:'yaml',java:'text/x-java',c:'text/x-csrc',h:'text/x-csrc',cpp:'text/x-c++src'};return modes[e]||'text/plain'}
+function ePrompt(label,placeholder){const v=prompt(label,placeholder||'');return v===null?null:v.trim()}
 const ext=n=>(n.match(/\.([^.\/]+)$/)||[])[1]||'';
 const SVG_FILE='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5"/></svg>';
 const SVG_DIR='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>';
@@ -1137,10 +1160,50 @@ function eDrawFiles(){
     if(r.sub){const em=document.createElement('em');em.textContent=r.sub;n.appendChild(em)}
     b.querySelector('.sz').textContent=r.f&&r.size!=null?fmt(r.size):'';
     b.onclick=r.f?()=>eOpenFile(r):()=>{E.dir=r.path;$('eSearchF').value='';eDrawFiles();scrollTo(0,0)};
-    li.appendChild(b);box.appendChild(li);
+    li.appendChild(b);
+    if(!q){const del=document.createElement('button');del.type='button';del.className='edel';del.textContent='Supprimer';del.setAttribute('aria-label','Supprimer '+r.name);del.onclick=e=>{e.stopPropagation();eDeletePath(r)};li.appendChild(del)}
+    box.appendChild(li);
   });
   if(E.truncated){const li=document.createElement('li');li.className='vide';li.style.padding='10px';li.textContent='Dépôt très volumineux : la liste est incomplète.';box.appendChild(li)}
 }
+
+/* ---- Créer des fichiers/dossiers et supprimer depuis GitHub ---- */
+async function eCreatePath(kind){
+  if(!E.repo||E.busy)return;
+  const base=E.dir?E.dir+'/':'';
+  const name=ePrompt(kind==='dir'?'Nom du nouveau dossier (ex. assets/images)':'Nom du nouveau fichier (ex. app.js)',kind==='dir'?'nouveau-dossier':'nouveau-fichier.txt');
+  if(name===null)return;
+  if(!name||name.startsWith('/')||name.split('/').some(p=>!p||p==='.'||p==='..')){toast('Nom ou chemin invalide.');return}
+  const path=base+name+(kind==='dir'?'/ .gitkeep'.replace(' ',''):'');
+  if(E.tree.some(x=>x.path===path||x.path===base+name||x.path.startsWith(base+name+'/'))){toast('Un fichier ou dossier existe déjà à cet emplacement.');return}
+  let content='',target=path;
+  if(kind==='dir')content='Dossier créé depuis APK Studio.\n';
+  else {target=base+name;content='';}
+  E.busy=true;toast('Création sur GitHub…');
+  try{
+    const body={message:(kind==='dir'?'Créer le dossier ':'Créer le fichier ')+target,content:b64(new TextEncoder().encode(content)),branch:E.branch};
+    await retry(()=>gh('/repos/'+E.repo+'/contents/'+encPath(target),{method:'PUT',body}));
+    toast(kind==='dir'?'Dossier créé.':'Fichier créé.');await eLoadTree();
+    if(kind==='file'){const it=E.tree.find(x=>x.path===target);if(it)await eOpenFile(it)}
+  }catch(e){toast(e.message)}finally{E.busy=false}
+}
+async function eDeletePath(r){
+  if(E.busy)return;
+  const isDir=!r.f,paths=isDir?E.tree.filter(x=>x.type==='blob'&&(x.path===r.path||x.path.startsWith(r.path+'/'))):E.tree.filter(x=>x.type==='blob'&&x.path===r.path);
+  if(!paths.length){toast('Ce dossier est vide ou ne contient aucun fichier suivi par GitHub.');return}
+  const msg=isDir?'Supprimer le dossier « '+r.name+' » et ses '+paths.length+' fichier(s) ?':'Supprimer le fichier « '+r.path+' » ?';
+  if(!confirm(msg+'\nCette action sera publiée sur GitHub et ne peut pas être annulée facilement.'))return;
+  E.busy=true;toast('Suppression sur GitHub…');
+  try{
+    for(let i=0;i<paths.length;i++){
+      const f=paths[i];
+      await retry(()=>gh('/repos/'+E.repo+'/contents/'+encPath(f.path),{method:'DELETE',body:{message:'Supprimer '+f.path,sha:f.sha,branch:E.branch}}));
+    }
+    if(E.cur&&paths.some(f=>f.path===E.cur.path)){$('eEd').classList.remove('on');E.cur=null}
+    toast(isDir?'Dossier supprimé.':'Fichier supprimé.');await eLoadTree();
+  }catch(e){toast('Suppression partielle possible : '+e.message);await eLoadTree()}finally{E.busy=false}
+}
+$('eNewFile').onclick=()=>eCreatePath('file');$('eNewDir').onclick=()=>eCreatePath('dir');
 
 /* ---- 3. Ouvrir, modifier, enregistrer ---- */
 function b64ToBytes(b){const bin=atob(b.replace(/\s/g,'')),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u}
@@ -1157,10 +1220,10 @@ async function eOpenFile(r){
     E.eol=txt.includes('\r\n')?'\r\n':'\n';
     const t=E.eol==='\r\n'?txt.replace(/\r\n/g,'\n'):txt;
     E.cur={path:r.path,sha:r.sha,name:r.name};E.orig=t;
-    $('eName').textContent=r.name;$('eTxt').value=t;$('eErr').textContent='';
+    $('eName').textContent=r.name;codeEditor.setOption('mode',eMode(r.path));codeEditor.setValue(t);$('eErr').textContent='';
     $('eMsg').value='Modifier '+r.path;
     eDirty(false);
-    $('eEd').classList.add('on');$('eTxt').scrollTop=0;
+    $('eEd').classList.add('on');codeEditor.scrollTo(0,0);setTimeout(()=>codeEditor.refresh(),50);
     toast('');
   }catch(e){toast(e.message)}
   finally{E.busy=false}
@@ -1172,7 +1235,7 @@ function eDirty(d){
   m.textContent=(E.cur?E.cur.path:'')+(d?' · modifié':'');
   $('eClose').title=d?'Fermer sans enregistrer':'Fermer';
 }
-$('eTxt').addEventListener('input',()=>{const d=$('eTxt').value!==E.orig;if(d!==E.dirty)eDirty(d)});
+codeEditor.on('change',()=>{const d=codeEditor.getValue()!==E.orig;if(d!==E.dirty)eDirty(d)});
 $('eWrap').onclick=()=>$('eTxt').classList.toggle('wrap');
 $('eClose').onclick=()=>{
   if(E.dirty&&!E.closeArm){E.closeArm=1;toast('Modifications non enregistrées. Touche encore pour fermer.');setTimeout(()=>{E.closeArm=0},3000);return}
@@ -1182,12 +1245,12 @@ $('eSave').onclick=async()=>{
   if(!E.cur||E.busy||!E.dirty)return;
   E.busy=true;const b=$('eSave'),t0=b.textContent;b.disabled=true;b.textContent='Envoi…';$('eErr').textContent='';
   try{
-    let txt=$('eTxt').value;if(E.eol==='\r\n')txt=txt.replace(/\n/g,'\r\n');
+    let txt=codeEditor.getValue();if(E.eol==='\r\n')txt=txt.replace(/\n/g,'\r\n');
     const body={message:$('eMsg').value.trim()||('Modifier '+E.cur.path),content:b64(new TextEncoder().encode(txt)),sha:E.cur.sha,branch:E.branch};
     const res=await retry(()=>gh('/repos/'+E.repo+'/contents/'+encPath(E.cur.path),{method:'PUT',body}));
     const ns=res&&res.content&&res.content.sha;
     if(ns){E.cur.sha=ns;const it=E.tree.find(x=>x.path===E.cur.path);if(it){it.sha=ns;it.size=new TextEncoder().encode(txt).length}}
-    E.orig=$('eTxt').value;eDirty(false);toast('Enregistré sur GitHub ('+E.branch+')');
+    E.orig=codeEditor.getValue();eDirty(false);toast('Enregistré sur GitHub ('+E.branch+')');
     b.textContent=t0;
   }catch(e){
     $('eErr').textContent=e.status===409||e.status===422?'Le fichier a changé sur GitHub depuis son ouverture. Copie ton texte, ferme puis rouvre le fichier.':e.message;
@@ -1195,9 +1258,7 @@ $('eSave').onclick=async()=>{
   }finally{E.busy=false}
 };
 document.addEventListener('keydown',e=>{if($('eEd').classList.contains('on')&&(e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();$('eSave').click()}});
-$('eTxt').addEventListener('keydown',e=>{
-  if(e.key==='Tab'){e.preventDefault();const t=e.target,a=t.selectionStart;t.setRangeText('  ',a,t.selectionEnd,'end');t.dispatchEvent(new Event('input'))}
-});
+codeEditor.on('keydown',(cm,e)=>{if(e.key==='Tab'){e.preventDefault();cm.replaceSelection('  ','end')}});
 
 /* ---- Progression ---- */
 function gRun(on){
