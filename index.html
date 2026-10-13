@@ -240,6 +240,30 @@ details.opts[open] summary::after{content:"−"}
 .eed .ef #eClr{color:var(--err)}
 .eed .ef #eClr:disabled{opacity:.4}
 .eed .eerr{color:var(--err);font-size:13px;margin:6px 2px 0;min-height:0}
+
+/* ---------- Console de compilation (façon Android Studio) ---------- */
+.con{margin:0 0 8px;border-radius:18px;overflow:hidden;background:#2b2b2b;color:#a9b7c6;box-shadow:var(--sh);text-align:left}
+.conh{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 14px;background:#3c3f41;border-bottom:1px solid #1f2123}
+.conttl{display:flex;align-items:center;gap:7px;font:600 12.5px Poppins,sans-serif;color:#dfe1e5}
+.conh .grow{flex:1}
+.badge{font:700 10px Poppins,sans-serif;letter-spacing:.06em;padding:3px 8px;border-radius:99px}
+.badge.run{background:#2f3f4a;color:#8ec7f0}.badge.ok{background:#2f4a3a;color:#6fe39a}.badge.ko{background:#5a2d2d;color:#ff8a85}
+.cb{width:34px;height:34px;border:0;border-radius:10px;background:transparent;color:#bcbec4;display:grid;place-items:center;cursor:pointer}
+.cb:active{background:#4b4e50}
+.cb.hot{color:#ff6b68;background:#4a2f2f;animation:hot 1.4s ease-in-out infinite}
+@keyframes hot{50%{box-shadow:0 0 0 5px rgba(255,107,104,.18)}}
+.conb{height:300px;max-height:46vh;overflow:auto;padding:8px 0;font:11.5px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;-webkit-user-select:text;user-select:text;overscroll-behavior:contain}
+.con.big .conb{height:70vh;max-height:70vh}
+.cl{display:flex;gap:7px;padding:0 12px 0 0;white-space:pre-wrap;word-break:break-word}
+.cl .ln{flex:none;width:34px;text-align:right;color:#606366;-webkit-user-select:none;user-select:none}
+.cl .ts{flex:none;color:#6b7075}.cl .ts:empty{display:none}
+.cl .tx{min-width:0}
+.c-in{color:#a9b7c6}.c-tk{color:#cc7832;font-weight:600}.c-ok{color:#6fbf73}.c-er{color:#ff6b68}.c-wa{color:#e5c07b}.c-cd{color:#ffc66d}.c-dim{color:#808080}
+.con.run .cl:last-child .tx::after{content:"\258D";color:#a9b7c6;animation:blink 1s steps(2,start) infinite}
+@keyframes blink{to{visibility:hidden}}
+.cons{display:flex;align-items:center;gap:9px;padding:8px 14px;background:#3c3f41;border-top:1px solid #1f2123;font:12px Poppins,sans-serif;color:#bcbec4;min-height:36px}
+.cons .sp{width:12px;height:12px;border-radius:50%;border:2px solid #5a5d60;border-top-color:#8ec7f0;animation:spin .9s linear infinite;flex:none}
+.con:not(.run) .cons .sp{display:none}
 </style>
 </head>
 <body>
@@ -313,6 +337,17 @@ details.opts[open] summary::after{content:"−"}
   </div>
   <ul id="phases"></ul>
   <p id="stat"></p>
+  <div id="con" class="con run" aria-label="Console de compilation">
+    <div class="conh">
+      <span class="conttl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>Build</span>
+      <span id="conBadge" class="badge run">EN COURS</span>
+      <span class="grow"></span>
+      <button type="button" class="cb" id="conExp" aria-label="Agrandir la console" title="Agrandir"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button type="button" class="cb" id="conCopy" aria-label="Copier l'erreur" title="Copier l'erreur"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg></button>
+    </div>
+    <div id="conBody" class="conb" tabindex="0" role="log" aria-live="off"></div>
+    <div class="cons"><i class="sp"></i><span id="conStat">En attente…</span></div>
+  </div>
   <div id="act"></div>
 </section>
 </div>
@@ -594,7 +629,156 @@ function fail(msg,url){
   $('act').innerHTML=(url?'<a class="btn ghost" target="_blank" rel="noopener" href="'+url+'">Voir le journal de compilation</a>':'')+'<button class="btn ghost" id="again">Réessayer</button>';
   $('again').onclick=reset;
 }
-function reset(){cancelAnimationFrame(raf);pv.style.display='none';fv.style.display='block';$('go').disabled=false}
+function reset(){clearInterval(CON.tick);cancelAnimationFrame(raf);pv.style.display='none';fv.style.display='block';$('go').disabled=false}
+
+/* =====================================================================
+   Console de compilation : journal en direct, erreurs, bouton « copier »
+   ===================================================================== */
+const CON={q:[],cur:null,n:0,busy:false,seen:{},live:true,liveN:0,lastLive:0,out:[],step:'',curStep:null,errText:'',fullText:'',tick:0,follow:true,t0:0,lost:false};
+const hhmmss=d=>{d=d instanceof Date?d:new Date(d);return [d.getHours(),d.getMinutes(),d.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':')};
+const mmss=ms=>{const s=Math.max(0,Math.floor(ms/1000));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+function conBadge(k){const b=$('conBadge');b.className='badge '+k;b.textContent=k==='ok'?'RÉUSSI':k==='ko'?'ÉCHEC':'EN COURS'}
+function conInit(){
+  Object.assign(CON,{q:[],cur:null,n:0,seen:{},live:true,liveN:0,lastLive:0,out:[],step:'',curStep:null,errText:'',fullText:'',follow:true,t0:Date.now(),lost:false});
+  $('conBody').innerHTML='';$('con').className='con run';$('conCopy').classList.remove('hot');conBadge('run');
+  clearInterval(CON.tick);CON.tick=setInterval(conStatus,1000);conStatus();
+}
+function conStatus(){
+  const c=CON.curStep;
+  $('conStat').textContent=c?c.name+' · '+mmss(Date.now()-c.t0):'En attente de GitHub… · '+mmss(Date.now()-CON.t0);
+}
+function conLog(t,c,ts){CON.q.push({t:String(t),c:c||'in',ts:ts||''});CON.out.push((ts?'['+ts+'] ':'')+t);if(!CON.busy){CON.busy=true;requestAnimationFrame(conStep)}}
+function conStep(){
+  const body=$('conBody');
+  if(!CON.cur){
+    const it=CON.q.shift();
+    if(!it){CON.busy=false;return}
+    const d=document.createElement('div');d.className='cl';
+    const ln=document.createElement('span');ln.className='ln';ln.textContent=++CON.n;
+    const ts=document.createElement('span');ts.className='ts';ts.textContent=it.ts?'['+it.ts+']':'';
+    const tx=document.createElement('span');tx.className='tx c-'+it.c;
+    d.append(ln,ts,tx);body.appendChild(d);
+    CON.cur={tx,s:it.t,i:0};
+  }
+  const c=CON.cur,pend=CON.q.length;
+  c.i=Math.min(c.s.length,c.i+(pend>40?1e6:pend>12?80:pend>4?14:5));   /* écriture progressive, plus rapide si ça s'accumule */
+  c.tx.textContent=c.s.slice(0,c.i);
+  if(c.i>=c.s.length)CON.cur=null;
+  if(CON.follow)body.scrollTop=body.scrollHeight;
+  requestAnimationFrame(conStep);
+}
+$('conBody').addEventListener('scroll',e=>{const b=e.target;CON.follow=b.scrollHeight-b.scrollTop-b.clientHeight<40});
+$('conExp').onclick=()=>{$('con').classList.toggle('big');const b=$('conBody');b.scrollTop=b.scrollHeight};
+
+function conHeader(cfg,zip,lien,url){
+  conLog('APK Studio · compilation '+(cfg.type==='flutter'?'Flutter':'Web (Capacitor)'),'tk',hhmmss(Date.now()));
+  conLog('Application : '+cfg.name+' · '+cfg.pkg+' · v'+cfg.versionName+' ('+cfg.versionCode+')','in');
+  conLog('Source : '+(lien?url:zip?zip.name+' ('+fmt(zip.size)+')':'application existante'),'in');
+}
+const STEP_FR=n=>n==='Set up job'?'Initialiser le job':/^Run actions\/checkout/.test(n)?'Récupérer le dépôt':/^Run actions\/setup-java/.test(n)?'Installer Java':/^Run actions\/setup-node/.test(n)?'Installer Node.js':n.replace(/^Run /,'');
+function conSteps(job){
+  (job.steps||[]).forEach(s=>{
+    if(/^(Post |Complete job)/.test(s.name)||s.conclusion==='skipped')return;
+    const seen=CON.seen[s.number]||(CON.seen[s.number]={}),nm=STEP_FR(s.name);
+    const t0=s.started_at?+new Date(s.started_at):Date.now();
+    if((s.status==='in_progress'||s.status==='completed')&&!seen.s){seen.s=1;conLog('> Étape :'+nm,'tk',hhmmss(t0));CON.curStep={name:nm,t0}}
+    if(s.status==='completed'&&!seen.d){
+      seen.d=1;const dur=s.started_at&&s.completed_at?Math.max(0,Math.round((new Date(s.completed_at)-new Date(s.started_at))/1000)):0;
+      if(s.conclusion==='success'){conLog('  ✔ '+nm+' — '+dur+' s','ok');if(CON.curStep&&CON.curStep.name===nm)CON.curStep=null}
+      else{conLog('  ✖ '+nm+' — échec après '+dur+' s','er');CON.step=nm}
+    }
+  });
+}
+/* Journal GitHub en direct (si l'API l'autorise pendant l'exécution ; sinon on s'en passe) */
+async function ghText(p){
+  const r=await fetch('https://api.github.com/repos/'+repo+p,{headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token,'X-GitHub-Api-Version':'2022-11-28'},redirect:'follow'});
+  if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}
+async function ghFile(path){
+  const r=await api('/contents/'+path);if(!r.ok)return '';
+  const j=await r.json();if(j.encoding!=='base64'||!j.content)return '';
+  return new TextDecoder().decode(b64ToBytes(j.content))}
+const clsFor=l=>/\b(error|erreur|exception|failed|FAILURE)\b/i.test(l)&&!/0 errors/.test(l)?'er':/\bwarning\b/i.test(l)?'wa':/^(> Task|Running Gradle)/.test(l)?'tk':/BUILD SUCCESSFUL/.test(l)?'ok':'in';
+async function conLive(job){
+  if(!CON.live||Date.now()-CON.lastLive<9000)return;CON.lastLive=Date.now();
+  try{
+    const L=cleanLog(await ghText('/actions/jobs/'+job.id+'/logs'));if(!L.length)throw 0;
+    L.slice(CON.liveN).slice(-60).forEach(l=>conLog(l.length>300?l.slice(0,300)+' …':l,clsFor(l)));CON.liveN=L.length;
+  }catch(_){CON.live=false}
+}
+
+/* ---- Nettoyage et extraction des erreurs ---- */
+function cleanLog(raw){
+  const out=[];let prev='';
+  for(let l of String(raw).replace(/\r/g,'').split('\n')){
+    l=l.replace(/\x1b\[[0-9;?]*[A-Za-z]/g,'').replace(/^\d{4}-\d\d-\d\dT[\d:.]+Z\s?/,'').replace(/^##\[(error|warning|notice)\]/,'');
+    if(/^\s*\[[= >]*\]\s*\d+%/.test(l)||/^##\[(group|endgroup)/.test(l))continue;
+    if(!l.trim()&&!prev.trim())continue;
+    if(l===prev&&l.trim())continue;
+    out.push(l);prev=l;
+  }
+  return out;
+}
+function extractErrors(L){
+  const out=[],seen=new Set();
+  const add=t=>{t=t.replace(/\s+$/,'');t=t.length>400?t.slice(0,400)+' …':t;if(t&&!seen.has(t)&&out.length<70){seen.add(t);out.push(t)}};
+  const snip=(code,col)=>{code=code.replace(/\s+$/,'');if(code.length<=200)return code;const a=Math.max(0,col-71);return (a>0?'…':'')+code.slice(a,col+89)+'…'};
+  for(let i=0;i<L.length;i++){
+    const l=L[i];let m;
+    if((m=l.match(/^(.+?\.dart):(\d+):(\d+): (?:Error|Warning): /))&&/Error: /.test(l)){
+      add(l);
+      while(L[i+1]!==undefined&&/^\s+- /.test(L[i+1])){add(L[i+1]);i++}
+      const nx=L[i+1];
+      if(nx!==undefined&&!/^\S+\.dart:\d+/.test(nx)&&!/^\s*\^+\s*$/.test(nx)&&!/^(Try |FAILURE|Target )/.test(nx)){add('    '+snip(nx,+m[3]));i++}
+      while(L[i+1]!==undefined&&/^\s*\^+\s*$/.test(L[i+1]))i++;
+      while(L[i+1]!==undefined&&/^Try /.test(L[i+1])){add(L[i+1]);i++}
+      continue}
+    if(/^FAILURE: /.test(l)){for(;i<L.length&&!/^\* Try:/.test(L[i]);i++)add(L[i]);i--;continue}
+    if(/^e: /.test(l)){add(l);continue}
+    if(/^\S+\.java:\d+: error:/.test(l)){add(l);if(L[i+1])add(L[i+1]);if(L[i+2])add(L[i+2]);i+=2;continue}
+    if(/version solving failed|^Because /.test(l)){let j=i;while(j>0&&L[j-1].trim()&&i-j<10)j--;for(let k=j;k<=i;k++)add(L[k]);continue}
+    if(/^(Error|ERROR|Exception|Unhandled exception)\b|^npm (ERR|error)|exit code \d+|command not found|No such file|introuvable|Aucun pubspec|Lien invalide|Téléchargement impossible/i.test(l)){add(l);continue}
+  }
+  return out.length?out:L.slice(-30);
+}
+function conCopyText(){return CON.errText||CON.out.join('\n')}
+async function copyText(t){
+  try{const C=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.Clipboard;if(C){await C.write({string:t});return true}}catch(_){}
+  try{await navigator.clipboard.writeText(t);return true}catch(_){}
+  const ta=document.createElement('textarea');ta.value=t;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;top:0;left:0;opacity:0';
+  document.body.appendChild(ta);ta.select();ta.setSelectionRange(0,t.length);let ok=false;try{ok=document.execCommand('copy')}catch(_){}ta.remove();return ok}
+async function doCopy(t,msg){toast(await copyText(t)?msg:"Copie impossible : appuie longtemps sur le texte de la console pour le sélectionner.")}
+$('conCopy').onclick=()=>doCopy(conCopyText(),CON.errText?'Erreur copiée':'Journal copié');
+
+function conOk(){
+  clearInterval(CON.tick);conBadge('ok');CON.curStep=null;
+  conLog('BUILD SUCCESSFUL en '+mmss(Date.now()-CON.t0),'ok');
+  setTimeout(()=>{$('con').classList.remove('run');$('conStat').textContent='Terminé'},900);
+}
+async function conFail(run,job,id,cfg){
+  const url=run.html_url;
+  fail('La compilation a échoué.',url);
+  clearInterval(CON.tick);conBadge('ko');CON.curStep=null;
+  conLog('BUILD FAILED en '+mmss(Date.now()-CON.t0),'er');
+  conLog("Récupération du journal d'erreur…",'in');
+  let raw='';
+  for(let k=0;k<3&&!raw;k++){try{raw=await ghFile('builds/'+id+'/build-error.txt')}catch(_){}if(!raw&&k<2)await sleep(2500)}
+  if(!raw&&job){try{raw=await ghText('/actions/jobs/'+job.id+'/logs')}catch(_){}}
+  const L=raw?cleanLog(raw):[],errs=L.length?extractErrors(L):[];
+  if(!CON.step&&job){const f=(job.steps||[]).find(s=>s.conclusion==='failure');if(f)CON.step=STEP_FR(f.name)}
+  const head='Erreur de compilation — '+cfg.name+' ('+(cfg.type==='flutter'?'Flutter':'Site web')+')'+(CON.step?'\nÉtape en échec : '+CON.step:'');
+  CON.errText=head+'\n\n'+(errs.length?errs.join('\n'):"(Journal indisponible depuis l'application. Mets à jour le workflow GitHub ou ouvre le journal.)")+'\n\nJournal complet : '+url;
+  CON.fullText=head+'\n\n'+(L.length?L.slice(-300).join('\n'):CON.out.join('\n'))+'\n\nJournal complet : '+url;
+  if(errs.length){errs.forEach(e=>conLog(e,/^\s/.test(e)?'cd':'er'))}
+  else conLog("Journal d'erreur indisponible dans l'application (mets à jour le workflow, voir l'aide).",'wa');
+  conLog("▸ Touche l'icône ⧉ (ou « Copier l'erreur ») pour copier tout ça.",'in');
+  $('conCopy').classList.add('hot');$('conStat').textContent='Échec'+(CON.step?' · '+CON.step:'');
+  setTimeout(()=>$('con').classList.remove('run'),900);
+  $('act').innerHTML='<button class="btn" id="cpErr">Copier l\'erreur</button><button class="btn ghost" id="cpAll">Copier tout le journal</button><a class="btn ghost" target="_blank" rel="noopener" href="'+url+'">Voir le journal sur GitHub</a><button class="btn ghost" id="again">Réessayer</button>';
+  $('cpErr').onclick=()=>doCopy(CON.errText,'Erreur copiée');
+  $('cpAll').onclick=()=>doCopy(CON.fullText,'Journal copié');
+  $('again').onclick=reset;
+  if(navigator.vibrate)navigator.vibrate([80,50,80]);
+}
 
 /* ---------- Génération ---------- */
 $('f').addEventListener('submit',async e=>{
@@ -620,37 +804,50 @@ $('f').addEventListener('submit',async e=>{
 
     const iconFile=$('icon').files[0]||(zip&&autoLogo?autoLogo.file:null);
     const iconB64=iconFile?await iconPng(iconFile):null;
-    initProg();
+    initProg();conInit();
     const id=Date.now().toString(36),dir='builds/'+id+'/';
     const cfg={name:$('name').value.trim(),pkg:$('pkg').value.trim().toLowerCase(),versionName:$('vname').value.trim(),versionCode:+$('vcode').value,orientation:$('orient').value,color:$('color').value,fullscreen:$('full').checked,icon:!!iconB64,type:mode(),permissions:permsChoisies(),share:$('share').checked,askStart:$('ask').checked};
     if(lien){cfg.sourceUrl=url;cfg.sourceKind=sourceKind}else if(!zip)cfg.fromRelease=edition.tag;
     if(edition){cfg.replaces=edition.tag;if(!cfg.icon&&edition.cfg.icon){cfg.icon=true;cfg.iconFrom=edition.tag}}
+    conHeader(cfg,zip,lien,url);
     if(zip){$('stat').textContent='Envoi de l\'archive…';await put(dir+'app.zip',await fileB64(zip),'Build '+id+' : archive')}
+    if(zip)conLog('  ↑ archive envoyée ('+fmt(zip.size)+')','ok');
     upProg(.5);
     if(iconB64){$('stat').textContent="Envoi de l'icône…";await put(dir+'icon.png',iconB64,'Build '+id+' : icône')}
+    if(iconB64)conLog('  ↑ icône envoyée','ok');
     upProg(.8);$('stat').textContent='Lancement de la compilation…';
     const res=await put(dir+(mode()==='flutter'?'flutter.json':'config.json'),b64(new TextEncoder().encode(JSON.stringify(cfg,null,2))),'Build '+id+' : '+cfg.name);
+    conLog('  ↑ configuration envoyée','ok');
     const sha=res.commit.sha;setPhase(1);
+    conLog('Commit '+sha.slice(0,7)+' poussé · GitHub Actions démarre…','tk',hhmmss(Date.now()));
     $('stat').textContent='Compilation en cours, laisse cette page ouverte.';
 
-    const start=Date.now();
+    const start=Date.now();let netFail=0;
     while(Date.now()-start<35*60*1000){
-      await sleep(4000);
-      const rel=await api('/releases/tags/apk-'+id);
-      if(rel.ok){const a=((await rel.json()).assets||[]).find(a=>/\.apk$/i.test(a.name));if(a)return succeed(a)}
-      const rr=await api('/actions/runs?head_sha='+sha);
-      if(rr.ok){
-        const run=(await rr.json()).workflow_runs[0];
-        if(run){
-          const jr=await api('/actions/runs/'+run.id+'/jobs');
-          if(jr.ok){const j=(await jr.json()).jobs[0];if(j&&j.steps)steps2phase(j.steps)}
-          if(run.status==='completed'&&run.conclusion!=='success')return fail('La compilation a échoué.',run.html_url);
+      await sleep(netFail?Math.min(30000,3000*netFail):4000);
+      try{
+        const rel=await api('/releases/tags/apk-'+id);
+        if(rel.ok){const a=((await rel.json()).assets||[]).find(a=>/\.apk$/i.test(a.name));if(a){conOk();return succeed(a)}}
+        const rr=await api('/actions/runs?head_sha='+sha);
+        if(rr.ok){
+          const run=(await rr.json()).workflow_runs[0];
+          if(run){
+            const jr=await api('/actions/runs/'+run.id+'/jobs');let job=null;
+            if(jr.ok){job=(await jr.json()).jobs[0];if(job&&job.steps){steps2phase(job.steps);conSteps(job);if(run.status!=='completed')conLive(job)}}
+            if(run.status==='completed'&&run.conclusion!=='success')return await conFail(run,job,id,cfg);
+          }
         }
+        if(netFail){netFail=0;CON.lost=false;conLog('✔ Connexion rétablie','ok');$('stat').textContent='Compilation en cours, laisse cette page ouverte.'}
+      }catch(e){
+        /* coupure réseau passagère (écran éteint, changement de réseau…) : la compilation continue sur GitHub */
+        if(e instanceof TypeError){netFail++;if(!CON.lost){CON.lost=true;conLog('! Connexion perdue, nouvelle tentative…','wa')}$('stat').textContent='Connexion perdue, nouvelle tentative…';continue}
+        throw e;
       }
     }
+    conLog('✖ Délai dépassé (35 min).','er');conBadge('ko');
     fail('Délai dépassé. Consulte l\'onglet Actions du dépôt.');
   }catch(err){
-    if(pv.style.display==='block')fail(err.message);else{$('err').textContent=err.message;$('go').disabled=false}
+    if(pv.style.display==='block'){conLog('✖ '+err.message,'er');conBadge('ko');clearInterval(CON.tick);fail(err.message)}else{$('err').textContent=err.message;$('go').disabled=false}
   }
 });
 
@@ -1049,7 +1246,19 @@ function gOpen(){gLoadRepos();if($('gRepo').value&&!G.info&&!$('gBr').value)gInf
    ===================================================================== */
 const E={repos:[],tokUsed:'',repo:'',branch:'',tree:[],dir:'',cur:null,orig:'',eol:'\n',dirty:false,busy:false,seq:0,closeArm:0};
 const EDIT_MAX=1500000;
-const codeEditor=CodeMirror.fromTextArea($('eTxt'),{lineNumbers:true,theme:'material-darker',indentUnit:2,tabSize:2,indentWithTabs:false,matchBrackets:true,lineWrapping:false,viewportMargin:20,mode:'javascript',extraKeys:{'Ctrl-S':()=> $('eSave').click(),'Cmd-S':()=> $('eSave').click(),'Tab':cm=>cm.replaceSelection('  ','end')}});
+/* Repli si l'éditeur de code (CodeMirror, chargé depuis Internet) n'est pas disponible : simple zone de texte */
+function textareaEditor(ta){
+  ta.style.cssText+=';display:block;flex:1;min-height:0;width:100%;resize:none;border:0;border-radius:18px;background:var(--card);box-shadow:var(--sh);padding:14px;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--ink);white-space:pre;overflow:auto';
+  const ev=n=>ta.dispatchEvent(new Event(n));
+  const ed={
+    setOption(){},refresh(){},focus(){ta.focus()},scrollTo(){ta.scrollTop=0;ta.scrollLeft=0},
+    getValue:()=>ta.value,setValue(v){ta.value=v;ev('input')},
+    replaceSelection(t){ta.setRangeText(t,ta.selectionStart,ta.selectionEnd,'end');ev('input')},
+    on(n,fn){if(n==='change')ta.addEventListener('input',()=>fn(ed));else if(n==='keydown')ta.addEventListener('keydown',e=>fn(ed,e))}
+  };
+  return ed;
+}
+const codeEditor=!window.CodeMirror?textareaEditor($('eTxt')):CodeMirror.fromTextArea($('eTxt'),{lineNumbers:true,theme:'material-darker',indentUnit:2,tabSize:2,indentWithTabs:false,matchBrackets:true,lineWrapping:false,viewportMargin:20,mode:'javascript',extraKeys:{'Ctrl-S':()=> $('eSave').click(),'Cmd-S':()=> $('eSave').click(),'Tab':cm=>cm.replaceSelection('  ','end')}});
 function eMode(path){const e=ext(path).toLowerCase();const modes={js:'javascript',mjs:'javascript',cjs:'javascript',ts:'javascript',jsx:'javascript',json:{name:'javascript',json:true},html:'htmlmixed',htm:'htmlmixed',xhtml:'htmlmixed',css:'css',scss:'css',xml:'xml',svg:'xml',md:'markdown',markdown:'markdown',yml:'yaml',yaml:'yaml',java:'text/x-java',c:'text/x-csrc',h:'text/x-csrc',cpp:'text/x-c++src'};return modes[e]||'text/plain'}
 function ePrompt(label,placeholder){const v=prompt(label,placeholder||'');return v===null?null:v.trim()}
 const ext=n=>(n.match(/\.([^.\/]+)$/)||[])[1]||'';

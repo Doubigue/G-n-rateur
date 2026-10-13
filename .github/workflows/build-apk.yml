@@ -17,7 +17,7 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: DÃ©tecter la demande
+      - name: Détecter la demande
         run: |
           CFG=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E '^builds/[^/]+/config\.json$' | head -n1)
           test -n "$CFG"
@@ -36,11 +36,13 @@ jobs:
       - name: Installer ImageMagick
         run: sudo apt-get update && sudo apt-get install -y imagemagick
 
-      - name: PrÃ©parer le projet Android
+      - name: Préparer le projet Android
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -e
+          exec > >(tee -a "$GITHUB_WORKSPACE/build.log") 2>&1
+          trap 'sleep 2' EXIT
           CFG="$GITHUB_WORKSPACE/$DIR/config.json"
           NAME=$(jq -r .name "$CFG");  PKG=$(jq -r .pkg "$CFG")
           VN=$(jq -r .versionName "$CFG"); VC=$(jq -r .versionCode "$CFG")
@@ -97,8 +99,9 @@ jobs:
       - name: Compiler l'APK
         working-directory: work/android
         run: |
+          set -o pipefail
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
 
       - name: Publier l'APK
         env:
@@ -124,5 +127,28 @@ jobs:
           git config user.email "github-actions@users.noreply.github.com"
           git rm -rq "$DIR"
           git commit -qm "Nettoyage $ID [skip ci]"
+          git pull --rebase -q || true
+          git push -q || true
+
+      - name: Enregistrer le journal d'erreur
+        if: failure()
+        run: |
+          [ -n "$DIR" ] || exit 0
+          LOG="$GITHUB_WORKSPACE/build.log"
+          OUT="$GITHUB_WORKSPACE/$DIR/build-error.txt"
+          mkdir -p "$GITHUB_WORKSPACE/$DIR"
+          {
+            echo "== Journal de compilation ($ID) =="
+            if [ -f "$LOG" ]; then
+              sed -E 's/\x1b\[[0-9;?]*[A-Za-z]//g' "$LOG" | tr -d '\r' | grep -v -E '^ *\[[= >]*\] +[0-9]+%' | tail -n 400 | cut -c1-4000
+            else
+              echo "Aucun journal disponible (échec avant la compilation)."
+            fi
+          } > "$OUT"
+          cd "$GITHUB_WORKSPACE"
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -f "$DIR/build-error.txt"
+          git commit -qm "Journal d'erreur $ID [skip ci]" || exit 0
           git pull --rebase -q || true
           git push -q || true
