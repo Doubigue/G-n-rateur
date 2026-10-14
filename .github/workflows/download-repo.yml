@@ -1,0 +1,72 @@
+name: Télécharger le dépôt (ZIP)
+
+# Lancement manuel : Actions > « Télécharger le dépôt (ZIP) » > Run workflow
+on:
+  workflow_dispatch:
+    inputs:
+      sans_builds:
+        description: "Exclure les builds (builds/, build/, node_modules, APK)"
+        type: boolean
+        default: true
+      branche:
+        description: "Branche à archiver (vide = branche courante)"
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  zip:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branche }}
+          fetch-depth: 1
+
+      - name: Créer le ZIP
+        env:
+          SANS_BUILDS: ${{ inputs.sans_builds }}
+        run: |
+          set -e
+          NAME=$(basename "$GITHUB_REPOSITORY")
+          BR=$(git rev-parse --abbrev-ref HEAD | tr '/' '-')
+          [ "$BR" = "HEAD" ] && BR=$(git rev-parse --short HEAD)
+          SUF=""; [ "$SANS_BUILDS" = "true" ] && SUF="-sans-builds"
+          ZIP="$NAME-$BR$SUF.zip"
+          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/zip/$NAME-$BR"
+          rsync -a --exclude '/.git' ./ "$RUNNER_TEMP/zip/$NAME-$BR/"
+          cd "$RUNNER_TEMP/zip"
+          if [ "$SANS_BUILDS" = "true" ]; then
+            zip -rq "$GITHUB_WORKSPACE/$ZIP" "$NAME-$BR" \
+              -x "$NAME-$BR/builds/*" "$NAME-$BR/build/*" \
+                 "*/node_modules/*" "*/.dart_tool/*" "*.apk" "*.aab"
+          else
+            zip -rq "$GITHUB_WORKSPACE/$ZIP" "$NAME-$BR"
+          fi
+          cd "$GITHUB_WORKSPACE"
+          ls -lh "$ZIP"
+          unzip -l "$ZIP" | tail -n 1
+
+      - name: Publier le ZIP (artefact, 7 jours)
+        uses: actions/upload-artifact@v4
+        with:
+          name: depot-zip
+          path: ${{ env.ZIP }}
+          retention-days: 7
+
+      - name: Publier le ZIP (release)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="zip-$(date -u +%Y%m%d-%H%M%S)"
+          gh release create "$TAG" "$ZIP" \
+            --title "Dépôt ZIP $(date -u +%d/%m/%Y\ %H:%M)" \
+            --notes "Archive du dépôt (${{ github.repository }}). Sans builds : ${{ inputs.sans_builds }}."
+          # Ne garde que les 3 dernières archives ZIP
+          gh release list --limit 100 --json tagName --jq '.[].tagName' \
+            | grep '^zip-' | sort -r | tail -n +4 \
+            | while read -r t; do gh release delete "$t" --cleanup-tag -y || true; done

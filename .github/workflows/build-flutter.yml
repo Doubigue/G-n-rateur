@@ -84,6 +84,8 @@ jobs:
           s=s.replace('<activity','<activity android:screenOrientation="%s"'%ori,1)
           if 'android.permission.INTERNET' not in s:
               s=s.replace('<application','<uses-permission android:name="android.permission.INTERNET"/>\n    <application',1)
+          if 'usesCleartextTraffic' not in s:
+              s=s.replace('<application','<application android:usesCleartextTraffic="true"',1)
           open(m,'w').write(s)
           for f in glob.glob('android/app/build.gradle*'):
               t=open(f).read()

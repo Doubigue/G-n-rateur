@@ -233,6 +233,7 @@ details.opts[open] summary::after{content:"−"}
 .eactions{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap}.eactions button{flex:1;min-width:105px}
 .edelete{background:#FDE3E7!important;color:#B42338!important}.elist li{display:flex;align-items:center;gap:6px;min-width:0}.elist li>button:first-child{flex:1;min-width:0;width:0}.elist .edel{box-sizing:border-box;width:34px;min-width:34px;max-width:34px;height:34px;padding:0;margin:0;display:grid;place-items:center;border:0;border-radius:10px;background:#FDE3E7;color:#B42338;font-size:0;cursor:pointer;flex:0 0 34px}.elist .edel svg{width:17px;height:17px;display:block;pointer-events:none}.elist .edel:active{background:#f8cbd2}.elist .edel:focus-visible{outline:2px solid #B42338;outline-offset:2px}
 .eactions .mini2{padding:10px 9px}
+.elist .edel.edown{background:var(--chip);color:var(--ink)}.elist .edel.edown:active{background:#E6E1DD}
 #eTxt:focus{outline:2px solid var(--org);outline-offset:0;background:var(--card)}
 .eed .ef{display:flex;gap:8px;margin-top:10px;align-items:center}
 .eed .ef input{flex:1;min-width:0;padding:10px 12px;font-size:14px}
@@ -441,6 +442,9 @@ details.opts[open] summary::after{content:"−"}
     <div class="ebar"><button type="button" class="mini2" id="eBackR">‹ Dépôts</button><select id="eBr" aria-label="Branche"></select><button type="button" class="mini2" id="eRef" aria-label="Actualiser">↻</button></div>
     <div class="crumb" id="eCrumb"></div>
     <div class="eactions"><button type="button" class="mini2" id="eNewFile">＋ Fichier</button><button type="button" class="mini2" id="eNewDir">＋ Dossier</button></div>
+    <div class="eactions"><button type="button" class="mini2" id="eDlRepo">⬇ Télécharger le dépôt (ZIP)</button><button type="button" class="mini2" id="eDlDir" style="display:none">⬇ Ce dossier (ZIP)</button></div>
+    <label class="sw"><input id="eDlNb" type="checkbox" checked><i></i>Sans les builds (builds/, build/, node_modules)</label>
+    <small class="h" id="eDlSt"></small>
     <input id="eSearchF" class="search" type="search" placeholder="Rechercher un fichier" autocapitalize="none" autocorrect="off" autocomplete="off">
     <ul class="elist" id="eList"></ul>
   </div>
@@ -1244,7 +1248,7 @@ function gOpen(){gLoadRepos();if($('gRepo').value&&!G.info&&!$('gBr').value)gInf
 /* =====================================================================
    Éditeur : liste des dépôts -> fichiers -> modification -> commit
    ===================================================================== */
-const E={repos:[],tokUsed:'',repo:'',branch:'',tree:[],dir:'',cur:null,orig:'',eol:'\n',dirty:false,busy:false,seq:0,closeArm:0};
+const E={repos:[],tokUsed:'',repo:'',branch:'',tree:[],dir:'',cur:null,orig:'',eol:'\n',dirty:false,busy:false,dl:false,seq:0,closeArm:0};
 const EDIT_MAX=1500000;
 /* Repli si l'éditeur de code (CodeMirror, chargé depuis Internet) n'est pas disponible : simple zone de texte */
 function textareaEditor(ta){
@@ -1336,6 +1340,7 @@ $('eSearchF').addEventListener('input',eDrawFiles);
 function eDrawFiles(){
   const box=$('eList'),q=$('eSearchF').value.trim().toLowerCase(),cr=$('eCrumb');
   cr.innerHTML='';
+  $('eDlDir').style.display=E.dir?'':'none';
   const parts=E.dir?E.dir.split('/'):[],mk=(t,d)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{E.dir=d;$('eSearchF').value='';eDrawFiles()};cr.appendChild(b)};
   mk(E.repo.split('/')[1],'');
   parts.forEach((p,i)=>{const s=document.createElement('span');s.textContent='›';cr.appendChild(s);mk(p,parts.slice(0,i+1).join('/'))});
@@ -1365,11 +1370,65 @@ function eDrawFiles(){
     b.querySelector('.sz').textContent=r.f&&r.size!=null?fmt(r.size):'';
     b.onclick=r.f?()=>eOpenFile(r):()=>{E.dir=r.path;$('eSearchF').value='';eDrawFiles();scrollTo(0,0)};
     li.appendChild(b);
+    {const dl=document.createElement('button');dl.type='button';dl.className='edel edown';dl.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg>';dl.title='Télécharger';dl.setAttribute('aria-label','Télécharger '+r.name);dl.onclick=e=>{e.stopPropagation();r.f?eDownloadFile(r):eDownloadZip(r.path)};li.appendChild(dl)}
     if(!q){const del=document.createElement('button');del.type='button';del.className='edel';del.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg>';del.title='Supprimer';del.setAttribute('aria-label','Supprimer '+r.name);del.onclick=e=>{e.stopPropagation();eDeletePath(r)};li.appendChild(del)}
     box.appendChild(li);
   });
   if(E.truncated){const li=document.createElement('li');li.className='vide';li.style.padding='10px';li.textContent='Dépôt très volumineux : la liste est incomplète.';box.appendChild(li)}
 }
+
+
+/* ---- Télécharger des fichiers ou le dépôt (ZIP), avec ou sans les builds ---- */
+function eDlSkip(rel){
+  if(!$('eDlNb').checked)return false;
+  const sg=rel.split('/');
+  return sg[0]==='builds'||sg[0]==='build'||sg.includes('node_modules');
+}
+function eDlStat(t){$('eDlSt').textContent=t||''}
+async function eBlobBytes(sha){
+  const b=await retry(()=>gh('/repos/'+E.repo+'/git/blobs/'+sha));
+  if(b.encoding!=='base64')throw new Error('Encodage inattendu.');
+  return b64ToBytes(b.content);
+}
+async function eDownloadFile(r){
+  if(E.dl||!r.sha)return;
+  E.dl=true;toast('Téléchargement…');
+  try{
+    const u8=await eBlobBytes(r.sha);
+    const how=await enregistrerTelechargements(new Blob([u8],{type:'application/octet-stream'}),r.name);
+    toast(how==='fs'?'« '+r.name+' » enregistré dans Téléchargements.':'Téléchargement lancé.');
+  }catch(e){toast('Échec : '+e.message)}finally{E.dl=false}
+}
+async function eDownloadZip(dir){
+  if(!E.repo||E.dl)return;
+  if(typeof JSZip==='undefined'){toast('JSZip indisponible : vérifie ta connexion Internet.');return}
+  const pre=dir?dir+'/':'';
+  const files=E.tree.filter(x=>x.type==='blob'&&x.path.startsWith(pre)&&!eDlSkip(x.path.slice(pre.length)));
+  const ignores=E.tree.filter(x=>x.type==='blob'&&x.path.startsWith(pre)).length-files.length;
+  if(!files.length){toast('Aucun fichier à télécharger'+(ignores?' (tout est exclu par « Sans les builds »).':'.'));return}
+  E.dl=true;
+  const repoName=E.repo.split('/')[1],root=repoName+'-'+E.branch.replace(/[^\w.-]+/g,'-')+(dir?'-'+dir.replace(/\//g,'-'):'');
+  const zip=new JSZip();let done=0,fail=[];
+  eDlStat('Téléchargement 0/'+files.length+'…');
+  try{
+    await pool(files,6,async f=>{
+      try{zip.file(root+'/'+f.path.slice(pre.length),await eBlobBytes(f.sha))}
+      catch(e){if(e.status===401||e.status===403||e.status===404)throw e;fail.push(f.path)}
+      done++;eDlStat('Téléchargement '+done+'/'+files.length+'…');
+    });
+    eDlStat('Création du ZIP…');
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    const nom=root+($('eDlNb').checked&&!dir?'-sans-builds':'')+'.zip';
+    const how=await enregistrerTelechargements(blob,nom);
+    const msg=files.length-fail.length+' fichier(s)'+(ignores?' · '+ignores+' exclu(s)':'')+(fail.length?' · '+fail.length+' échec(s)':'')+' · '+fmt(blob.size);
+    eDlStat((how==='fs'?'Enregistré dans Téléchargements : ':'ZIP prêt : ')+nom+' ('+msg+')');
+    toast(how==='fs'?'ZIP enregistré dans Téléchargements.':'Téléchargement du ZIP lancé.');
+    if(E.truncated)toast('Attention : dépôt très volumineux, la liste GitHub est incomplète.');
+  }catch(e){eDlStat('Échec : '+e.message);toast('Échec : '+e.message)}
+  finally{E.dl=false}
+}
+$('eDlRepo').onclick=()=>eDownloadZip('');
+$('eDlDir').onclick=()=>eDownloadZip(E.dir);
 
 /* ---- Créer des fichiers/dossiers et supprimer depuis GitHub ---- */
 async function eCreatePath(kind){
