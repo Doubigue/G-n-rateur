@@ -453,6 +453,51 @@ details.opts[open] summary::after{content:"−"}
   </div>
 </section>
 
+<!-- ======== Vercel ======== -->
+<section id="tVer" style="display:none">
+  <div class="pgh"><h2>Vercel</h2><p>Relance un déploiement ou déploie un dossier ou un ZIP directement sur un de tes projets Vercel.</p></div>
+  <div class="panel" id="vCx">
+    <label for="vTok">Jeton Vercel</label>
+    <input id="vTok" type="password" autocomplete="off" placeholder="Jeton créé dans vercel.com/account/tokens" autocapitalize="none" autocorrect="off">
+    <label for="vTeam">Team ID (optionnel, pour un compte d'équipe)</label>
+    <input id="vTeam" placeholder="team_…" autocapitalize="none" autocorrect="off" autocomplete="off">
+    <small class="h">Le jeton reste sur cet appareil et n'est envoyé qu'à api.vercel.com. Il donne accès à tout ton compte Vercel.</small>
+    <button type="button" class="btn" id="vSave" style="margin-top:16px">Enregistrer et charger les projets</button>
+    <button type="button" class="btn ghost" id="vClr">Effacer le jeton de cet appareil</button>
+  </div>
+  <div id="vProj">
+    <div class="apps-head"><h2>Projets</h2><button type="button" class="mini2" id="vRef">Actualiser</button></div>
+    <div id="vList"></div>
+  </div>
+  <div id="vDet" style="display:none">
+    <div class="ebar"><button type="button" class="mini2" id="vBack">‹ Projets</button><b id="vName" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><button type="button" class="mini2" id="vRef2" aria-label="Actualiser">↻</button></div>
+    <div class="panel">
+      <h2>Relancer</h2>
+      <button type="button" class="btn" id="vRedeploy">Relancer le dernier déploiement</button>
+      <label class="sw" id="vLcSw"><input id="vLc" type="checkbox"><i></i>Avec le dernier commit GitHub</label>
+      <small class="h">Recrée un déploiement identique au dernier. Avec la case cochée (projet relié à GitHub), le dernier commit de la branche est utilisé.</small>
+    </div>
+    <div class="panel">
+      <h2>Déployer des fichiers</h2>
+      <div class="drop" id="vDz">
+        <b id="vSrc">Aucun fichier choisi</b>
+        <div class="row2" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <label class="btn sm ghost" for="vDir">Choisir un dossier</label>
+          <label class="btn sm sun" for="vZip">Choisir un ZIP</label>
+        </div>
+      </div>
+      <input id="vDir" class="hid" type="file" webkitdirectory multiple>
+      <input id="vZip" class="hid" type="file" accept=".zip,application/zip">
+      <label class="sw"><input id="vProd" type="checkbox" checked><i></i>Déployer en production</label>
+      <button type="button" class="btn" id="vDeploy" style="margin-top:14px" disabled>Déployer</button>
+      <p class="err" id="vErr" role="alert"></p>
+      <small class="h" id="vStat"></small>
+    </div>
+    <div class="apps-head"><h2>Déploiements</h2></div>
+    <div id="vDeps"></div>
+  </div>
+</section>
+
 <section id="tSet" style="display:none">
   <div class="panel">
     <h2>Application</h2>
@@ -493,6 +538,7 @@ details.opts[open] summary::after{content:"−"}
   <button type="button" data-t="apps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>Mes applis</button>
   <button type="button" data-t="git"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="9" r="2"/><path d="M6 7v10M18 11c0 4-6 3-12 6"/></svg>Dépôts</button>
   <button type="button" data-t="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 15l5-5 1.5 1.5-5 5H9z"/></svg>Éditeur</button>
+  <button type="button" data-t="vercel"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 4l9 16H3z"/></svg>Vercel</button>
   <button type="button" data-t="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Réglages</button>
 </nav>
 
@@ -858,8 +904,209 @@ $('f').addEventListener('submit',async e=>{
   }
 });
 
+/* =====================================================================
+   Vercel : projets, déploiements, relance, déploiement d'un dossier ou ZIP
+   ===================================================================== */
+const V={tok:'',team:'',projects:[],cur:null,deps:[],files:[],label:'',busy:false,seq:0,watch:0};
+const vSt={READY:['✓','#1FA971','Prêt'],ERROR:['✕','#D6334A','Erreur'],BUILDING:['…','#E0A000','Compilation'],INITIALIZING:['…','#E0A000','Initialisation'],QUEUED:['…','#E0A000','En attente'],CANCELED:['–','#8A8F98','Annulé'],DELETED:['–','#8A8F98','Supprimé']};
+const vEtat=x=>(x||'').toUpperCase();
+function vTok(){V.tok=$('vTok').value.trim();V.team=$('vTeam').value.trim()}
+function vUrl(p){return 'https://api.vercel.com'+p+(V.team?(p.includes('?')?'&':'?')+'teamId='+encodeURIComponent(V.team):'')}
+async function vApi(path,o={}){
+  const url=vUrl(path),headers=Object.assign({Authorization:'Bearer '+V.tok},o.headers||{});
+  if(o.json)headers['Content-Type']='application/json';
+  let res;
+  try{
+    const r=await fetch(url,{method:o.method||'GET',headers,body:o.json?JSON.stringify(o.json):o.body});
+    res={status:r.status,ok:r.ok,text:await r.text()};
+  }catch(e){
+    /* repli natif (contourne CORS) pour les requêtes JSON */
+    const CH=window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.CapacitorHttp;
+    if(!CH||o.body)throw new Error('Connexion à Vercel impossible (réseau ou restriction CORS).');
+    const r=await CH.request({url,method:o.method||'GET',headers,data:o.json});
+    res={status:r.status,ok:r.status<400,text:typeof r.data==='string'?r.data:JSON.stringify(r.data||'')};
+  }
+  let j=null;try{j=JSON.parse(res.text)}catch(_){}
+  if(!res.ok){
+    const m=(j&&j.error&&(j.error.message||j.error.code))||res.text.slice(0,140)||'erreur';
+    const h=res.status===401||res.status===403?' — jeton invalide, ou Team ID manquant/incorrect.':res.status===404?' — introuvable.':res.status===429?' — trop de requêtes, réessaie dans un instant.':'';
+    const e=new Error('Vercel ('+res.status+') : '+m+h);e.status=res.status;throw e;
+  }
+  return j;
+}
+function vOpen(){
+  try{if(!$('vTok').value){$('vTok').value=localStorage.getItem('apk-vercel-token')||'';$('vTeam').value=localStorage.getItem('apk-vercel-team')||''}}catch(_){}
+  vTok();
+  if(V.cur){vShow('det');return}
+  vShow('list');
+  if(V.tok&&!V.projects.length)vLoadProjects();
+  else if(!V.tok)vMsg($('vList'),'Ajoute ton jeton Vercel ci-dessus.');
+}
+function vShow(w){$('vProj').style.display=w==='list'?'':'none';$('vDet').style.display=w==='det'?'':'none';$('vCx').style.display=w==='list'?'':'none'}
+function vMsg(box,t,bad){box.innerHTML='';const p=document.createElement('p');p.className='vide';p.textContent=t;if(bad)p.style.color='var(--err)';box.appendChild(p)}
+$('vSave').onclick=()=>{
+  vTok();
+  try{if($('rem').checked){localStorage.setItem('apk-vercel-token',V.tok);localStorage.setItem('apk-vercel-team',V.team)}}catch(_){}
+  V.projects=[];V.cur=null;vLoadProjects();
+};
+$('vClr').onclick=()=>{
+  try{localStorage.removeItem('apk-vercel-token');localStorage.removeItem('apk-vercel-team')}catch(_){}
+  $('vTok').value='';$('vTeam').value='';V.tok=V.team='';V.projects=[];V.cur=null;vMsg($('vList'),'Jeton effacé de cet appareil.');toast('Jeton Vercel effacé');
+};
+async function vLoadProjects(){
+  const box=$('vList');vTok();
+  if(!V.tok){vMsg(box,'Ajoute ton jeton Vercel ci-dessus.',true);return}
+  vMsg(box,'Chargement…');
+  try{
+    const j=await vApi('/v9/projects?limit=100');
+    V.projects=j.projects||[];vDrawProjects();
+  }catch(e){vMsg(box,e.message,true)}
+}
+function vDrawProjects(){
+  const box=$('vList');box.innerHTML='';
+  if(!V.projects.length){vMsg(box,'Aucun projet trouvé.');return}
+  V.projects.forEach(x=>{
+    const b=document.createElement('button');b.type='button';b.className='rrow';
+    b.innerHTML='<div class="ico"></div><div class="inf"><b></b><small></small></div>'+SVG_GO;
+    b.querySelector('.ico').textContent=x.name[0].toUpperCase();
+    b.querySelector('b').textContent=x.name;
+    const ld=(x.latestDeployments||[])[0],st=ld&&vSt[vEtat(ld.readyState)];
+    b.querySelector('small').textContent=[x.framework,st&&st[2],x.link&&x.link.repo?'GitHub : '+x.link.repo:''].filter(Boolean).join(' · ');
+    b.onclick=()=>vOpenProject(x);
+    box.appendChild(b);
+  });
+}
+$('vRef').onclick=vLoadProjects;
+$('vBack').onclick=()=>{V.cur=null;V.watch++;vShow('list');vDrawProjects()};
+$('vRef2').onclick=()=>vLoadDeps();
+
+async function vOpenProject(x){
+  V.cur=x;V.files=[];V.label='';V.watch++;
+  $('vName').textContent=x.name;$('vErr').textContent='';$('vStat').textContent='';
+  $('vLcSw').style.display=x.link&&x.link.type?'':'none';$('vLc').checked=false;
+  vFilesRefresh();vShow('det');scrollTo(0,0);vLoadDeps();
+}
+async function vLoadDeps(){
+  const box=$('vDeps'),x=V.cur;if(!x)return;
+  const n=++V.seq;vMsg(box,'Chargement…');
+  try{
+    const j=await vApi('/v6/deployments?projectId='+encodeURIComponent(x.id)+'&limit=15');
+    if(n!==V.seq)return;
+    V.deps=j.deployments||[];vDrawDeps();
+  }catch(e){if(n===V.seq)vMsg(box,e.message,true)}
+}
+function vDrawDeps(){
+  const box=$('vDeps');box.innerHTML='';
+  if(!V.deps.length){vMsg(box,'Aucun déploiement pour ce projet.');return}
+  V.deps.forEach(d=>{
+    const e=vEtat(d.state||d.readyState),st=vSt[e]||['?','#8A8F98',e||'?'];
+    const c=document.createElement('article');c.className='app';
+    c.innerHTML='<div class="ico"></div><div class="inf"><b></b><small class="d1"></small><small class="d2"></small></div><div class="acts"></div>';
+    const ico=c.querySelector('.ico');ico.textContent=st[0];ico.style.background=st[1];ico.style.fontStyle='normal';
+    c.querySelector('b').textContent=st[2]+(d.target==='production'?' · production':' · aperçu');
+    c.querySelector('.d1').textContent=(d.meta&&(d.meta.githubCommitMessage||d.meta.action))||d.url||'';
+    c.querySelector('.d2').textContent=new Date(d.created||d.createdAt||0).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
+    const acts=c.querySelector('.acts'),mk=(t,cls,fn)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=t;b.onclick=()=>fn(b);acts.appendChild(b)};
+    if(d.url)mk('Ouvrir','ed',()=>ouvrirLien('https://'+d.url));
+    if(['BUILDING','QUEUED','INITIALIZING'].includes(e))mk('Annuler','rm',b=>vCancel(d,b));
+    else mk('Relancer','dl',b=>vRedeploy(d,b));
+    box.appendChild(c);
+  });
+}
+async function vCancel(d,btn){
+  btn.disabled=true;
+  try{await vApi('/v12/deployments/'+encodeURIComponent(d.uid||d.id)+'/cancel',{method:'PATCH'});toast('Déploiement annulé');vLoadDeps()}
+  catch(e){toast(e.message);btn.disabled=false}
+}
+async function vRedeploy(d,btn){
+  const x=V.cur;if(!x||V.busy)return;
+  V.busy=true;if(btn)btn.disabled=true;$('vRedeploy').disabled=true;$('vErr').textContent='';
+  try{
+    const body={name:x.name,project:x.id,deploymentId:d.uid||d.id,meta:{action:'redeploy'}};
+    if(d.target==='production')body.target='production';
+    if($('vLc').checked&&x.link)body.withLatestCommit=true;
+    const j=await vApi('/v13/deployments?forceNew=1&skipAutoDetectionConfirmation=1',{method:'POST',json:body});
+    toast('Nouveau déploiement lancé');
+    vWatch(j.id||j.uid);vLoadDeps();
+  }catch(e){$('vErr').textContent=e.message;toast(e.message)}
+  finally{V.busy=false;if(btn)btn.disabled=false;$('vRedeploy').disabled=false}
+}
+$('vRedeploy').onclick=()=>{
+  const d=V.deps.find(z=>z.target==='production')||V.deps[0];
+  if(!d){toast('Aucun déploiement à relancer : déploie d’abord des fichiers.');return}
+  vRedeploy(d,null);
+};
+async function vWatch(id){
+  const my=++V.watch;
+  for(let i=0;i<100&&my===V.watch;i++){
+    await sleep(3000);
+    try{
+      const j=await vApi('/v13/deployments/'+encodeURIComponent(id));
+      const e=vEtat(j.readyState||j.status),st=vSt[e];
+      if(my!==V.watch)return;
+      $('vStat').textContent='Déploiement : '+(st?st[2]:e)+(j.url?' · https://'+j.url:'');
+      if(['READY','ERROR','CANCELED'].includes(e)){vLoadDeps();toast(e==='READY'?'Déploiement terminé ✓':e==='ERROR'?'Le déploiement a échoué.':'Déploiement annulé.');return}
+    }catch(_){}
+  }
+}
+
+/* ---- Fichiers à déployer : dossier ou ZIP ---- */
+function vFilesRefresh(){
+  $('vSrc').textContent=V.files.length?V.label+' · '+V.files.length+' fichier'+(V.files.length>1?'s':'')+' · '+fmt(V.files.reduce((a,f)=>a+(f.size||0),0)):'Aucun fichier choisi';
+  $('vDeploy').disabled=!V.files.length||V.busy;
+}
+function vSet(raw,label){
+  let l=raw.map(f=>({path:f.path.replace(/\\/g,'/').replace(/^(\.\/|\/)+/,''),size:f.size,read:f.read}))
+    .filter(f=>{const sg=f.path.split('/'),n=sg[sg.length-1];return f.path&&!f.path.endsWith('/')&&!sg.includes('..')&&!sg.includes('.git')&&!sg.includes('node_modules')&&!sg.includes('__MACOSX')&&!/^(\.DS_Store|Thumbs\.db)$/i.test(n)});
+  if(l.length&&l.every(f=>f.path.includes('/')&&f.path.split('/')[0]===l[0].path.split('/')[0])&&!l[0].path.startsWith('.'))
+    {const r=l[0].path.split('/')[0].length+1;l=l.map(f=>({path:f.path.slice(r),size:f.size,read:f.read}))}
+  V.files=l;V.label=label;$('vErr').textContent='';vFilesRefresh();
+}
+$('vDir').addEventListener('change',e=>{
+  const l=[...e.target.files];e.target.value='';if(!l.length)return;
+  vSet(l.map(f=>({path:f.webkitRelativePath||f.name,size:f.size,read:()=>f.arrayBuffer().then(b=>new Uint8Array(b))})),'Dossier « '+((l[0].webkitRelativePath||'').split('/')[0]||'sélection')+' »');
+});
+$('vZip').addEventListener('change',async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{
+    const z=await JSZip.loadAsync(f);const raw=[];
+    z.forEach((p,o)=>{if(!o.dir)raw.push({path:p,size:(o._data&&o._data.uncompressedSize)||0,read:()=>o.async('uint8array')})});
+    if(!raw.length)throw new Error('Ce ZIP est vide.');
+    vSet(raw,f.name);
+  }catch(err){toast(err.message||'ZIP invalide.')}
+});
+async function sha1hex(u8){return [...new Uint8Array(await crypto.subtle.digest('SHA-1',u8))].map(x=>x.toString(16).padStart(2,'0')).join('')}
+$('vDeploy').onclick=async()=>{
+  const x=V.cur;if(!x||V.busy||!V.files.length)return;
+  V.busy=true;vFilesRefresh();$('vErr').textContent='';
+  try{
+    const list=[];let done=0;const n=V.files.length;
+    $('vStat').textContent='Préparation des fichiers…';
+    await pool(V.files,5,async f=>{
+      const u8=await f.read(),sha=await sha1hex(u8);
+      list.push({file:f.path,sha,size:u8.length,u8});
+      done++;$('vStat').textContent='Envoi des fichiers '+done+'/'+n+'…';
+    });
+    /* 1. envoi des fichiers (dédoublonnés par empreinte) */
+    const seen=new Set(),up=list.filter(f=>!seen.has(f.sha)&&seen.add(f.sha));
+    let sent=0;
+    await pool(up,5,async f=>{
+      await retry(()=>vApi('/v2/files',{method:'POST',body:f.u8,headers:{'Content-Type':'application/octet-stream','x-vercel-digest':f.sha}}));
+      sent++;$('vStat').textContent='Envoi des fichiers '+sent+'/'+up.length+'…';
+    });
+    /* 2. création du déploiement */
+    $('vStat').textContent='Création du déploiement…';
+    const body={name:x.name,project:x.id,files:list.map(f=>({file:f.file,sha:f.sha,size:f.size})),meta:{action:'apk-studio'}};
+    if($('vProd').checked)body.target='production';
+    const j=await vApi('/v13/deployments?skipAutoDetectionConfirmation=1',{method:'POST',json:body});
+    toast('Déploiement lancé');$('vStat').textContent='Déploiement lancé…';
+    vWatch(j.id||j.uid);vLoadDeps();
+  }catch(e){$('vErr').textContent=e.message;$('vStat').textContent='';toast(e.message)}
+  finally{V.busy=false;vFilesRefresh()}
+};
+
 /* ---------- Onglets, toast ---------- */
-const TABS={create:'tCreate',apps:'tApps',git:'tGit',edit:'tEdit',set:'tSet'};
+const TABS={create:'tCreate',apps:'tApps',git:'tGit',edit:'tEdit',vercel:'tVer',set:'tSet'};
 function goTab(n){
   curTab=n;
   for(const k in TABS)$(TABS[k]).style.display=k===n?'block':'none';
@@ -867,6 +1114,7 @@ function goTab(n){
   if(n==='apps')chargerApps();
   if(n==='git')gOpen();
   if(n==='edit')eOpen();
+  if(n==='vercel')vOpen();
   scrollTo(0,0);
 }
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>goTab(b.dataset.t));
