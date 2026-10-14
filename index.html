@@ -268,6 +268,33 @@ details.opts[open] summary::after{content:"−"}
 .cons{display:flex;align-items:center;gap:9px;padding:8px 14px;background:#3c3f41;border-top:1px solid #1f2123;font:12px Poppins,sans-serif;color:#bcbec4;min-height:36px}
 .cons .sp{width:12px;height:12px;border-radius:50%;border:2px solid #5a5d60;border-top-color:#8ec7f0;animation:spin .9s linear infinite;flex:none}
 .con:not(.run) .cons .sp{display:none}
+/* --- Recherche d'appli par nom, boutons de version --- */
+.sug{display:none;margin:6px 0 0;background:var(--card);border-radius:16px;box-shadow:var(--sh);overflow:hidden;border:1px solid var(--line)}
+.sug.on{display:block}
+.sug button{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;background:none;border:0;border-bottom:1px solid var(--line);font:inherit;text-align:left;color:var(--ink);cursor:pointer}
+.sug button:last-child{border-bottom:0}.sug button:active{background:var(--chip)}
+.sug .si{width:34px;height:34px;border-radius:11px;background:var(--tint);color:var(--org);display:grid;place-items:center;font-weight:700;flex:none}
+.sug .sn{flex:1;min-width:0}.sug .sn b{display:block;font-size:14.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.sug .sn small{display:block;color:var(--mut);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sug .sg{font-size:11px;color:var(--org);font-weight:600;flex:none}
+.vchips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.vchips button{border:0;border-radius:99px;background:var(--chip);color:var(--ink);padding:7px 12px;font:500 12.5px Poppins,sans-serif;cursor:pointer}
+.vchips button:active{background:var(--tint);color:var(--org)}
+/* --- Écran de build --- */
+.bhead{display:flex;align-items:center;gap:12px;background:var(--card);box-shadow:var(--sh);border-radius:20px;padding:12px 14px;margin:0 0 6px;text-align:left}
+.bhead .bt{width:44px;height:44px;border-radius:14px;color:#fff;display:grid;place-items:center;font:700 18px Poppins,sans-serif;flex:none;background:var(--org)}
+.bhead .bi{flex:1;min-width:0}.bhead .bi b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bhead .bi small{display:block;color:var(--mut);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bchip{font:700 11px Poppins,sans-serif;padding:5px 10px;border-radius:99px;flex:none}
+.bchip.run{background:var(--tint);color:var(--org)}.bchip.ok{background:#DDF5E6;color:#0E7A3B}.bchip.ko{background:#FDE3E7;color:#B42338}
+.fb{margin:0 0 12px;background:#FFF4F5;border:1.5px solid #F4B6BE;border-radius:20px;padding:16px;text-align:left}
+.fbh{display:flex;align-items:center;gap:10px;color:#B42338;font-size:15px;margin-bottom:12px}
+.fbi{width:24px;height:24px;border-radius:50%;background:#E5384F;color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px;flex:none}
+.fb dl{margin:0;display:grid;grid-template-columns:62px 1fr;gap:10px 12px;font-size:13.5px}
+.fb dt{color:var(--mut);font-weight:500}.fb dd{margin:0;color:var(--ink);min-width:0;word-break:break-word}
+.fb .mono{font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#2b2b2b;color:#ff9a96;border-radius:10px;padding:8px 10px;white-space:pre-wrap;-webkit-user-select:text;user-select:text}
+.fb details{margin-top:12px;font-size:13px}.fb summary{cursor:pointer;color:#B42338;font-weight:600}
+.fb pre{margin:8px 0 0;max-height:240px;overflow:auto;background:#2b2b2b;color:#ff9a96;border-radius:10px;padding:10px;font:11.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap;word-break:break-word;-webkit-user-select:text;user-select:text}
+.con.onlyerr .cl:not(.k-er):not(.k-cd):not(.k-wa){display:none}
+.cb.on{background:#4b4e50;color:#fff}
 </style>
 </head>
 <body>
@@ -293,13 +320,21 @@ details.opts[open] summary::after{content:"−"}
     <div class="panel">
       <h2><span>1</span>Application</h2>
       <label for="name">Nom</label>
-      <input id="name" required maxlength="40" placeholder="Mon application">
+      <input id="name" required maxlength="40" placeholder="Mon application" autocomplete="off" autocapitalize="words">
+      <div class="sug" id="nameSug" role="listbox" aria-label="Applications existantes"></div>
       <label for="pkg">Identifiant du paquet</label>
       <input id="pkg" required value="com.doubigue.app" autocapitalize="none" autocorrect="off" pattern="[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+">
       <div class="row">
         <div><label for="vname">Version</label><input id="vname" required value="1.0.0" pattern="[0-9A-Za-z.\-]+"></div>
         <div><label for="vcode">Code de version</label><input id="vcode" type="number" min="1" required value="1" inputmode="numeric"></div>
       </div>
+      <div class="vchips" id="vchips" aria-label="Augmenter la version">
+        <button type="button" data-k="patch">＋ Correctif</button>
+        <button type="button" data-k="minor">＋ Mineure</button>
+        <button type="button" data-k="major">＋ Majeure</button>
+        <button type="button" data-k="code">＋ Code seul</button>
+      </div>
+      <small class="h" id="vHint">Pour mettre à jour une appli déjà installée : même identifiant, code de version plus grand.</small>
       <div class="row">
         <div><label for="orient">Orientation</label><select id="orient"><option value="auto">Automatique</option><option value="portrait">Portrait</option><option value="landscape">Paysage</option></select></div>
         <div><label for="color">Couleur</label><input id="color" type="color" value="#2a2f6b"></div>
@@ -334,6 +369,7 @@ details.opts[open] summary::after{content:"−"}
 </section>
 
 <section id="vProg" aria-live="polite">
+  <div class="bhead" id="bHead"><div class="bt" id="bTile">M</div><div class="bi"><b id="bName">Application</b><small id="bSub"></small></div><span class="bchip run" id="bChip">En cours</span></div>
   <div class="ringbox" id="rb">
     <svg viewBox="0 0 200 200"><defs><linearGradient id="gr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF7A45"/><stop offset="1" stop-color="#FF3F1A"/></linearGradient></defs>
     <circle class="trk" cx="100" cy="100" r="90"/><circle id="arc" cx="100" cy="100" r="90" stroke-dasharray="565.49" stroke-dashoffset="565.49"/></svg>
@@ -341,11 +377,23 @@ details.opts[open] summary::after{content:"−"}
   </div>
   <ul id="phases"></ul>
   <p id="stat"></p>
+  <div class="fb" id="failBox" style="display:none" role="alert">
+    <div class="fbh"><span class="fbi">!</span><b>Ce qui a échoué</b></div>
+    <dl>
+      <dt>Étape</dt><dd id="fbStep"></dd>
+      <dt id="fbMainT">Erreur</dt><dd id="fbMain" class="mono"></dd>
+      <dt>Cause</dt><dd id="fbWhy"></dd>
+      <dt>À faire</dt><dd id="fbFix"></dd>
+    </dl>
+    <details id="fbDet"><summary>Toutes les erreurs du journal (<span id="fbN">0</span>)</summary><pre id="fbPre"></pre></details>
+  </div>
   <div id="con" class="con run" aria-label="Console de compilation">
     <div class="conh">
       <span class="conttl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>Build</span>
       <span id="conBadge" class="badge run">EN COURS</span>
       <span class="grow"></span>
+      <button type="button" class="cb" id="conFilt" aria-label="Afficher seulement les erreurs" title="Erreurs seulement"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4l9 16H3zM12 10v4M12 17h.01"/></svg></button>
+      <button type="button" class="cb" id="conEnd" aria-label="Aller à la dernière ligne" title="Aller à la fin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v13m0 0l-5-5m5 5l5-5M5 21h14"/></svg></button>
       <button type="button" class="cb" id="conExp" aria-label="Agrandir la console" title="Agrandir"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
       <button type="button" class="cb" id="conCopy" aria-label="Copier l'erreur" title="Copier l'erreur"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg></button>
     </div>
@@ -455,7 +503,7 @@ details.opts[open] summary::after{content:"−"}
 
 <!-- ======== Vercel ======== -->
 <section id="tVer" style="display:none">
-  <div class="pgh"><h2>Vercel</h2><p>Relance un déploiement ou déploie un dossier ou un ZIP directement sur un de tes projets Vercel.</p></div>
+  <div class="pgh"><h2>Vercel</h2><p>Parcours les fichiers d’un projet Vercel, modifie-les, télécharge-les en ZIP et redéploie. Tu peux aussi relancer un déploiement ou déployer un dossier ou un ZIP.</p></div>
   <div class="panel" id="vCx">
     <label for="vTok">Jeton Vercel</label>
     <input id="vTok" type="password" autocomplete="off" placeholder="Jeton créé dans vercel.com/account/tokens" autocapitalize="none" autocorrect="off">
@@ -476,6 +524,22 @@ details.opts[open] summary::after{content:"−"}
       <button type="button" class="btn" id="vRedeploy">Relancer le dernier déploiement</button>
       <label class="sw" id="vLcSw"><input id="vLc" type="checkbox"><i></i>Avec le dernier commit GitHub</label>
       <small class="h">Recrée un déploiement identique au dernier. Avec la case cochée (projet relié à GitHub), le dernier commit de la branche est utilisé.</small>
+    </div>
+    <div class="panel" id="vfPanel">
+      <h2>Fichiers du projet</h2>
+      <div class="ebar"><select id="vfDep" aria-label="Déploiement"></select><button type="button" class="mini2" id="vfRef" aria-label="Recharger les fichiers">↻</button></div>
+      <div class="crumb" id="vfCrumb"></div>
+      <div class="eactions"><button type="button" class="mini2" id="vfNew">＋ Fichier</button><button type="button" class="mini2" id="vfZipAll">⬇ Tout (ZIP)</button><button type="button" class="mini2" id="vfZipDir" style="display:none">⬇ Ce dossier (ZIP)</button></div>
+      <input id="vfSearch" class="search" type="search" placeholder="Rechercher un fichier" autocapitalize="none" autocorrect="off" autocomplete="off">
+      <ul class="elist" id="vfList"></ul>
+      <small class="h" id="vfSt"></small>
+      <div id="vfPend" style="display:none">
+        <label class="sw"><input id="vfProd" type="checkbox" checked><i></i>Déployer en production</label>
+        <button type="button" class="btn" id="vfDeploy" style="margin-top:14px">Déployer les modifications</button>
+        <button type="button" class="btn ghost" id="vfReset">Annuler les modifications</button>
+      </div>
+      <p class="err" id="vfErr" role="alert"></p>
+      <small class="h">Touche un fichier pour le modifier (texte uniquement), puis « Déployer les modifications » crée un nouveau déploiement. Si le projet est relié à GitHub, le prochain push repartira du dépôt.</small>
     </div>
     <div class="panel">
       <h2>Déployer des fichiers</h2>
@@ -682,17 +746,21 @@ function fail(msg,url){
   $('act').innerHTML=(url?'<a class="btn ghost" target="_blank" rel="noopener" href="'+url+'">Voir le journal de compilation</a>':'')+'<button class="btn ghost" id="again">Réessayer</button>';
   $('again').onclick=reset;
 }
-function reset(){clearInterval(CON.tick);cancelAnimationFrame(raf);pv.style.display='none';fv.style.display='block';$('go').disabled=false}
+function reset(){$('failBox').style.display='none';clearInterval(CON.tick);cancelAnimationFrame(raf);pv.style.display='none';fv.style.display='block';$('go').disabled=false}
 
 /* =====================================================================
    Console de compilation : journal en direct, erreurs, bouton « copier »
    ===================================================================== */
-const CON={q:[],cur:null,n:0,busy:false,seen:{},live:true,liveN:0,lastLive:0,out:[],step:'',curStep:null,errText:'',fullText:'',tick:0,follow:true,t0:0,lost:false};
+const CON={q:[],cur:null,n:0,busy:false,seen:{},live:true,liveN:0,lastLive:0,out:[],step:'',curStep:null,errText:'',fullText:'',tick:0,follow:true,t0:0,lost:false,liveFail:0,liveBusy:false,done:false};
 const hhmmss=d=>{d=d instanceof Date?d:new Date(d);return [d.getHours(),d.getMinutes(),d.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':')};
 const mmss=ms=>{const s=Math.max(0,Math.floor(ms/1000));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
-function conBadge(k){const b=$('conBadge');b.className='badge '+k;b.textContent=k==='ok'?'RÉUSSI':k==='ko'?'ÉCHEC':'EN COURS'}
+function conBadge(k){
+  const b=$('conBadge');b.className='badge '+k;b.textContent=k==='ok'?'RÉUSSI':k==='ko'?'ÉCHEC':'EN COURS';
+  const c=$('bChip');c.className='bchip '+k;c.textContent=k==='ok'?'Réussi':k==='ko'?'Échec':'En cours';
+}
 function conInit(){
-  Object.assign(CON,{q:[],cur:null,n:0,seen:{},live:true,liveN:0,lastLive:0,out:[],step:'',curStep:null,errText:'',fullText:'',follow:true,t0:Date.now(),lost:false});
+  Object.assign(CON,{q:[],cur:null,n:0,seen:{},live:true,liveN:0,lastLive:0,out:[],step:'',curStep:null,errText:'',fullText:'',follow:true,t0:Date.now(),lost:false,liveFail:0,liveBusy:false,done:false});
+  $('failBox').style.display='none';$('con').classList.remove('onlyerr');$('conFilt').classList.remove('on');
   $('conBody').innerHTML='';$('con').className='con run';$('conCopy').classList.remove('hot');conBadge('run');
   clearInterval(CON.tick);CON.tick=setInterval(conStatus,1000);conStatus();
 }
@@ -703,27 +771,35 @@ function conStatus(){
 function conLog(t,c,ts){CON.q.push({t:String(t),c:c||'in',ts:ts||''});CON.out.push((ts?'['+ts+'] ':'')+t);if(!CON.busy){CON.busy=true;requestAnimationFrame(conStep)}}
 function conStep(){
   const body=$('conBody');
-  if(!CON.cur){
-    const it=CON.q.shift();
-    if(!it){CON.busy=false;return}
-    const d=document.createElement('div');d.className='cl';
-    const ln=document.createElement('span');ln.className='ln';ln.textContent=++CON.n;
-    const ts=document.createElement('span');ts.className='ts';ts.textContent=it.ts?'['+it.ts+']':'';
-    const tx=document.createElement('span');tx.className='tx c-'+it.c;
-    d.append(ln,ts,tx);body.appendChild(d);
-    CON.cur={tx,s:it.t,i:0};
+  /* plusieurs lignes par image quand le journal s'accumule : tout est écrit, jusqu'à la dernière */
+  const pend0=CON.q.length,budget=CON.done?400:pend0>800?300:pend0>200?80:pend0>60?20:pend0>20?6:1;
+  for(let n=0;n<budget;n++){
+    if(!CON.cur){
+      const it=CON.q.shift();
+      if(!it)break;
+      if(body.childElementCount>6000){for(let k=0;k<500;k++)body.firstChild.remove()}   /* garde l'écran fluide ; « Copier » reste complet */
+      const d=document.createElement('div');d.className='cl k-'+it.c;
+      const ln=document.createElement('span');ln.className='ln';ln.textContent=++CON.n;
+      const ts=document.createElement('span');ts.className='ts';ts.textContent=it.ts?'['+it.ts+']':'';
+      const tx=document.createElement('span');tx.className='tx c-'+it.c;
+      d.append(ln,ts,tx);body.appendChild(d);
+      CON.cur={tx,s:it.t,i:0};
+    }
+    const c=CON.cur,pend=CON.q.length;
+    c.i=Math.min(c.s.length,c.i+(CON.done||pend>20?1e6:pend>12?80:pend>4?14:5));   /* écriture progressive, plus rapide si ça s'accumule */
+    c.tx.textContent=c.s.slice(0,c.i);
+    if(c.i>=c.s.length)CON.cur=null;
   }
-  const c=CON.cur,pend=CON.q.length;
-  c.i=Math.min(c.s.length,c.i+(pend>40?1e6:pend>12?80:pend>4?14:5));   /* écriture progressive, plus rapide si ça s'accumule */
-  c.tx.textContent=c.s.slice(0,c.i);
-  if(c.i>=c.s.length)CON.cur=null;
   if(CON.follow)body.scrollTop=body.scrollHeight;
+  if(!CON.cur&&!CON.q.length){CON.busy=false;return}
   requestAnimationFrame(conStep);
 }
 $('conBody').addEventListener('scroll',e=>{const b=e.target;CON.follow=b.scrollHeight-b.scrollTop-b.clientHeight<40});
 $('conExp').onclick=()=>{$('con').classList.toggle('big');const b=$('conBody');b.scrollTop=b.scrollHeight};
 
 function conHeader(cfg,zip,lien,url){
+  $('bName').textContent=cfg.name;$('bTile').textContent=(cfg.name||'?')[0].toUpperCase();$('bTile').style.background='linear-gradient(135deg,'+cfg.color+',#0b0d1c)';
+  $('bSub').textContent=[cfg.type==='flutter'?'Flutter':'Site web',cfg.pkg,'v'+cfg.versionName+' ('+cfg.versionCode+')'].join(' · ');
   conLog('APK Studio · compilation '+(cfg.type==='flutter'?'Flutter':'Web (Capacitor)'),'tk',hhmmss(Date.now()));
   conLog('Application : '+cfg.name+' · '+cfg.pkg+' · v'+cfg.versionName+' ('+cfg.versionCode+')','in');
   conLog('Source : '+(lien?url:zip?zip.name+' ('+fmt(zip.size)+')':'application existante'),'in');
@@ -751,12 +827,46 @@ async function ghFile(path){
   const j=await r.json();if(j.encoding!=='base64'||!j.content)return '';
   return new TextDecoder().decode(b64ToBytes(j.content))}
 const clsFor=l=>/\b(error|erreur|exception|failed|FAILURE)\b/i.test(l)&&!/0 errors/.test(l)?'er':/\bwarning\b/i.test(l)?'wa':/^(> Task|Running Gradle)/.test(l)?'tk':/BUILD SUCCESSFUL/.test(l)?'ok':'in';
+function conPushLines(L){
+  const fresh=L.slice(CON.liveN);CON.liveN=L.length;
+  fresh.forEach(l=>conLog(l.length>1500?l.slice(0,1500)+' … (+'+(l.length-1500)+' car.)':l,clsFor(l)));
+}
 async function conLive(job){
-  if(!CON.live||Date.now()-CON.lastLive<9000)return;CON.lastLive=Date.now();
+  if(!CON.live||CON.liveBusy||Date.now()-CON.lastLive<5000)return;
+  CON.lastLive=Date.now();CON.liveBusy=true;
   try{
     const L=cleanLog(await ghText('/actions/jobs/'+job.id+'/logs'));if(!L.length)throw 0;
-    L.slice(CON.liveN).slice(-60).forEach(l=>conLog(l.length>300?l.slice(0,300)+' …':l,clsFor(l)));CON.liveN=L.length;
-  }catch(_){CON.live=false}
+    conPushLines(L);CON.liveFail=0;       /* toutes les nouvelles lignes, sans en sauter */
+  }catch(_){if(++CON.liveFail>=6)CON.live=false}   /* GitHub ne sert parfois le journal qu'à la fin : on le récupère alors en entier */
+  finally{CON.liveBusy=false}
+}
+/* Journal complet une fois le job terminé : écrit toutes les lignes restantes, jusqu'à la dernière */
+async function conFlush(job){
+  if(!job)return null;
+  while(CON.liveBusy)await sleep(150);
+  let L=null;
+  for(let k=0;k<4&&!L;k++){
+    try{const c=cleanLog(await ghText('/actions/jobs/'+job.id+'/logs'));if(c.length)L=c}catch(_){}
+    if(!L&&k<3)await sleep(2500);
+  }
+  if(L)conPushLines(L);
+  return L;
+}
+/* Attend la fin du run (25 s max) puis écrit le journal complet */
+async function conFinish(sha,job){
+  $('stat').textContent='Récupération du journal complet…';
+  try{
+    for(let k=0;k<8;k++){
+      const rr=await api('/actions/runs?head_sha='+sha);
+      const run=rr.ok&&(await rr.json()).workflow_runs[0];
+      if(!run)break;
+      const jr=await api('/actions/runs/'+run.id+'/jobs');
+      if(jr.ok){const j=(await jr.json()).jobs[0];if(j){job=j;if(j.steps)conSteps(j)}}
+      if(run.status==='completed')break;
+      await sleep(3000);
+    }
+  }catch(_){}
+  await conFlush(job);
 }
 
 /* ---- Nettoyage et extraction des erreurs ---- */
@@ -803,32 +913,124 @@ async function doCopy(t,msg){toast(await copyText(t)?msg:"Copie impossible : app
 $('conCopy').onclick=()=>doCopy(conCopyText(),CON.errText?'Erreur copiée':'Journal copié');
 
 function conOk(){
-  clearInterval(CON.tick);conBadge('ok');CON.curStep=null;
+  clearInterval(CON.tick);conBadge('ok');CON.curStep=null;CON.done=true;
   conLog('BUILD SUCCESSFUL en '+mmss(Date.now()-CON.t0),'ok');
   setTimeout(()=>{$('con').classList.remove('run');$('conStat').textContent='Terminé'},900);
+}
+
+/* ---- Diagnostic : dit exactement ce qui n'a pas marché ---- */
+const DIAG=[
+  [/index\.html (est )?introuvable/i,"Le ZIP ne contient pas de fichier index.html.","Mets index.html à la racine du ZIP (ou dans un seul dossier), puis relance."],
+  [/Aucun pubspec|Could not find a file named "pubspec\.yaml"|pubspec\.yaml.*(not found|introuvable)/i,"Le projet Flutter n'a pas de pubspec.yaml.","Ajoute pubspec.yaml (et le dossier lib/) à la racine du ZIP."],
+  [/version solving failed/i,"Deux dépendances Dart demandent des versions incompatibles.","Ouvre pubspec.yaml et aligne la version du paquet cité plus haut, ou retire-le."],
+  [/\.dart:\d+:\d+: Error:/,"Le code Dart ne compile pas.","Corrige le fichier et la ligne indiqués dans « Erreur », puis relance."],
+  [/^e: .*\.kt/m,"Le code Kotlin ne compile pas.","Corrige le fichier et la ligne indiqués, puis relance."],
+  [/\.java:\d+: error:/,"Le code Java ne compile pas.","Corrige le fichier et la ligne indiqués, puis relance."],
+  [/Manifest merger failed/i,"Conflit dans AndroidManifest.xml (permission ou attribut en double).","Lis le message « Manifest merger failed » : il nomme l'attribut en conflit."],
+  [/Duplicate class/i,"Une classe est présente en double dans les dépendances.","Retire l'une des deux dépendances qui la contiennent."],
+  [/AAPT|resource linking failed|resource .{0,60} not found/i,"Une ressource Android est introuvable ou invalide (souvent le logo).","Réessaie sans logo, ou avec un PNG/JPG carré."],
+  [/OutOfMemoryError|Java heap space|GC overhead|signal 9|Killed/i,"Le serveur de compilation a manqué de mémoire.","Allège le projet (grosses images, vidéos), puis relance."],
+  [/No space left on device/i,"Le disque du serveur de compilation est plein.","Réduis la taille du ZIP puis relance."],
+  [/End-of-central-directory|cannot find zipfile directory|not a zip|Bad ZIP|unzip:\s+(cannot|End)/i,"Le ZIP est corrompu ou illisible.","Recompresse le projet en .zip puis réessaie."],
+  [/jq: error|Invalid numeric literal|parse error: .*JSON/i,"Le fichier de configuration envoyé est invalide.","Évite les caractères spéciaux dans le nom ou la version, puis relance."],
+  [/Lien invalide|Téléchargement impossible|(?:HTTP|http|curl[^\n]{0,30})\D(404|403|401)\b/,"Le lien source est inaccessible (introuvable, privé ou protégé).","Vérifie que le lien est public et correct, ou dépose un ZIP."],
+  [/npm (?:ERR!|error) (?:code )?E404|npm (?:ERR!|error) 404/i,"Un paquet npm demandé n'existe pas (erreur 404).","Vérifie le nom du paquet cité dans l'erreur."],
+  [/Could not (?:resolve|GET|HEAD)|Connection (?:reset|refused|timed out)|Read timed out|Unable to resolve host|ENOTFOUND|ETIMEDOUT|EAI_AGAIN|Temporary failure in name resolution|Failed to connect/i,"Un téléchargement a échoué (réseau, ou serveur de dépendances indisponible).","C'est souvent passager : relance la compilation."],
+  [/npm (?:ERR!|error)/i,"L'installation d'un paquet npm a échoué.","Relance ; si ça recommence, lis la ligne « npm » dans l'erreur."],
+  [/SDK location not found|ANDROID_HOME|ANDROID_SDK_ROOT/i,"Le SDK Android n'a pas été trouvé sur le serveur.","Problème côté serveur : relance la compilation."],
+  [/Execution failed for task '([^']+)'/,m=>"Gradle a échoué sur la tâche « "+m[1]+" ».","Regarde « Erreur » : elle donne la raison exacte."]
+];
+function pickMain(L){
+  const f=re=>{for(let i=0;i<L.length;i++)if(re.test(L[i]))return i;return -1};
+  let i=f(/\.dart:\d+:\d+: Error:/);
+  if(i>=0)return [L[i]].concat(L[i+1]&&/^\s+- /.test(L[i+1])?[L[i+1]]:[]).join('\n');
+  i=f(/^e: /);if(i>=0)return L[i];
+  i=f(/\.java:\d+: error:/);if(i>=0)return L.slice(i,i+3).join('\n');
+  i=f(/^\* What went wrong:/);if(i>=0){const o=[];for(let k=i+1;k<L.length&&o.length<4&&L[k].trim()&&!/^(\*|BUILD FAILED)/.test(L[k]);k++)o.push(L[k]);if(o.length)return o.join('\n')}
+  i=f(/version solving failed/);if(i>=0){let j=i;while(j>0&&L[j-1].trim()&&i-j<8)j--;return L.slice(j,i+1).join('\n')}
+  i=f(/^npm (ERR!|error)/);if(i>=0)return L.slice(i,i+3).join('\n');
+  for(let k=L.length-1;k>=0;k--){const l=L[k];
+    if(/(error|erreur|exception|failed|échec|introuvable|impossible|not found|No such file|cannot|could not|timed out|refused|unable|Aucun)/i.test(l)&&!/(Process completed|BUILD FAILED|FAILURE: Build failed|Run with --|Try:|0 errors|^\s+at )/i.test(l))return l}
+  for(let k=L.length-1;k>=0;k--)if(/exit code \d+/i.test(L[k]))return L[k];
+  return '';
+}
+function diagnose(L,errs,step,notes,run){
+  const concl=run&&run.conclusion;
+  let main=pickMain(L)||notes.filter(n=>!/^Process completed with exit code/.test(n))[0]||notes[0]||'';
+  main=main.length>700?main.slice(0,700)+' …':main;
+  let why='',fix='';
+  if(concl==='cancelled'){why='La compilation a été annulée (à la main, ou remplacée par un autre lancement).';fix='Relance la compilation.'}
+  else if(concl==='timed_out'){why='La compilation a dépassé le temps maximum de GitHub Actions (30 min).';fix='Allège le projet (dépendances, images) puis relance.'}
+  else if(concl==='startup_failure'){why='GitHub n\u2019a pas pu démarrer le workflow (fichier .yml invalide, ou Actions désactivées).';fix='Ouvre l\u2019onglet Actions du dépôt : GitHub y affiche l\u2019erreur du .yml.'}
+  else{
+    const hay=L.slice(-800).join('\n')+'\n'+notes.join('\n');
+    for(const [re,w,f] of DIAG){const m=hay.match(re);if(m){why=typeof w==='function'?w(m):w;fix=f;break}}
+  }
+  if(!why){
+    why=step?'L\u2019étape « '+step+' » s\u2019est terminée avec une erreur.':'La compilation s\u2019est arrêtée sur une erreur.';
+    fix=L.length?'Lis « Erreur » ci-dessus, ou touche « Copier l\u2019erreur » pour la transmettre.':'Le journal n\u2019est pas lisible depuis l\u2019appli (droit « Actions : lecture » manquant ?) : ouvre-le sur GitHub.';
+  }
+  if(!main&&!L.length)main=notes[0]||'(GitHub n\u2019a renvoyé aucun détail)';
+  return{step,main,why,fix,lines:errs};
+}
+function showFail(d){
+  $('fbStep').textContent=d.step||'—';
+  const mn=$('fbMain');mn.textContent=d.main||'';mn.style.display=d.main?'':'none';$('fbMainT').style.display=d.main?'':'none';
+  $('fbWhy').textContent=d.why||'';$('fbFix').textContent=d.fix||'';
+  const ls=d.lines||[];
+  $('fbDet').style.display=ls.length>1?'':'none';$('fbN').textContent=ls.length;$('fbPre').textContent=ls.join('\n');
+  $('failBox').style.display='block';
+  setTimeout(()=>{try{$('failBox').scrollIntoView({behavior:'smooth',block:'center'})}catch(_){}},500);
+}
+/* Erreur avant ou pendant la communication avec GitHub (envoi, droits, réseau…) */
+function clientDiag(err){
+  const m=String((err&&err.message)||err),k=st?st.findIndex(v=>v===1):-1;
+  let why='Une erreur est survenue pendant la préparation ou la communication avec GitHub.',fix='Vérifie ta connexion et tes réglages, puis réessaie.';
+  if(/\(401\)/.test(m)){why='GitHub refuse le jeton (invalide, expiré ou révoqué).';fix='Réglages : crée un nouveau jeton (Contents en écriture, Actions en lecture) et colle-le.'}
+  else if(/\(403\)/.test(m)){why='Le jeton n\u2019a pas les droits nécessaires, ou la limite de requêtes GitHub est atteinte.';fix='Donne au jeton Contents (écriture) et Actions (lecture), ou attends quelques minutes.'}
+  else if(/\(404\)/.test(m)){why='Le dépôt est introuvable, ou le jeton n\u2019y a pas accès.';fix='Vérifie « propriétaire/dépôt » dans Réglages et l\u2019accès du jeton à ce dépôt.'}
+  else if(/\(422\)/.test(m)){why='GitHub a refusé le fichier envoyé (déjà présent ou invalide).';fix='Réessaie : un nouvel identifiant de build sera créé.'}
+  else if(/Failed to fetch|NetworkError|Load failed|network/i.test(m)){why='Pas de connexion à GitHub (réseau coupé ou bloqué).';fix='Vérifie ta connexion internet puis réessaie.'}
+  else if(/Aucune exécution/.test(m)){why='GitHub Actions n\u2019a pas lancé le workflow.';fix='Dans le dépôt : onglet Actions, active les workflows et vérifie que .github/workflows est présent.'}
+  else if(/Délai dépassé/.test(m)){why='La compilation n\u2019a pas fini en 35 min.';fix='Ouvre l\u2019onglet Actions du dépôt pour voir où elle bloque.'}
+  else if(/APK est introuvable/.test(m)){why='Le build a réussi mais aucune release avec l\u2019APK n\u2019a été trouvée.';fix='Ouvre l\u2019onglet Actions, étape « Publier l\u2019APK ».'}
+  return{step:k>=0?PH[k].t:'Préparation',main:m,why,fix,lines:[]};
 }
 async function conFail(run,job,id,cfg){
   const url=run.html_url;
   fail('La compilation a échoué.',url);
-  clearInterval(CON.tick);conBadge('ko');CON.curStep=null;
+  clearInterval(CON.tick);conBadge('ko');CON.curStep=null;CON.done=true;
+  conLog("Récupération du journal complet…",'in');
+  let L=await conFlush(job);                       /* journal complet du job : toutes les lignes, jusqu'à la dernière */
+  if(!L){                                          /* repli : extrait enregistré par le workflow */
+    let raw='';
+    for(let k=0;k<3&&!raw;k++){try{raw=await ghFile('builds/'+id+'/build-error.txt')}catch(_){}if(!raw&&k<2)await sleep(2500)}
+    if(raw){L=cleanLog(raw);conLog('— extrait enregistré par le workflow (400 dernières lignes) —','tk');L.forEach(l=>conLog(l.length>1500?l.slice(0,1500)+' …':l,clsFor(l)))}
+  }
+  L=L||[];
+  let notes=[];
+  if(job){try{const r=await api('/check-runs/'+job.id+'/annotations');if(r.ok)notes=(await r.json()).filter(a=>a.annotation_level==='failure'&&a.message).map(a=>a.message)}catch(_){}}
+  const f=job&&(job.steps||[]).find(s=>s.conclusion==='failure');
+  let step=f?STEP_FR(f.name):CON.step||'';
+  if(f&&f.started_at&&f.completed_at)step+=' ('+Math.max(0,Math.round((new Date(f.completed_at)-new Date(f.started_at))/1000))+' s)';
+  CON.step=step;
+  const errs=L.length?extractErrors(L):[],d=diagnose(L,errs,step.replace(/ \(\d+ s\)$/,''),notes,run);
+  d.step=step||'inconnue';
   conLog('BUILD FAILED en '+mmss(Date.now()-CON.t0),'er');
-  conLog("Récupération du journal d'erreur…",'in');
-  let raw='';
-  for(let k=0;k<3&&!raw;k++){try{raw=await ghFile('builds/'+id+'/build-error.txt')}catch(_){}if(!raw&&k<2)await sleep(2500)}
-  if(!raw&&job){try{raw=await ghText('/actions/jobs/'+job.id+'/logs')}catch(_){}}
-  const L=raw?cleanLog(raw):[],errs=L.length?extractErrors(L):[];
-  if(!CON.step&&job){const f=(job.steps||[]).find(s=>s.conclusion==='failure');if(f)CON.step=STEP_FR(f.name)}
-  const head='Erreur de compilation — '+cfg.name+' ('+(cfg.type==='flutter'?'Flutter':'Site web')+')'+(CON.step?'\nÉtape en échec : '+CON.step:'');
-  CON.errText=head+'\n\n'+(errs.length?errs.join('\n'):"(Journal indisponible depuis l'application. Mets à jour le workflow GitHub ou ouvre le journal.)")+'\n\nJournal complet : '+url;
-  CON.fullText=head+'\n\n'+(L.length?L.slice(-300).join('\n'):CON.out.join('\n'))+'\n\nJournal complet : '+url;
-  if(errs.length){errs.forEach(e=>conLog(e,/^\s/.test(e)?'cd':'er'))}
-  else conLog("Journal d'erreur indisponible dans l'application (mets à jour le workflow, voir l'aide).",'wa');
-  conLog("▸ Touche l'icône ⧉ (ou « Copier l'erreur ») pour copier tout ça.",'in');
-  $('conCopy').classList.add('hot');$('conStat').textContent='Échec'+(CON.step?' · '+CON.step:'');
+  conLog('────────── Ce qui a échoué ──────────','tk');
+  conLog('Étape : '+d.step,'er');
+  if(d.main)d.main.split('\n').forEach(x=>conLog(x,/^\s/.test(x)?'cd':'er'));
+  conLog('Cause : '+d.why,'wa');conLog('À faire : '+d.fix,'in');
+  showFail(d);
+  $('stat').textContent='Échec : '+d.why;
+  const head='Erreur de compilation — '+cfg.name+' ('+(cfg.type==='flutter'?'Flutter':'Site web')+')';
+  CON.errText=[head,'Étape : '+d.step,d.main?'Erreur :\n'+d.main:'','Cause : '+d.why,'À faire : '+d.fix,'',errs.length?errs.join('\n'):'','','Journal complet : '+url].filter((x,i,a)=>x!==''||a[i-1]!=='').join('\n');
+  CON.fullText=head+'\nÉtape : '+d.step+'\n\n'+(L.length?L.join('\n'):CON.out.join('\n'))+'\n\nJournal complet : '+url;
+  $('conCopy').classList.add('hot');$('conStat').textContent='Échec'+(d.step?' · '+d.step:'');
   setTimeout(()=>$('con').classList.remove('run'),900);
   $('act').innerHTML='<button class="btn" id="cpErr">Copier l\'erreur</button><button class="btn ghost" id="cpAll">Copier tout le journal</button><a class="btn ghost" target="_blank" rel="noopener" href="'+url+'">Voir le journal sur GitHub</a><button class="btn ghost" id="again">Réessayer</button>';
   $('cpErr').onclick=()=>doCopy(CON.errText,'Erreur copiée');
-  $('cpAll').onclick=()=>doCopy(CON.fullText,'Journal copié');
+  $('cpAll').onclick=()=>doCopy(CON.fullText,'Journal complet copié');
   $('again').onclick=reset;
   if(navigator.vibrate)navigator.vibrate([80,50,80]);
 }
@@ -875,20 +1077,24 @@ $('f').addEventListener('submit',async e=>{
     conLog('Commit '+sha.slice(0,7)+' poussé · GitHub Actions démarre…','tk',hhmmss(Date.now()));
     $('stat').textContent='Compilation en cours, laisse cette page ouverte.';
 
-    const start=Date.now();let netFail=0;
+    const start=Date.now();let netFail=0,noRun=0,okNoRel=0,lastJob=null;
     while(Date.now()-start<35*60*1000){
       await sleep(netFail?Math.min(30000,3000*netFail):4000);
       try{
         const rel=await api('/releases/tags/apk-'+id);
-        if(rel.ok){const a=((await rel.json()).assets||[]).find(a=>/\.apk$/i.test(a.name));if(a){conOk();return succeed(a)}}
+        if(rel.ok){const a=((await rel.json()).assets||[]).find(a=>/\.apk$/i.test(a.name));if(a){CON.done=true;await conFinish(sha,lastJob);conOk();return succeed(a)}}
         const rr=await api('/actions/runs?head_sha='+sha);
+        if(!rr.ok&&[401,403,404].includes(rr.status))throw new Error('GitHub ('+rr.status+') : lecture des exécutions du workflow refusée. Le jeton doit avoir le droit « Actions : lecture » et le dépôt « '+repo+' » doit exister.');
         if(rr.ok){
           const run=(await rr.json()).workflow_runs[0];
           if(run){
+            noRun=0;
             const jr=await api('/actions/runs/'+run.id+'/jobs');let job=null;
-            if(jr.ok){job=(await jr.json()).jobs[0];if(job&&job.steps){steps2phase(job.steps);conSteps(job);if(run.status!=='completed')conLive(job)}}
+            if(jr.ok){job=(await jr.json()).jobs[0];if(job){lastJob=job;if(job.steps){steps2phase(job.steps);conSteps(job);if(run.status!=='completed')conLive(job)}}}
             if(run.status==='completed'&&run.conclusion!=='success')return await conFail(run,job,id,cfg);
-          }
+            if(run.status==='completed'&&run.conclusion==='success'&&++okNoRel>4)throw new Error('Le build a réussi mais l\u2019APK est introuvable dans les releases du dépôt.');
+          }else if(!noRun)noRun=Date.now();
+          else if(Date.now()-noRun>4*60*1000)throw new Error('Aucune exécution GitHub Actions n\u2019a démarré en 4 min : le workflow « '+(mode()==='flutter'?'Build Flutter APK':'Build APK')+' » est absent ou désactivé dans « '+repo+' » (onglet Actions), ou Actions est désactivé pour ce dépôt.');
         }
         if(netFail){netFail=0;CON.lost=false;conLog('✔ Connexion rétablie','ok');$('stat').textContent='Compilation en cours, laisse cette page ouverte.'}
       }catch(e){
@@ -897,10 +1103,13 @@ $('f').addEventListener('submit',async e=>{
         throw e;
       }
     }
-    conLog('✖ Délai dépassé (35 min).','er');conBadge('ko');
-    fail('Délai dépassé. Consulte l\'onglet Actions du dépôt.');
+    throw new Error('Délai dépassé (35 min) : la compilation ne s\u2019est pas terminée.');
   }catch(err){
-    if(pv.style.display==='block'){conLog('✖ '+err.message,'er');conBadge('ko');clearInterval(CON.tick);fail(err.message)}else{$('err').textContent=err.message;$('go').disabled=false}
+    if(pv.style.display==='block'){
+      conLog('✖ '+err.message,'er');conBadge('ko');clearInterval(CON.tick);CON.done=true;
+      CON.errText=err.message;CON.fullText=CON.out.join('\n');$('conCopy').classList.add('hot');$('conStat').textContent='Échec';
+      fail(err.message);showFail(clientDiag(err));
+    }else{$('err').textContent=err.message;$('go').disabled=false}
   }
 });
 
@@ -982,6 +1191,7 @@ $('vRef2').onclick=()=>vLoadDeps();
 
 async function vOpenProject(x){
   V.cur=x;V.files=[];V.label='';V.watch++;
+  if(VF.proj!==x.id){vfReset();vMsg($('vfList'),'Chargement…');$('vfSt').textContent='';$('vfCrumb').innerHTML=''}
   $('vName').textContent=x.name;$('vErr').textContent='';$('vStat').textContent='';
   $('vLcSw').style.display=x.link&&x.link.type?'':'none';$('vLc').checked=false;
   vFilesRefresh();vShow('det');scrollTo(0,0);vLoadDeps();
@@ -992,7 +1202,7 @@ async function vLoadDeps(){
   try{
     const j=await vApi('/v6/deployments?projectId='+encodeURIComponent(x.id)+'&limit=15');
     if(n!==V.seq)return;
-    V.deps=j.deployments||[];vDrawDeps();
+    V.deps=j.deployments||[];vDrawDeps();vfInit();
   }catch(e){if(n===V.seq)vMsg(box,e.message,true)}
 }
 function vDrawDeps(){
@@ -1103,6 +1313,219 @@ $('vDeploy').onclick=async()=>{
     vWatch(j.id||j.uid);vLoadDeps();
   }catch(e){$('vErr').textContent=e.message;$('vStat').textContent='';toast(e.message)}
   finally{V.busy=false;vFilesRefresh()}
+};
+
+/* =====================================================================
+   Fichiers d'un projet Vercel : lister, modifier, télécharger (ZIP), redéployer
+   ===================================================================== */
+const VF={proj:'',dep:'',want:'',tree:[],edits:new Map(),dir:'',busy:false,seq:0};
+function vfFlat(nodes,pre,out){
+  (nodes||[]).forEach(n=>{
+    const p=pre+n.name;
+    if(n.type==='directory')vfFlat(n.children,p+'/',out);
+    else if(n.type==='file'&&n.uid)out.push({path:p,uid:n.uid});
+  });
+  return out;
+}
+function vfReset(){VF.proj='';VF.dep='';VF.want='';VF.tree=[];VF.edits.clear();VF.dir='';vfPend()}
+function vfAll(){
+  const out=[];
+  VF.tree.forEach(f=>{const e=VF.edits.get(f.path);if(e&&e.del)return;out.push({path:f.path,uid:f.uid,st:e?'mod':''})});
+  VF.edits.forEach((e,p)=>{if(!e.del&&!VF.tree.some(f=>f.path===p))out.push({path:p,uid:'',st:'new'})});
+  return out;
+}
+function vfPend(){
+  const n=VF.edits.size;
+  $('vfPend').style.display=n?'':'none';
+  $('vfDeploy').textContent='Déployer les modifications ('+n+')';
+}
+function vfInit(){
+  const x=V.cur;if(!x)return;
+  if(VF.proj!==x.id){vfReset();VF.proj=x.id}
+  const ok=V.deps.filter(d=>vEtat(d.state||d.readyState)==='READY'),sel=$('vfDep'),keep=VF.dep;
+  sel.innerHTML='';
+  ok.forEach(d=>{const o=document.createElement('option');o.value=d.uid||d.id;o.textContent=(d.target==='production'?'Production':'Aperçu')+' · '+new Date(d.created||d.createdAt||0).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});sel.appendChild(o)});
+  if(!ok.length){VF.dep='';VF.tree=[];vMsg($('vfList'),'Aucun déploiement prêt : déploie d’abord des fichiers.');return}
+  const id=d=>d.uid||d.id;
+  const pick=(VF.want&&ok.find(d=>id(d)===VF.want))||ok.find(d=>id(d)===keep)||ok.find(d=>d.target==='production')||ok[0];
+  if(VF.want&&id(pick)===VF.want)VF.want='';
+  sel.value=id(pick);
+  if(VF.dep!==sel.value||!VF.tree.length)vfLoad(sel.value);
+}
+async function vfLoad(id){
+  const n=++VF.seq;VF.dep=id;VF.dir='';$('vfSt').textContent='';$('vfErr').textContent='';
+  vMsg($('vfList'),'Chargement…');
+  try{
+    const j=await vApi('/v6/deployments/'+encodeURIComponent(id)+'/files');
+    if(n!==VF.seq)return;
+    VF.tree=vfFlat(Array.isArray(j)?j:(j&&j.files)||[],'',[]);vfDraw();
+  }catch(e){if(n===VF.seq){VF.tree=[];vMsg($('vfList'),e.message,true)}}
+}
+$('vfDep').onchange=()=>{
+  const sel=$('vfDep');
+  if(VF.edits.size&&!confirm('Les modifications non déployées seront perdues. Continuer ?')){sel.value=VF.dep;return}
+  VF.edits.clear();vfPend();vfLoad(sel.value);
+};
+$('vfRef').onclick=()=>{
+  if(!VF.dep)return;
+  if(VF.edits.size&&!confirm('Les modifications non déployées seront perdues. Continuer ?'))return;
+  VF.edits.clear();vfPend();vfLoad(VF.dep);
+};
+$('vfSearch').addEventListener('input',()=>vfDraw());
+function vfDraw(){
+  const box=$('vfList'),q=$('vfSearch').value.trim().toLowerCase(),cr=$('vfCrumb');
+  cr.innerHTML='';$('vfZipDir').style.display=VF.dir?'':'none';
+  const parts=VF.dir?VF.dir.split('/'):[],mk=(t,d)=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=()=>{VF.dir=d;$('vfSearch').value='';vfDraw()};cr.appendChild(b)};
+  mk(V.cur?V.cur.name:'/','');
+  parts.forEach((p,i)=>{const s=document.createElement('span');s.textContent='›';cr.appendChild(s);mk(p,parts.slice(0,i+1).join('/'))});
+  const all=vfAll();let rows=[];
+  if(q){
+    rows=all.filter(f=>f.path.toLowerCase().includes(q)).slice(0,200).map(f=>({f:1,path:f.path,name:f.path.split('/').pop(),sub:f.path.includes('/')?f.path.slice(0,f.path.lastIndexOf('/')):'',st:f.st,uid:f.uid}));
+  }else{
+    const pre=VF.dir?VF.dir+'/':'',dirs=new Set(),files=[];
+    all.forEach(f=>{
+      if(!f.path.startsWith(pre))return;
+      const r=f.path.slice(pre.length),i=r.indexOf('/');
+      if(i>=0)dirs.add(r.slice(0,i));else files.push({f:1,path:f.path,name:r,sub:'',st:f.st,uid:f.uid});
+    });
+    rows=[...[...dirs].sort((a,b)=>a.localeCompare(b)).map(d=>({f:0,name:d,path:pre+d})),...files.sort((a,b)=>a.name.localeCompare(b.name))];
+  }
+  box.innerHTML='';
+  if(!rows.length){vMsg(box,q?'Aucun fichier ne correspond.':(VF.tree.length||VF.edits.size?'Dossier vide.':'Aucun fichier.'));return}
+  const ICO_DL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg>';
+  const ICO_RM='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg>';
+  rows.forEach(r=>{
+    const li=document.createElement('li'),b=document.createElement('button');b.type='button';
+    b.innerHTML='<span class="fi"></span><span class="n"></span><span class="sz"></span>';
+    const fi=b.querySelector('.fi');fi.innerHTML=r.f?SVG_FILE:SVG_DIR;fi.className='fi '+(r.f?'t':'d');
+    const n=b.querySelector('.n');n.textContent=r.name;
+    if(r.sub){const em=document.createElement('em');em.textContent=r.sub;n.appendChild(em)}
+    b.querySelector('.sz').textContent=r.st==='new'?'nouveau':r.st==='mod'?'modifié':'';
+    b.onclick=r.f?()=>vfOpen(r):()=>{VF.dir=r.path;$('vfSearch').value='';vfDraw();scrollTo(0,0)};
+    li.appendChild(b);
+    const dl=document.createElement('button');dl.type='button';dl.className='edel edown';dl.innerHTML=ICO_DL;dl.title='Télécharger';dl.setAttribute('aria-label','Télécharger '+r.name);
+    dl.onclick=e=>{e.stopPropagation();r.f?vfDownloadFile(r):vfZip(r.path)};li.appendChild(dl);
+    if(!q){const del=document.createElement('button');del.type='button';del.className='edel';del.innerHTML=ICO_RM;del.title='Supprimer du prochain déploiement';del.setAttribute('aria-label','Supprimer '+r.name);del.onclick=e=>{e.stopPropagation();vfDelete(r)};li.appendChild(del)}
+    box.appendChild(li);
+  });
+}
+async function vfBytes(f){
+  const e=VF.edits.get(f.path);
+  if(e&&!e.del)return new TextEncoder().encode(e.text);
+  const j=await retry(()=>vApi('/v7/deployments/'+encodeURIComponent(VF.dep)+'/files/'+encodeURIComponent(f.uid)));
+  if(!j||typeof j.data!=='string')throw new Error('Contenu illisible : '+f.path);
+  return b64ToBytes(j.data);
+}
+async function vfOpen(r){
+  if(VF.busy)return;VF.busy=true;toast('Ouverture…');
+  try{
+    let txt;const e=VF.edits.get(r.path);
+    if(e&&!e.del)txt=e.text;
+    else{
+      const u=await vfBytes(r);
+      if(u.length>EDIT_MAX)throw new Error('Fichier trop gros pour être modifié ici ('+fmt(u.length)+'). Tu peux le télécharger.');
+      if(u.subarray(0,8000).includes(0))throw new Error('Fichier binaire : modification impossible ici (téléchargement possible).');
+      try{txt=new TextDecoder('utf-8',{fatal:true}).decode(u)}catch(_){throw new Error("Ce fichier n'est pas en UTF-8 : modification impossible ici.")}
+      if(txt.charCodeAt(0)===0xFEFF)txt=txt.slice(1);
+    }
+    E.src='v';E.eol=txt.includes('\r\n')?'\r\n':'\n';
+    const t=E.eol==='\r\n'?txt.replace(/\r\n/g,'\n'):txt;
+    E.cur={path:r.path,name:r.path.split('/').pop()};E.orig=t;
+    $('eName').textContent=E.cur.name;codeEditor.setOption('mode',eMode(r.path));codeEditor.setValue(t);$('eErr').textContent='';
+    $('eMsg').style.display='none';$('eSave').textContent='Garder';
+    eDirty(false);
+    $('eEd').classList.add('on');codeEditor.scrollTo(0,0);setTimeout(()=>codeEditor.refresh(),50);
+    toast('');
+  }catch(e){toast(e.message)}
+  finally{VF.busy=false}
+}
+function vfKeep(){
+  const p=E.cur.path;let txt=codeEditor.getValue();if(E.eol==='\r\n')txt=txt.replace(/\n/g,'\r\n');
+  const old=VF.edits.get(p),isNew=!!(old&&old.isNew)||!VF.tree.some(f=>f.path===p);
+  VF.edits.set(p,{text:txt,isNew});
+  E.orig=codeEditor.getValue();eDirty(false);
+  $('eEd').classList.remove('on');E.cur=null;
+  vfPend();vfDraw();toast('Modification gardée. Touche « Déployer les modifications ».');
+}
+function vfNew(){
+  if(!VF.dep)return;
+  const base=VF.dir?VF.dir+'/':'';
+  const name=ePrompt('Nom du nouveau fichier (ex. style.css ou assets/app.js)','nouveau-fichier.txt');
+  if(name===null)return;
+  if(!name||name.startsWith('/')||name.split('/').some(p=>!p||p==='.'||p==='..')){toast('Nom ou chemin invalide.');return}
+  const path=base+name;
+  if(vfAll().some(f=>f.path===path)){toast('Ce fichier existe déjà.');return}
+  VF.edits.set(path,{text:'',isNew:true});vfPend();vfDraw();vfOpen({path});
+}
+function vfDelete(r){
+  const hit=vfAll().filter(f=>r.f?f.path===r.path:f.path.startsWith(r.path+'/'));
+  if(!hit.length)return;
+  if(!confirm((r.f?'Retirer « '+r.path+' »':'Retirer le dossier « '+r.name+' » et ses '+hit.length+' fichier(s)')+' du prochain déploiement ?\nRien n’est supprimé tant que tu ne déploies pas.'))return;
+  hit.forEach(f=>{if(f.st==='new')VF.edits.delete(f.path);else VF.edits.set(f.path,{del:true})});
+  vfPend();vfDraw();
+}
+async function vfDownloadFile(r){
+  if(VF.busy)return;VF.busy=true;toast('Téléchargement…');
+  try{
+    const u8=await vfBytes(r),nom=r.path.split('/').pop();
+    const how=await enregistrerTelechargements(new Blob([u8],{type:'application/octet-stream'}),nom);
+    toast(how==='fs'?'« '+nom+' » enregistré dans Téléchargements.':'Téléchargement lancé.');
+  }catch(e){toast('Échec : '+e.message)}finally{VF.busy=false}
+}
+async function vfZip(dir){
+  if(VF.busy||!V.cur)return;
+  if(typeof JSZip==='undefined'){toast('JSZip indisponible : vérifie ta connexion Internet.');return}
+  const pre=dir?dir+'/':'',files=vfAll().filter(f=>f.path.startsWith(pre));
+  if(!files.length){toast('Aucun fichier à télécharger.');return}
+  VF.busy=true;const st=t=>{$('vfSt').textContent=t||''};
+  const root=V.cur.name+(dir?'-'+dir.replace(/\//g,'-'):''),zip=new JSZip();let done=0,fail=[];
+  st('Téléchargement 0/'+files.length+'…');
+  try{
+    await pool(files,6,async f=>{
+      try{zip.file(root+'/'+f.path.slice(pre.length),await vfBytes(f))}
+      catch(e){if(e.status===401||e.status===403)throw e;fail.push(f.path)}
+      st('Téléchargement '+(++done)+'/'+files.length+'…');
+    });
+    st('Création du ZIP…');
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    const how=await enregistrerTelechargements(blob,root+'.zip');
+    st((how==='fs'?'Enregistré dans Téléchargements : ':'ZIP prêt : ')+root+'.zip ('+(files.length-fail.length)+' fichier(s)'+(fail.length?' · '+fail.length+' échec(s)':'')+' · '+fmt(blob.size)+')');
+    toast(how==='fs'?'ZIP enregistré dans Téléchargements.':'Téléchargement du ZIP lancé.');
+  }catch(e){st('Échec : '+e.message);toast('Échec : '+e.message)}
+  finally{VF.busy=false}
+}
+$('vfNew').onclick=vfNew;$('vfZipAll').onclick=()=>vfZip('');$('vfZipDir').onclick=()=>vfZip(VF.dir);
+$('vfReset').onclick=()=>{
+  if(!VF.edits.size)return;
+  if(!confirm('Annuler toutes les modifications non déployées ?'))return;
+  VF.edits.clear();vfPend();vfDraw();
+};
+$('vfDeploy').onclick=async()=>{
+  const x=V.cur;if(!x||V.busy||!VF.edits.size)return;
+  V.busy=true;$('vfDeploy').disabled=true;$('vfErr').textContent='';const st=t=>{$('vfSt').textContent=t||''};
+  try{
+    const files=vfAll(),list=[];let done=0;
+    if(!files.length)throw new Error('Il ne resterait aucun fichier à déployer.');
+    st('Préparation des fichiers…');
+    await pool(files,5,async f=>{
+      const u8=await vfBytes(f),sha=await sha1hex(u8);
+      list.push({file:f.path,sha,size:u8.length,u8});
+      st('Préparation '+(++done)+'/'+files.length+'…');
+    });
+    const seen=new Set(),up=list.filter(f=>!seen.has(f.sha)&&seen.add(f.sha));let sent=0;
+    await pool(up,5,async f=>{
+      await retry(()=>vApi('/v2/files',{method:'POST',body:f.u8,headers:{'Content-Type':'application/octet-stream','x-vercel-digest':f.sha}}));
+      st('Envoi des fichiers '+(++sent)+'/'+up.length+'…');
+    });
+    st('Création du déploiement…');
+    const body={name:x.name,project:x.id,files:list.map(f=>({file:f.file,sha:f.sha,size:f.size})),meta:{action:'apk-studio'}};
+    if($('vfProd').checked)body.target='production';
+    const j=await vApi('/v13/deployments?skipAutoDetectionConfirmation=1',{method:'POST',json:body});
+    VF.want=j.id||j.uid||'';VF.edits.clear();vfPend();vfDraw();
+    toast('Déploiement lancé');st('Déploiement lancé…');
+    vWatch(j.id||j.uid);vLoadDeps();
+  }catch(e){$('vfErr').textContent=e.message;st('');toast(e.message)}
+  finally{V.busy=false;$('vfDeploy').disabled=false}
 };
 
 /* ---------- Onglets, toast ---------- */
@@ -1284,6 +1707,7 @@ async function chargerApps(){
     if(!r.ok)throw new Error('GitHub ('+r.status+')');
     const l=(await r.json()).filter(x=>x.tag_name.startsWith('apk-')&&(x.assets||[]).some(a=>/\.apk$/i.test(a.name)));
     if(!l.length){box.innerHTML="<p class=\"vide\">Aucune application pour le moment. Génère la première dans l'onglet Créer.</p>";return}
+    APPS=l;appsAt=Date.now();
     box.innerHTML='';
     l.forEach(x=>{
       const a=x.assets.find(a=>/\.apk$/i.test(a.name)),m=meta(x);
@@ -1354,7 +1778,7 @@ function modifier(x){
   edition={tag:x.tag_name,cfg:c,source:(x.assets||[]).some(a=>a.name==='source.zip')||!!c.sourceUrl};
   choisir('mode',c.type==='flutter'?'flutter':'web');
   $('name').value=c.name||x.name||'';$('pkg').value=c.pkg||$('pkg').value;
-  $('vname').value=c.versionName||'1.0.0';$('vcode').value=(+c.versionCode||1)+1;
+  $('vname').value=bumpVer(c.versionName||'1.0.0','patch');$('vcode').value=(+c.versionCode||1)+1;majVchips();
   $('orient').value=c.orientation||'auto';$('color').value=c.color||'#2a2f6b';$('full').checked=!!c.fullscreen;
   const set=new Set(c.permissions||[]);pcb().forEach(b=>b.checked=set.has(b.value));$('all').checked=pcb().every(b=>b.checked);
   $('share').checked=c.share!==false;$('ask').checked=c.askStart!==false;
@@ -1362,10 +1786,73 @@ function modifier(x){
   $('zip').value='';$('icon').value='';autoLogo=null;iconeAff();
   if(edition.source&&!c.sourceUrl){$('zn').textContent='Source conservée dans l\'application';$('zs').textContent='Dépose un ZIP seulement pour la remplacer'}
   else if(!edition.source){$('zn').textContent='Dépose le ZIP de l\'application';$('zs').textContent='La source de cette ancienne version n\'a pas été conservée'}
-  $('edTxt').textContent='Modification de « '+(c.name||x.name)+' » : la nouvelle version remplacera l\'ancienne. Garde le même identifiant pour mettre à jour l\'application installée.';
+  $('edTxt').textContent='Modification de « '+(c.name||x.name)+' » : version '+(c.versionName||'?')+' ('+(c.versionCode||1)+') → '+$('vname').value+' ('+$('vcode').value+'). Garde le même identifiant pour mettre à jour l\'application installée.';
   $('edBar').style.display='flex';
   prev();goTab('create');toast('Informations chargées');
 }
+/* ---------- Nom d'une appli existante : remplit le formulaire ---------- */
+let APPS=[],appsAt=0;
+const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+async function appsCache(){
+  repo=$('repo').value.trim();token=$('token').value.trim();
+  if(!repo||!token||(APPS.length&&Date.now()-appsAt<120000))return;
+  try{
+    const r=await api('/releases?per_page=100');if(!r.ok)return;
+    APPS=(await r.json()).filter(x=>x.tag_name.startsWith('apk-')&&(x.assets||[]).some(a=>/\.apk$/i.test(a.name)));appsAt=Date.now();
+  }catch(_){}
+}
+function sugHide(){$('nameSug').classList.remove('on');$('nameSug').innerHTML=''}
+async function sugShow(){
+  const q=norm($('name').value);
+  if(!q||edition){sugHide();return}
+  await appsCache();
+  if(norm($('name').value)!==q||edition)return;
+  const seen=new Set(),l=APPS.filter(x=>{const n=norm(x.name);if(!n.includes(q)||seen.has(n))return false;seen.add(n);return true})
+    .sort((a,b)=>(norm(b.name).startsWith(q)-norm(a.name).startsWith(q))).slice(0,6);
+  const box=$('nameSug');box.innerHTML='';
+  if(!l.length){sugHide();return}
+  l.forEach(x=>{
+    const c=cfgDe(x),b=document.createElement('button');b.type='button';b.setAttribute('role','option');
+    b.innerHTML='<span class="si"></span><span class="sn"><b></b><small></small></span><span class="sg">Remplir</span>';
+    b.querySelector('.si').textContent=(x.name||'?')[0].toUpperCase();
+    b.querySelector('b').textContent=x.name;
+    b.querySelector('small').textContent=['v'+(c.versionName||'?')+' ('+(c.versionCode||'?')+')',c.pkg,c.type==='flutter'?'Flutter':'Site web'].filter(Boolean).join(' · ');
+    b.addEventListener('pointerdown',e=>{e.preventDefault();sugHide();modifier(x)});
+    box.appendChild(b);
+  });
+  box.classList.add('on');
+}
+$('name').addEventListener('input',sugShow);
+$('name').addEventListener('focus',()=>{if($('name').value.trim())sugShow()});
+$('name').addEventListener('blur',()=>setTimeout(sugHide,150));
+$('name').addEventListener('keydown',e=>{if(e.key==='Escape')sugHide()});
+
+/* ---------- Boutons « version + » ---------- */
+function bumpVer(v,k){
+  const m=String(v||'').match(/^(\d+)(?:\.(\d+))?(?:\.(\d+))?(.*)$/);
+  if(!m||k==='code')return v;
+  let a=+m[1],b=+(m[2]||0),c=+(m[3]||0);
+  if(k==='major'){a++;b=0;c=0}else if(k==='minor'){b++;c=0}else c++;
+  return a+'.'+b+'.'+c+(m[4]||'');
+}
+function majVchips(){
+  const v=$('vname').value.trim()||'1.0.0',n=(+$('vcode').value||0)+1;
+  const lab={patch:'Correctif',minor:'Mineure',major:'Majeure',code:'Code seul'};
+  document.querySelectorAll('#vchips button').forEach(b=>{
+    const k=b.dataset.k;b.textContent='＋ '+lab[k]+' · '+(k==='code'?'code '+n:bumpVer(v,k)+' ('+n+')');
+  });
+}
+document.querySelectorAll('#vchips button').forEach(b=>b.addEventListener('click',()=>{
+  const k=b.dataset.k;
+  $('vname').value=bumpVer($('vname').value.trim()||'1.0.0',k);
+  $('vcode').value=(+$('vcode').value||0)+1;
+  ['vname','vcode'].forEach(i=>$(i).dispatchEvent(new Event('input')));
+  toast('Version '+$('vname').value+' · code '+$('vcode').value);
+}));
+['vname','vcode'].forEach(i=>$(i).addEventListener('input',majVchips));majVchips();
+$('conFilt').onclick=()=>{const on=$('con').classList.toggle('onlyerr');$('conFilt').classList.toggle('on',on);const b=$('conBody');b.scrollTop=b.scrollHeight};
+$('conEnd').onclick=()=>{const b=$('conBody');CON.follow=true;b.scrollTop=b.scrollHeight};
+
 $('edX').onclick=()=>{edition=null;$('edBar').style.display='none';choisir('mode',mode());toast('Modification annulée')};
 
 /* ---------- Réinitialiser ---------- */
@@ -1587,7 +2074,7 @@ function gOpen(){gLoadRepos();if($('gRepo').value&&!G.info&&!$('gBr').value)gInf
 /* =====================================================================
    Éditeur : liste des dépôts -> fichiers -> modification -> commit
    ===================================================================== */
-const E={repos:[],tokUsed:'',repo:'',branch:'',tree:[],dir:'',cur:null,orig:'',eol:'\n',dirty:false,busy:false,dl:false,seq:0,closeArm:0};
+const E={src:'gh',repos:[],tokUsed:'',repo:'',branch:'',tree:[],dir:'',cur:null,orig:'',eol:'\n',dirty:false,busy:false,dl:false,seq:0,closeArm:0};
 const EDIT_MAX=1500000;
 /* Repli si l'éditeur de code (CodeMirror, chargé depuis Internet) n'est pas disponible : simple zone de texte */
 function textareaEditor(ta){
@@ -1815,6 +2302,7 @@ $('eNewFile').onclick=()=>eCreatePath('file');$('eNewDir').onclick=()=>eCreatePa
 function b64ToBytes(b){const bin=atob(b.replace(/\s/g,'')),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u}
 async function eOpenFile(r){
   if(E.busy)return;
+  E.src='gh';$('eMsg').style.display='';$('eSave').textContent='Enregistrer';
   if(r.size>EDIT_MAX){toast('Fichier trop gros pour être modifié ici ('+fmt(r.size)+').');return}
   E.busy=true;toast('Ouverture…');
   try{
@@ -1859,6 +2347,7 @@ $('eClose').onclick=()=>{
 };
 $('eSave').onclick=async()=>{
   if(!E.cur||E.busy||!E.dirty)return;
+  if(E.src==='v'){vfKeep();return}
   E.busy=true;const b=$('eSave'),t0=b.textContent;b.disabled=true;b.textContent='Envoi…';$('eErr').textContent='';
   try{
     let txt=codeEditor.getValue();if(E.eol==='\r\n')txt=txt.replace(/\n/g,'\r\n');
