@@ -990,12 +990,40 @@ async function enregistrerTelechargements(blob,nom){
   return'dl';
 }
 /* Téléchargement : on confie directement le lien à Chrome (onglet Chrome / navigateur externe) */
-function telecharger(a,btn){
+function ouvrirChromeDl(a){
   const u=a.browser_download_url;
   if(!u){toast('Lien de téléchargement introuvable.');return}
   try{ouvrirLien(u)}catch(e){try{window.location.href=u}catch(_){toast('Échec : '+(e&&e.message||e))}}
   toast('Ouverture de Chrome…');
+}
+/* Téléchargement via le gestionnaire de téléchargement d'Android (notification, progression, annulation).
+   Replis : téléchargement dans l'application, puis navigateur. */
+function telecharger(a,btn){
+  const AD=window.AndroidDownload,prive=!!(a.id&&repo&&token);
+  const url=prive?'https://api.github.com/repos/'+repo+'/releases/assets/'+a.id:a.browser_download_url;
+  if(!url){toast('Lien de téléchargement introuvable.');return}
   if(navigator.vibrate)navigator.vibrate(40);
+  const repli=async()=>{
+    if(!prive){ouvrirChromeDl(a);return}
+    try{
+      toast('Téléchargement en cours…');
+      const blob=await recupererAsset(a,()=>{});
+      const how=await enregistrerTelechargements(blob,a.name);
+      toast(how==='fs'?'« '+a.name+' » enregistré dans Téléchargements.':'Téléchargement lancé.');
+    }catch(e){toast('Échec : '+(e&&e.message||e));ouvrirChromeDl(a)}
+  };
+  if(AD&&typeof AD.systeme==='function'){
+    if(btn)btn.style.pointerEvents='none';
+    setTimeout(()=>{   /* l'appel natif fait une requête réseau : on laisse d'abord l'interface respirer */
+      let ok=false;
+      try{ok=AD.systeme(url,a.name,'application/vnd.android.package-archive',prive?token:'')}catch(e){console.warn('systeme',e)}
+      if(btn)btn.style.pointerEvents='';
+      if(ok)toast('Téléchargement lancé : suis la progression dans les notifications.');
+      else repli();
+    },30);
+    return;
+  }
+  repli();
 }
 function meta(x){const b=x.body||'',g=r=>(b.match(r)||[])[1];return{ver:g(/Version\s*:\s*(.+)/)||g(/version ([^)]+)/i)||'',type:g(/Type\s*:\s*(\w+)/)||''}}
 async function apiDel(p){return fetch('https://api.github.com/repos/'+repo+p,{method:'DELETE',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token}})}

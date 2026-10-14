@@ -137,6 +137,8 @@ bool_ = lambda b: 'true' if b else 'false'
 
 JAVA = r'''package %PKG%;
 
+import android.app.DownloadManager;
+import android.content.Context;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -157,6 +159,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -234,6 +238,41 @@ public class MainActivity extends BridgeActivity {
         uri = null; fichier = null;
         return true;
       } catch (Exception e) { abort(); return false; }
+    }
+
+    /** Télécharge via le gestionnaire de téléchargement d'Android (notification, progression, annulation).
+     *  Avec un jeton (dépôt privé), l'adresse signée est d'abord résolue ici, puis confiée au gestionnaire. */
+    @JavascriptInterface
+    public boolean systeme(String url, String nom, String mime, String jeton) {
+      try {
+        nom = nom.replaceAll("[\\\\/:*?\"<>|]", "_");
+        if (mime == null || mime.isEmpty()) mime = "application/octet-stream";
+        String cible = url;
+        if (jeton != null && !jeton.isEmpty()) {
+          HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+          c.setInstanceFollowRedirects(false);
+          c.setConnectTimeout(15000);
+          c.setReadTimeout(15000);
+          c.setRequestProperty("Authorization", "Bearer " + jeton);
+          c.setRequestProperty("Accept", "application/octet-stream");
+          c.setRequestProperty("X-GitHub-Api-Version", "2022-11-28");
+          int code = c.getResponseCode();
+          String loc = c.getHeaderField("Location");
+          c.disconnect();
+          if (code < 300 || code >= 400 || loc == null) return false;
+          cible = loc;
+        }
+        DownloadManager.Request r = new DownloadManager.Request(Uri.parse(cible));
+        r.setTitle(nom);
+        r.setDescription("APK Studio");
+        r.setMimeType(mime);
+        r.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+        r.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, nom);
+        DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+        if (dm == null) return false;
+        dm.enqueue(r);
+        return true;
+      } catch (Exception e) { return false; }
     }
 
     @JavascriptInterface
