@@ -145,13 +145,14 @@ button:focus-visible,a:focus-visible,summary:focus-visible,label.btn:focus-withi
 .apps-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
 .apps-head h2{margin:0;font-size:21px;font-weight:700}
 .app{display:flex;gap:14px;align-items:center;padding:14px;margin-bottom:12px;background:var(--card);box-shadow:var(--sh);border-radius:20px}
-.app .ico{width:52px;height:52px;border-radius:16px;background:linear-gradient(145deg,var(--org2),var(--org));color:#fff;display:grid;place-items:center;font:italic 800 22px 'Exo 2',sans-serif;flex:none}
+.app .ico img{width:100%;height:100%;object-fit:cover;display:block}
+.app .ico{overflow:hidden;width:52px;height:52px;border-radius:16px;background:linear-gradient(145deg,var(--org2),var(--org));color:#fff;display:grid;place-items:center;font:italic 800 22px 'Exo 2',sans-serif;flex:none}
 .app .inf{flex:1;min-width:0}
 .app .inf b{display:block;font:600 15.5px Poppins,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .app .inf small{color:var(--mut);font-size:12px;display:block}
 .app .acts{display:flex;flex-direction:column;gap:6px}
 .app .dl{background:var(--dark);color:#fff;border:0;border-radius:12px;padding:9px 12px;font:600 12.5px Poppins,sans-serif;cursor:pointer}
-.app .ed,.app .rm{background:var(--chip);border:0;color:var(--ink);border-radius:12px;padding:6px;font:500 12px Poppins,sans-serif;cursor:pointer}
+.app .ed,.app .rm,.app .lg{background:var(--chip);border:0;color:var(--ink);border-radius:12px;padding:6px;font:500 12px Poppins,sans-serif;cursor:pointer}
 .app .rm{color:var(--mut)}
 .vide{color:var(--mut);text-align:center;padding:32px 12px}
 #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 100px);transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;opacity:0;transition:.3s;z-index:9;pointer-events:none;font-size:14px;max-width:90vw;text-align:center}
@@ -898,6 +899,64 @@ async function recupererAsset(a,onProg){
   }else{parts.push(new Uint8Array(await r.arrayBuffer()))}
   return new Blob(parts,{type:'application/vnd.android.package-archive'});
 }
+/* Logo des applications : on affiche l'icône (icon.png) jointe à la release, sinon la lettre */
+const LOGOS=new Map();
+async function urlLogo(x){
+  const a=(x.assets||[]).find(a=>/^icon\.(png|jpe?g|webp|svg)$/i.test(a.name));
+  if(!a)return null;
+  if(LOGOS.has(a.id))return LOGOS.get(a.id);
+  const p=(async()=>{
+    const direct=!!(a.id&&repo&&token);
+    const r=await fetch(direct?'https://api.github.com/repos/'+repo+'/releases/assets/'+a.id:a.browser_download_url,
+      {headers:direct?{Accept:'application/octet-stream',Authorization:'Bearer '+token,'X-GitHub-Api-Version':'2022-11-28'}:{},redirect:'follow'});
+    if(!r.ok)throw new Error(r.status);
+    const b=await r.blob();
+    return URL.createObjectURL(b.type&&b.type.startsWith('image/')?b:new Blob([b],{type:/\.svg$/i.test(a.name)?'image/svg+xml':'image/png'}));
+  })();
+  LOGOS.set(a.id,p);
+  p.catch(()=>LOGOS.delete(a.id));
+  return p;
+}
+/* Changer le logo d'une application déjà publiée : remplace icon.png dans la release, sans recompiler.
+   (L'icône du lanceur Android, elle, ne change qu'avec un nouvel APK.) */
+function choisirLogo(x,carte,btn){
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=async()=>{
+    const f=inp.files[0];if(!f)return;
+    const txt=btn.textContent;btn.disabled=true;btn.textContent='Envoi…';
+    try{
+      if(!repo||!token)throw new Error('Ajoute ton jeton dans Réglages.');
+      const u8=b64ToBytes(await iconPng(f));
+      /* 1. supprimer l'ancien logo de la release */
+      for(const a of (x.assets||[]).filter(a=>/^icon\.(png|jpe?g|webp|svg)$/i.test(a.name))){
+        const d=await apiDel('/releases/assets/'+a.id);
+        if(!d.ok&&d.status!==404)throw new Error('Suppression de l’ancien logo refusée ('+d.status+')');
+        LOGOS.delete(a.id);
+      }
+      /* 2. envoyer le nouveau */
+      const r=await fetch('https://uploads.github.com/repos/'+repo+'/releases/'+x.id+'/assets?name=icon.png',
+        {method:'POST',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token,'Content-Type':'image/png','X-GitHub-Api-Version':'2022-11-28'},body:u8});
+      if(!r.ok){let m='';try{m=(await r.json()).message||''}catch(_){}throw new Error('Envoi refusé ('+r.status+') '+m)}
+      const na=await r.json();
+      x.assets=(x.assets||[]).filter(a=>!/^icon\./i.test(a.name)).concat([na]);
+      /* 3. afficher tout de suite */
+      const ico=carte.querySelector('.ico'),im=new Image(),u=URL.createObjectURL(new Blob([u8],{type:'image/png'}));
+      LOGOS.set(na.id,Promise.resolve(u));
+      im.onload=()=>{ico.textContent='';ico.appendChild(im)};im.alt='';im.src=u;
+      toast('Logo mis à jour dans la liste. Pour le changer sur le téléphone, il faut un nouvel APK.');
+    }catch(e){toast(e.message)}
+    finally{btn.disabled=false;btn.textContent=txt}
+  };
+  inp.click();
+}
+function afficherLogo(ico,x){
+  urlLogo(x).then(u=>{
+    if(!u||!ico.isConnected)return;
+    const im=new Image();im.alt='';im.decoding='async';
+    im.onload=()=>{ico.textContent='';ico.appendChild(im)};
+    im.src=u;
+  }).catch(()=>{});
+}
 async function enregistrerTelechargements(blob,nom){
   const AD=window.AndroidDownload;
   if(AD){
@@ -953,13 +1012,15 @@ async function chargerApps(){
     l.forEach(x=>{
       const a=x.assets.find(a=>/\.apk$/i.test(a.name)),m=meta(x);
       const c=document.createElement('article');c.className='app';
-      c.innerHTML='<div class="ico"></div><div class="inf"><b></b><small class="d1"></small><small class="d2"></small></div><div class="acts"><button type="button" class="dl">Télécharger</button><button type="button" class="ed">Modifier</button><button type="button" class="rm">Supprimer</button></div>';
+      c.innerHTML='<div class="ico"></div><div class="inf"><b></b><small class="d1"></small><small class="d2"></small></div><div class="acts"><button type="button" class="dl">Télécharger</button><button type="button" class="ed">Modifier</button><button type="button" class="lg">Changer le logo</button><button type="button" class="rm">Supprimer</button></div>';
       c.querySelector('.ico').textContent=(x.name||'?')[0].toUpperCase();
+      afficherLogo(c.querySelector('.ico'),x);
       c.querySelector('b').textContent=x.name||a.name;
       c.querySelector('.d1').textContent=[m.ver&&'Version '+m.ver,m.type==='flutter'?'Flutter':m.type==='web'?'Site web':''].filter(Boolean).join(' · ');
       c.querySelector('.d2').textContent=new Date(x.published_at||x.created_at).toLocaleDateString('fr-FR')+' · '+(a.size/1048576).toFixed(1)+' Mo';
       {const bd=c.querySelector('.dl');bd.onclick=()=>telecharger(a,bd)}
       c.querySelector('.ed').onclick=()=>modifier(x);
+      {const lg=c.querySelector('.lg');lg.onclick=()=>choisirLogo(x,c,lg)}
       const rm=c.querySelector('.rm');let t2;
       rm.onclick=async()=>{
         if(rm.textContent!=='Confirmer'){rm.textContent='Confirmer';clearTimeout(t2);t2=setTimeout(()=>rm.textContent='Supprimer',3000);return}
