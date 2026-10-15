@@ -1,0 +1,28 @@
+{
+  "name": "Autogroupe",
+  "pkg": "com.doubigue.auto",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "orientation": "auto",
+  "color": "#2a2f6b",
+  "fullscreen": false,
+  "icon": true,
+  "type": "web",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true,
+  "sourceUrl": "https://autogroupe-nti2xb0n1-doubigues-projects.vercel.app/",
+  "sourceKind": "site"
+}
