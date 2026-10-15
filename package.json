@@ -1,0 +1,17 @@
+{
+  "name": "apk-studio-preview-server",
+  "version": "1.0.0",
+  "description": "Serveur backend de prévisualisation sécurisée de ZIP pour APK Studio",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}

@@ -504,6 +504,16 @@ details.opts[open] summary::after{content:"−"}
 <!-- ======== Vercel ======== -->
 <section id="tVer" style="display:none">
   <div class="pgh"><h2>Vercel</h2><p>Parcours les fichiers d’un projet Vercel, modifie-les, télécharge-les en ZIP et redéploie. Tu peux aussi relancer un déploiement ou déployer un dossier ou un ZIP.</p></div>
+  <div class="panel" id="vCreateSite">
+    <h2>Publier un nouveau site depuis GitHub</h2>
+    <p class="h">Crée un projet Vercel relié à un dépôt GitHub. Le dépôt doit être accessible à l’intégration Git de ton compte Vercel.</p>
+    <label for="vGitRepo">Dépôt GitHub (propriétaire/dépôt)</label>
+    <input id="vGitRepo" placeholder="ex. Doubigue/mon-site" autocapitalize="none" autocorrect="off">
+    <label for="vSiteName">Nom du site (optionnel)</label>
+    <input id="vSiteName" placeholder="mon-site" autocapitalize="none" autocorrect="off">
+    <button type="button" class="btn" id="vCreateBtn" style="margin-top:12px">Créer et publier sur Vercel</button>
+    <p class="err" id="vCreateErr" role="alert"></p><div id="vCreateOut" class="h" style="overflow-wrap:anywhere"></div>
+  </div>
   <div class="panel" id="vCx">
     <label for="vTok">Jeton Vercel</label>
     <input id="vTok" type="password" autocomplete="off" placeholder="Jeton créé dans vercel.com/account/tokens" autocapitalize="none" autocorrect="off">
@@ -1171,6 +1181,23 @@ async function vLoadProjects(){
     V.projects=j.projects||[];vDrawProjects();
   }catch(e){vMsg(box,e.message,true)}
 }
+$('vCreateBtn').onclick=async()=>{
+  vTok();const repo=$('vGitRepo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$/,'');
+  const name=($('vSiteName').value.trim()||repo.split('/').pop()||'nouveau-site').toLowerCase().replace(/[^a-z0-9._-]/g,'-').replace(/^-+|-+$/g,'').slice(0,100);
+  const err=$('vCreateErr'),out=$('vCreateOut'),btn=$('vCreateBtn');err.textContent='';out.textContent='';
+  if(!V.tok){err.textContent='Ajoute d’abord ton jeton Vercel.';return}
+  if(!/^[^/]+\/[^/]+$/.test(repo)){err.textContent='Indique le dépôt sous la forme propriétaire/dépôt.';return}
+  btn.disabled=true;btn.textContent='Création…';
+  try{
+    const j=await vApi('/v10/projects',{method:'POST',json:{name,gitRepository:{type:'github',repo}}});
+    const url='https://vercel.com/'+(j.accountId?'dashboard':'')+'/'+(j.name||name);
+    out.innerHTML='';const p=document.createElement('p');p.textContent='Projet Vercel créé : '+(j.name||name);out.appendChild(p);
+    const a=document.createElement('a');a.href='https://vercel.com/dashboard';a.target='_blank';a.rel='noopener';a.textContent='Ouvrir le tableau de bord Vercel';out.appendChild(a);
+    if(j.link&&j.link.repo) {const q=document.createElement('p');q.textContent='Dépôt relié : '+j.link.repo;out.appendChild(q)}
+    toast('Projet Vercel créé. Vérifie le déploiement dans Vercel.');V.projects=[];vLoadProjects();
+  }catch(e){err.textContent=e.message+' Vérifie que GitHub est connecté à Vercel et que le dépôt est autorisé.'}
+  finally{btn.disabled=false;btn.textContent='Créer et publier sur Vercel'}
+};
 function vDrawProjects(){
   const box=$('vList');box.innerHTML='';
   if(!V.projects.length){vMsg(box,'Aucun projet trouvé.');return}
@@ -1434,7 +1461,7 @@ async function vfOpen(r){
     $('eName').textContent=E.cur.name;codeEditor.setOption('mode',eMode(r.path));codeEditor.setValue(t);$('eErr').textContent='';
     $('eMsg').style.display='none';$('eSave').textContent='Garder';
     eDirty(false);
-    $('eEd').classList.add('on');codeEditor.scrollTo(0,0);setTimeout(()=>codeEditor.refresh(),50);
+    $('eEd').classList.add('on');codeEditor.scrollTo(0,0);setTimeout(()=>{codeEditor.refresh();codeEditor.focus();},120);
     toast('');
   }catch(e){toast(e.message)}
   finally{VF.busy=false}
@@ -2267,7 +2294,7 @@ async function eCreatePath(kind){
   if(E.tree.some(x=>x.path===path||x.path===base+name||x.path.startsWith(base+name+'/'))){toast('Un fichier ou dossier existe déjà à cet emplacement.');return}
   let content='',target=path;
   if(kind==='dir')content='Dossier créé depuis APK Studio.\n';
-  else {target=base+name;content='';}
+  else {target=base+name;content='\n';}
   E.busy=true;toast('Création sur GitHub…');
   try{
     const body={message:(kind==='dir'?'Créer le dossier ':'Créer le fichier ')+target,content:b64(new TextEncoder().encode(content)),branch:E.branch};
@@ -2317,7 +2344,7 @@ async function eOpenFile(r){
     $('eName').textContent=r.name;codeEditor.setOption('mode',eMode(r.path));codeEditor.setValue(t);$('eErr').textContent='';
     $('eMsg').value='Modifier '+r.path;
     eDirty(false);
-    $('eEd').classList.add('on');codeEditor.scrollTo(0,0);setTimeout(()=>codeEditor.refresh(),50);
+    $('eEd').classList.add('on');codeEditor.scrollTo(0,0);setTimeout(()=>{codeEditor.refresh();codeEditor.focus();},120);
     toast('');
   }catch(e){toast(e.message)}
   finally{E.busy=false}
@@ -2488,6 +2515,20 @@ function fin(res,r){
   add('Voir le commit','sun','https://github.com/'+r+'/commit/'+res.sha);
   if(res.newBr)add('Ouvrir une pull request','ghost','https://github.com/'+r+'/compare/'+encPath(res.br)+'...'+encPath(res.newBr)+'?expand=1');
   else add('Ouvrir le dépôt','ghost','https://github.com/'+r);
+  const siteBox=document.createElement('div');siteBox.className='panel';siteBox.style.cssText='margin-top:12px;padding:14px;grid-column:1/-1';
+  siteBox.innerHTML='<b>Publier comme site web</b><p class="h">Active GitHub Pages après le commit et obtiens un lien à copier.</p><button type="button" class="btn" id="gPagesBtn">Enregistrer comme site</button><div id="gPagesOut" style="display:none;margin-top:10px"><input id="gPagesUrl" readonly aria-label="Lien du site" style="width:100%;margin-bottom:8px"><button type="button" class="btn ghost" id="gPagesCopy">Copier le lien</button><p class="h" id="gPagesNote"></p></div>';
+  A.appendChild(siteBox);
+  $('gPagesBtn').onclick=async()=>{
+    const b=$('gPagesBtn'),out=$('gPagesOut'),url=$('gPagesUrl'),note=$('gPagesNote');b.disabled=true;b.textContent='Activation…';note.textContent='';
+    try{
+      let pg;
+      try{pg=await gh('/repos/'+r+'/pages',{method:'POST',body:{source:{branch:res.br,path:'/'}}})}
+      catch(err){if(err.status===409||err.status===422)pg=await gh('/repos/'+r+'/pages');else throw err}
+      const owner=r.split('/')[0],name=r.split('/')[1];const u=(pg&&pg.html_url)||('https://'+owner+'.github.io/'+name+'/');
+      url.value=u;out.style.display='block';note.textContent='Le site peut prendre quelques minutes avant d’être accessible. Vérifie que le dépôt contient index.html à la racine.';b.textContent='Site configuré ✓';
+      $('gPagesCopy').onclick=async()=>{try{await navigator.clipboard.writeText(u);toast('Lien copié')}catch(_){url.focus();url.select();try{document.execCommand('copy');toast('Lien copié')}catch(__){toast('Sélectionne le lien pour le copier')}}};
+    }catch(err){b.disabled=false;b.textContent='Réessayer';note.textContent=err.message;out.style.display='block'}
+  };
   if(navigator.vibrate)navigator.vibrate([60,40,60]);
   toast('Publié');
 }
