@@ -579,3 +579,36 @@ if kind == 'flutter':
     print('compileSdk des plugins aligné dans :', aligner_compile_sdk())
 
 print('Autorisations :', groups or '(aucune supplémentaire)', '| partage :', share, '| demande au démarrage :', ask)
+
+# ---------- Flutter : notifications/alarmes (flutter_local_notifications) ----------
+# Active le « core library desugaring » (obligatoire pour ce plugin) et ajoute les autorisations/récepteurs d'alarme.
+if kind == 'flutter':
+    for f in glob.glob('android/app/build.gradle*'):
+        t = open(f, encoding='utf-8').read()
+        if 'coreLibraryDesugaring' in t:
+            continue
+        if f.endswith('.kts'):
+            t = re.sub(r'compileOptions\s*\{', 'compileOptions {\n        isCoreLibraryDesugaringEnabled = true', t, count=1)
+            t += '\ndependencies {\n    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")\n}\n'
+        else:
+            t = re.sub(r'compileOptions\s*\{', 'compileOptions {\n        coreLibraryDesugaringEnabled true', t, count=1)
+            t += '\ndependencies {\n    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"\n}\n'
+        open(f, 'w', encoding='utf-8').write(t)
+    mf = 'android/app/src/main/AndroidManifest.xml'
+    s2 = open(mf, encoding='utf-8').read()
+    extra = ''.join('    <uses-permission android:name="android.permission.%s"/>\n' % p
+                    for p in ('POST_NOTIFICATIONS', 'SCHEDULE_EXACT_ALARM', 'USE_FULL_SCREEN_INTENT', 'RECEIVE_BOOT_COMPLETED')
+                    if 'android.permission.%s"' % p not in s2)
+    s2 = s2.replace('<application', extra + '    <application', 1)
+    if 'ScheduledNotificationReceiver' not in s2:
+        s2 = s2.replace('</application>', '''    <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"/>
+    <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+      </intent-filter>
+    </receiver>
+  </application>''', 1)
+    s2 = s2.replace('<activity', '<activity android:showWhenLocked="true" android:turnScreenOn="true"', 1) if 'showWhenLocked' not in s2 else s2
+    open(mf, 'w', encoding='utf-8').write(s2)
+    print('Alarmes : desugaring + autorisations ajoutés')
