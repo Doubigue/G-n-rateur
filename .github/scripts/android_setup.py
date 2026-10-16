@@ -369,12 +369,14 @@ public class MainActivity extends BridgeActivity {
 
 KOTLIN = r'''package %PKG%
 
+import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.os.Handler
+import android.provider.MediaStore
 import android.provider.OpenableColumns
 import android.provider.Settings
 import android.view.WindowManager
@@ -403,12 +405,46 @@ class MainActivity : FlutterActivity() {
         result.success(null)
       }
     }
+    MethodChannel(m, "baobab/download").setMethodCallHandler { call, result ->
+      if (call.method == "save") {
+        try {
+          val nom = (call.argument<String>("name") ?: "fichier").replace(Regex("[^A-Za-z0-9._ -]"), "_")
+          val mime = call.argument<String>("mime") ?: "application/octet-stream"
+          val octets = call.argument<ByteArray>("bytes")
+          result.success(if (octets == null) null else enregistrerTelechargement(nom, mime, octets))
+        } catch (e: Exception) { result.success(null) }
+      } else result.notImplemented()
+    }
     canalPartage = MethodChannel(m, "baobab/share")
     canalPartage?.setMethodCallHandler { call, result ->
       if (call.method == "take") { result.success(pending); pending = null } else result.notImplemented()
     }
     if (share) lire(intent)
     if (ask) Handler(mainLooper).postDelayed({ demander() }, 800)
+  }
+
+  /** Écrit le fichier dans le dossier Téléchargements (MediaStore dès Android 10 : visible dans « Téléchargements »). */
+  private fun enregistrerTelechargement(nom: String, mime: String, octets: ByteArray): String? {
+    if (Build.VERSION.SDK_INT >= 29) {
+      val v = ContentValues().apply {
+        put(MediaStore.MediaColumns.DISPLAY_NAME, nom)
+        put(MediaStore.MediaColumns.MIME_TYPE, mime)
+        put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+        put(MediaStore.MediaColumns.IS_PENDING, 1)
+      }
+      val uri = contentResolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v) ?: return null
+      val ecrit = contentResolver.openOutputStream(uri)?.use { it.write(octets); true } ?: false
+      if (!ecrit) { contentResolver.delete(uri, null, null); return null }
+      val fin = ContentValues().apply { put(MediaStore.MediaColumns.IS_PENDING, 0) }
+      contentResolver.update(uri, fin, null, null)
+      return uri.toString()
+    }
+    val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+    dir.mkdirs()
+    val f = File(dir, nom)
+    f.writeBytes(octets)
+    android.media.MediaScannerConnection.scanFile(this, arrayOf(f.absolutePath), null, null)
+    return f.absolutePath
   }
 
   override fun onNewIntent(intent: Intent) {
@@ -597,7 +633,7 @@ if kind == 'flutter':
     mf = 'android/app/src/main/AndroidManifest.xml'
     s2 = open(mf, encoding='utf-8').read()
     extra = ''.join('    <uses-permission android:name="android.permission.%s"/>\n' % p
-                    for p in ('POST_NOTIFICATIONS', 'SCHEDULE_EXACT_ALARM', 'USE_FULL_SCREEN_INTENT', 'RECEIVE_BOOT_COMPLETED')
+                    for p in ('POST_NOTIFICATIONS', 'SCHEDULE_EXACT_ALARM', 'USE_EXACT_ALARM', 'USE_FULL_SCREEN_INTENT', 'RECEIVE_BOOT_COMPLETED')
                     if 'android.permission.%s"' % p not in s2)
     s2 = s2.replace('<application', extra + '    <application', 1)
     if 'ScheduledNotificationReceiver' not in s2:
@@ -612,3 +648,15 @@ if kind == 'flutter':
     s2 = s2.replace('<activity', '<activity android:showWhenLocked="true" android:turnScreenOn="true"', 1) if 'showWhenLocked' not in s2 else s2
     open(mf, 'w', encoding='utf-8').write(s2)
     print('Alarmes : desugaring + autorisations ajoutés')
+
+    # Sonneries des notifications : Android lit les sons dans res/raw (les assets Flutter ne suffisent pas)
+    import shutil
+    raw = 'android/app/src/main/res/raw'
+    if os.path.isdir('assets/sounds'):
+        os.makedirs(raw, exist_ok=True)
+        for fsnd in glob.glob('assets/sounds/*.wav'):
+            shutil.copy(fsnd, os.path.join(raw, os.path.basename(fsnd).lower()))
+        # sans ce fichier, le build « release » supprime les sons (ils ne sont lus que par leur nom)
+        open(os.path.join(raw, 'keep.xml'), 'w', encoding='utf-8').write(
+            '<?xml version="1.0" encoding="utf-8"?>\n<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@raw/*" />\n')
+        print('Sonneries copiées dans res/raw :', sorted(os.listdir(raw)))
