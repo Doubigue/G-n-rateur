@@ -732,6 +732,8 @@ const TYPES={
     ok:n=>n.some(x=>/(^|\/)main\.py$/i.test(x)),err:'Aucun main.py dans le ZIP.'}
 };
 const typeDe=t=>TYPES[t]||TYPES.web;
+/* Ne retient que le run du workflow de ce build (ignore « pages build and deployment », etc.) */
+const runDuBuild=j=>((j&&j.workflow_runs)||[]).find(r=>r.name===typeDe(mode()).wf);
 function zipTextes(){const T=typeDe(mode());
   $('zn').textContent=T.zn;$('zs').textContent=T.zs}
 $('zipClr').addEventListener('click',()=>{$('zip').value='';aiSync();$('zipClr').style.display='none';zipTextes();detecterLogo()});
@@ -929,7 +931,7 @@ async function conFinish(sha,job){
   try{
     for(let k=0;k<8;k++){
       const rr=await api('/actions/runs?head_sha='+sha);
-      const run=rr.ok&&(await rr.json()).workflow_runs[0];
+      const run=rr.ok&&runDuBuild(await rr.json());
       if(!run)break;
       const jr=await api('/actions/runs/'+run.id+'/jobs');
       if(jr.ok){const j=(await jr.json()).jobs[0];if(j){job=j;if(j.steps)conSteps(j)}}
@@ -1158,7 +1160,7 @@ $('f').addEventListener('submit',async e=>{
         const rr=await api('/actions/runs?head_sha='+sha);
         if(!rr.ok&&[401,403,404].includes(rr.status))throw new Error('GitHub ('+rr.status+') : lecture des exécutions du workflow refusée. Le jeton doit avoir le droit « Actions : lecture » et le dépôt « '+repo+' » doit exister.');
         if(rr.ok){
-          const run=(await rr.json()).workflow_runs[0];
+          const run=runDuBuild(await rr.json());
           if(run){
             noRun=0;
             const jr=await api('/actions/runs/'+run.id+'/jobs');let job=null;
