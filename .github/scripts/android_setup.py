@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Autorisations, partage entrant et activité principale des APK générés.
 Usage (à la racine du projet) : android_setup.py <capacitor|flutter> <config.json>"""
-import glob, json, os, re, sys
+import glob, json, os, re, subprocess, sys
 
 if sys.argv[1] == 'fetch':
     # Prépare builds/<id>/app.zip (et icon.png) depuis un lien, une application existante ou un site web.
@@ -660,3 +660,35 @@ if kind == 'flutter':
         open(os.path.join(raw, 'keep.xml'), 'w', encoding='utf-8').write(
             '<?xml version="1.0" encoding="utf-8"?>\n<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@raw/*" />\n')
         print('Sonneries copiées dans res/raw :', sorted(os.listdir(raw)))
+
+    # Icône de l'appli : grande, sans marge (le badge remplit toute la zone visible de l'icône adaptative)
+    fg, lg = 'android_icon/icon_foreground.png', 'android_icon/icon_legacy.png'
+    if os.path.exists(fg) and os.path.exists(lg):
+        try:
+            try:
+                from PIL import Image
+            except ImportError:
+                subprocess.run([sys.executable, '-m', 'pip', 'install', '-q', 'pillow'], check=True)
+                from PIL import Image
+            res = 'android/app/src/main/res'
+            tailles = {'mdpi': (48, 108), 'hdpi': (72, 162), 'xhdpi': (96, 216), 'xxhdpi': (144, 324), 'xxxhdpi': (192, 432)}
+            for dens, (leg, ada) in tailles.items():
+                d = os.path.join(res, 'mipmap-' + dens)
+                os.makedirs(d, exist_ok=True)
+                for vieux in glob.glob(os.path.join(d, 'ic_launcher*')):
+                    os.remove(vieux)  # évite les doublons (.webp / .png)
+                Image.open(lg).convert('RGBA').resize((leg, leg), Image.LANCZOS).save(os.path.join(d, 'ic_launcher.png'))
+                Image.open(lg).convert('RGBA').resize((leg, leg), Image.LANCZOS).save(os.path.join(d, 'ic_launcher_round.png'))
+                Image.open(fg).convert('RGBA').resize((ada, ada), Image.LANCZOS).save(os.path.join(d, 'ic_launcher_foreground.png'))
+            os.makedirs(os.path.join(res, 'values'), exist_ok=True)
+            open(os.path.join(res, 'values', 'baobab_icon.xml'), 'w', encoding='utf-8').write(
+                '<?xml version="1.0" encoding="utf-8"?>\n<resources><color name="baobab_icon_bg">#1B5E20</color></resources>\n')
+            ad = os.path.join(res, 'mipmap-anydpi-v26')
+            os.makedirs(ad, exist_ok=True)
+            xml = ('<?xml version="1.0" encoding="utf-8"?>\n<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">\n'
+                   '  <background android:drawable="@color/baobab_icon_bg"/>\n  <foreground android:drawable="@mipmap/ic_launcher_foreground"/>\n</adaptive-icon>\n')
+            for nom in ('ic_launcher.xml', 'ic_launcher_round.xml'):
+                open(os.path.join(ad, nom), 'w', encoding='utf-8').write(xml)
+            print('Icône adaptative grande taille générée')
+        except Exception as ex:
+            print('Icône non générée :', ex)
