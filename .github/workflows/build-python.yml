@@ -1,0 +1,131 @@
+name: Build Python APK
+
+on:
+  push:
+    paths:
+      - 'builds/*/python.json'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Détecter la demande
+        run: |
+          CFG=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E '^builds/[^/]+/python\.json$' | head -n1)
+          test -n "$CFG"
+          echo "DIR=$(dirname "$CFG")" >> "$GITHUB_ENV"
+          echo "ID=$(basename "$(dirname "$CFG")")" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Installer ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
+
+      - name: Installer Buildozer
+        run: |
+          sudo apt-get install -y git zip unzip autoconf automake libtool pkg-config zlib1g-dev libncurses-dev cmake libffi-dev libssl-dev
+          pip install --upgrade pip setuptools wheel
+          pip install buildozer "cython<3" virtualenv
+
+      - name: Cache Buildozer
+        uses: actions/cache@v4
+        with:
+          path: ~/.buildozer
+          key: buildozer-${{ runner.os }}-v1
+
+      - name: Préparer le projet Python
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          exec > >(tee -a "$GITHUB_WORKSPACE/build.log") 2>&1
+          trap 'sleep 2' EXIT
+          CFG="$GITHUB_WORKSPACE/$DIR/python.json"
+          S="$GITHUB_WORKSPACE/.github/scripts"
+
+          python3 "$S/android_setup.py" fetch "$CFG" "$GITHUB_WORKSPACE/$DIR" python
+          mkdir -p "$GITHUB_WORKSPACE/work/src"
+          unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d "$GITHUB_WORKSPACE/work/src"
+          MP=$(python3 "$S/native_setup.py" find "$GITHUB_WORKSPACE/work/src" main.py || true)
+          test -n "$MP" || { echo "Aucun main.py dans le ZIP."; exit 1; }
+          ROOT=$(dirname "$MP")
+          echo "ROOT=$ROOT" >> "$GITHUB_ENV"
+          cd "$ROOT"
+          [ -f buildozer.spec ] || buildozer init
+          if [ "$(jq -r .icon "$CFG")" = "true" ]; then cp "$GITHUB_WORKSPACE/$DIR/icon.png" icon.png; fi
+          python3 "$S/native_setup.py" spec "$CFG" "$ROOT/buildozer.spec"
+
+      - name: Compiler l'APK
+        run: |
+          set -o pipefail
+          cd "$ROOT"
+          buildozer -v android debug 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
+          APK=$(find "$ROOT/bin" -name '*.apk' | head -n1)
+          test -n "$APK" || { echo "Aucun APK produit par Buildozer."; exit 1; }
+          echo "APK=$APK" >> "$GITHUB_ENV"
+
+      - name: Publier l'APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CF="$DIR/python.json"
+          NAME=$(jq -r .name "$CF"); VN=$(jq -r .versionName "$CF")
+          SLUG=$(echo "$NAME" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cs 'A-Za-z0-9' '-' | sed 's/^-//;s/-$//')
+          [ -n "$SLUG" ] || SLUG=app
+          test -f "$APK" || { echo "APK introuvable : $APK"; exit 1; }
+          cp "$APK" "$SLUG-$VN.apk"
+          CFGJ=$(jq -c 'del(.fromRelease,.replaces,.iconFrom)' "$CF")
+          NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : python\nConfig : %s' "$VN" "$(jq -r .versionCode "$CF")" "$(jq -r .pkg "$CF")" "$CFGJ")
+          FILES=("$SLUG-$VN.apk")
+          if [ -f "$DIR/app.zip" ] && [ "$(jq -r '.sourceKind // ""' "$CF")" != "site" ]; then cp "$DIR/app.zip" source.zip; FILES+=(source.zip); fi
+          if [ -f "$DIR/icon.png" ]; then FILES+=("$DIR/icon.png"); fi
+          gh release create "apk-$ID" "${FILES[@]}" --title "$NAME" --notes "$NOTES"
+          OLD=$(jq -r '.replaces // ""' "$CF")
+          if [ -n "$OLD" ]; then gh release delete "$OLD" --cleanup-tag -y || true; fi
+
+      - name: Nettoyer la demande
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git rm -rq "$DIR"
+          git commit -qm "Nettoyage $ID [skip ci]"
+          git pull --rebase -q || true
+          git push -q || true
+
+      - name: Enregistrer le journal d'erreur
+        if: failure()
+        run: |
+          [ -n "$DIR" ] || exit 0
+          LOG="$GITHUB_WORKSPACE/build.log"
+          OUT="$GITHUB_WORKSPACE/$DIR/build-error.txt"
+          mkdir -p "$GITHUB_WORKSPACE/$DIR"
+          {
+            echo "== Journal de compilation ($ID) =="
+            if [ -f "$LOG" ]; then
+              sed -E 's/\x1b\[[0-9;?]*[A-Za-z]//g' "$LOG" | tr -d '\r' | grep -v -E '^ *\[[= >]*\] +[0-9]+%' | tail -n 400 | cut -c1-4000
+            else
+              echo "Aucun journal disponible (échec avant la compilation)."
+            fi
+          } > "$OUT"
+          cd "$GITHUB_WORKSPACE"
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -f "$DIR/build-error.txt"
+          git commit -qm "Journal d'erreur $ID [skip ci]" || exit 0
+          git pull --rebase -q || true
+          git push -q || true

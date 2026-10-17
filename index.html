@@ -129,6 +129,7 @@ button:focus-visible,a:focus-visible,summary:focus-visible,label.btn:focus-withi
 
 /* ---------- Pastilles (sélecteurs) ---------- */
 .seg{display:flex;gap:8px;margin-top:12px}
+.seg.wrap{flex-wrap:wrap}.seg.wrap label{flex:1 1 30%}
 .seg label{flex:1;margin:0;color:var(--mut);font-size:14px;cursor:pointer}
 .seg input{position:absolute;opacity:0;width:0}
 .seg span{display:block;text-align:center;padding:10px 8px;border-radius:99px;background:var(--chip);font-weight:500;transition:.2s}
@@ -319,7 +320,7 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
 <section id="vForm">
   <div id="edBar" class="edbar" style="display:none"><span id="edTxt"></span><button type="button" class="mini2" id="edX">Annuler</button></div>
   <div class="hero" id="hero">
-    <div class="hl"><h2>Crée<br>ton<br><em>appli</em></h2><p>Un site web ou un projet Flutter, transformé en APK Android.</p><button type="button" class="cta" id="cta">Commencer <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6l6 6-6 6"/></svg></button></div>
+    <div class="hl"><h2>Crée<br>ton<br><em>appli</em></h2><p>Un site web, Flutter, Kotlin/Java, React Native ou Python (Kivy), transformé en APK Android.</p><button type="button" class="cta" id="cta">Commencer <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6l6 6-6 6"/></svg></button></div>
     <svg class="art" viewBox="0 0 120 150" aria-hidden="true"><g transform="rotate(12 60 75)"><rect x="22" y="8" width="76" height="134" rx="16" fill="#fff"/><rect x="28" y="20" width="64" height="104" rx="8" fill="#14181F"/><path d="M60 46v34m0 0l-14-14m14 14l14-14M42 102h36" stroke="#FF4A1F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="50" y="129" width="20" height="4" rx="2" fill="#C9CDD3"/></g></svg>
   </div>
   <div class="preview" aria-label="Aperçu de l'application">
@@ -355,7 +356,7 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
 
     <div class="panel">
       <h2><span>2</span>Fichiers</h2>
-      <div class="seg" role="radiogroup" aria-label="Type de projet"><label><input type="radio" name="mode" value="web" checked><span>Site web</span></label><label><input type="radio" name="mode" value="flutter"><span>Flutter</span></label></div>
+      <div class="seg wrap" role="radiogroup" aria-label="Type de projet"><label><input type="radio" name="mode" value="web" checked><span>Site web</span></label><label><input type="radio" name="mode" value="flutter"><span>Flutter</span></label><label><input type="radio" name="mode" value="native"><span>Kotlin / Java</span></label><label><input type="radio" name="mode" value="reactnative"><span>React Native</span></label><label><input type="radio" name="mode" value="python"><span>Python (Kivy)</span></label></div>
       <div id="zipBox"><div class="seg" role="radiogroup" aria-label="Source du projet" style="margin-bottom:6px"><label><input type="radio" name="src" value="zip" checked><span>ZIP</span></label><label><input type="radio" name="src" value="link"><span>Lien</span></label></div>
       <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FF3F1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,application/zip"></label><button type="button" class="clr" id="zipClr">✕ Vider le fichier</button></div>
       <div id="lnkBox" style="display:none"><label for="url">Lien source</label><input id="url" type="url" inputmode="url" autocapitalize="none" autocorrect="off" placeholder="https://…"><small class="h" id="lnkHint"></small></div>
@@ -696,9 +697,21 @@ async function detecterLogo(){
 }
 $('icon').addEventListener('change',iconeAff);iconeAff();
 function zipInfo(){const f=$('zip').files[0];if(!f)return;$('zn').textContent=f.name;$('zs').textContent=(f.size/1048576).toFixed(1)+' Mo';$('zipClr').style.display='block';detecterLogo()}
-function zipTextes(){const fl=mode()==='flutter';
-  $('zn').textContent=fl?'Déposer le projet Flutter (ZIP)':'Déposer le ZIP du site';
-  $('zs').textContent=fl?'pubspec.yaml + lib/, ou simplement main.dart · 40 Mo max':'index.html + ressources · 40 Mo max'}
+const TYPES={
+  web:{label:'Site web',long:'Web (Capacitor)',json:'config.json',wf:'Build APK',zn:'Déposer le ZIP du site',zs:'index.html + ressources · 40 Mo max',
+    ok:n=>n.some(x=>/(^|\/)index\.html$/i.test(x)),err:'index.html est introuvable dans le ZIP.'},
+  flutter:{label:'Flutter',long:'Flutter',json:'flutter.json',wf:'Build Flutter APK',zn:'Déposer le projet Flutter (ZIP)',zs:'pubspec.yaml + lib/, ou simplement main.dart · 40 Mo max',
+    ok:n=>n.some(x=>/(^|\/)pubspec\.yaml$/i.test(x)||/\.dart$/i.test(x)),err:'Aucun pubspec.yaml ni fichier .dart dans le ZIP.'},
+  native:{label:'Kotlin / Java',long:'Android natif (Gradle)',json:'native.json',wf:'Build Android natif APK',zn:'Déposer le projet Android (ZIP)',zs:'Projet Android Studio : settings.gradle + app/ · 40 Mo max',
+    ok:n=>n.some(x=>/(^|\/)settings\.gradle(\.kts)?$/i.test(x)),err:'Aucun settings.gradle(.kts) dans le ZIP : envoie un projet Android Studio complet.'},
+  reactnative:{label:'React Native',long:'React Native / Expo',json:'reactnative.json',wf:'Build React Native APK',zn:'Déposer le projet React Native (ZIP)',zs:'package.json + App.js (Expo ou RN) · 40 Mo max',
+    ok:n=>n.some(x=>/(^|\/)package\.json$/i.test(x)),err:'Aucun package.json dans le ZIP.'},
+  python:{label:'Python (Kivy)',long:'Python / Kivy (Buildozer)',json:'python.json',wf:'Build Python APK',zn:'Déposer le projet Python (ZIP)',zs:'main.py (+ buildozer.spec facultatif) · 40 Mo max',
+    ok:n=>n.some(x=>/(^|\/)main\.py$/i.test(x)),err:'Aucun main.py dans le ZIP.'}
+};
+const typeDe=t=>TYPES[t]||TYPES.web;
+function zipTextes(){const T=typeDe(mode());
+  $('zn').textContent=T.zn;$('zs').textContent=T.zs}
 $('zipClr').addEventListener('click',()=>{$('zip').value='';$('zipClr').style.display='none';zipTextes();detecterLogo()});
 $('zip').addEventListener('change',zipInfo);
 const mode=()=>document.querySelector('input[name=mode]:checked').value;
@@ -835,8 +848,8 @@ $('conExp').onclick=()=>{$('con').classList.toggle('big');const b=$('conBody');b
 
 function conHeader(cfg,zip,lien,url){
   $('bName').textContent=cfg.name;$('bTile').textContent=(cfg.name||'?')[0].toUpperCase();$('bTile').style.background='linear-gradient(135deg,'+cfg.color+',#0b0d1c)';
-  $('bSub').textContent=[cfg.type==='flutter'?'Flutter':'Site web',cfg.pkg,'v'+cfg.versionName+' ('+cfg.versionCode+')'].join(' · ');
-  conLog('APK Studio · compilation '+(cfg.type==='flutter'?'Flutter':'Web (Capacitor)'),'tk',hhmmss(Date.now()));
+  $('bSub').textContent=[typeDe(cfg.type).label,cfg.pkg,'v'+cfg.versionName+' ('+cfg.versionCode+')'].join(' · ');
+  conLog('APK Studio · compilation '+typeDe(cfg.type).long,'tk',hhmmss(Date.now()));
   conLog('Application : '+cfg.name+' · '+cfg.pkg+' · v'+cfg.versionName+' ('+cfg.versionCode+')','in');
   conLog('Source : '+(lien?url:zip?zip.name+' ('+fmt(zip.size)+')':'application existante'),'in');
 }
@@ -1059,7 +1072,7 @@ async function conFail(run,job,id,cfg){
   conLog('Cause : '+d.why,'wa');conLog('À faire : '+d.fix,'in');
   showFail(d);
   $('stat').textContent='Échec : '+d.why;
-  const head='Erreur de compilation — '+cfg.name+' ('+(cfg.type==='flutter'?'Flutter':'Site web')+')';
+  const head='Erreur de compilation — '+cfg.name+' ('+typeDe(cfg.type).label+')';
   CON.errText=[head,'Étape : '+d.step,d.main?'Erreur :\n'+d.main:'','Cause : '+d.why,'À faire : '+d.fix,'',errs.length?errs.join('\n'):'','','Journal complet : '+url].filter((x,i,a)=>x!==''||a[i-1]!=='').join('\n');
   CON.fullText=head+'\nÉtape : '+d.step+'\n\n'+(L.length?L.join('\n'):CON.out.join('\n'))+'\n\nJournal complet : '+url;
   $('conCopy').classList.add('hot');$('conStat').textContent='Échec'+(d.step?' · '+d.step:'');
@@ -1084,13 +1097,12 @@ $('f').addEventListener('submit',async e=>{
     if(lien){
       if(!/^https?:\/\//i.test(url))throw new Error('Entre un lien valide (https://…).');
       sourceKind=kindUrl(url);
-      if(sourceKind==='site'&&mode()==='flutter')throw new Error('Un lien de site web fonctionne seulement en mode Site web.');
+      if(sourceKind==='site'&&mode()!=='web')throw new Error('Un lien de site web fonctionne seulement en mode Site web.');
     }else if(zip){
       if(zip.size>40*1048576)throw new Error('ZIP trop volumineux (40 Mo max).');
       z=await JSZip.loadAsync(zip).catch(()=>{throw new Error('ZIP invalide.')});
       const ok=Object.keys(z.files).filter(n=>!n.startsWith('__MACOSX'));
-      if(mode()==='flutter'){if(!ok.some(n=>/(^|\/)pubspec\.yaml$/i.test(n)||/\.dart$/i.test(n)))throw new Error('Aucun pubspec.yaml ni fichier .dart dans le ZIP.')}
-      else if(!ok.some(n=>/(^|\/)index\.html$/i.test(n)))throw new Error('index.html est introuvable dans le ZIP.');
+      if(!typeDe(mode()).ok(ok))throw new Error(typeDe(mode()).err);
     }else if(!(edition&&edition.source))throw new Error('Choisis un fichier ZIP ou entre un lien.');
 
     const iconFile=$('icon').files[0]||(zip&&autoLogo?autoLogo.file:null);
@@ -1107,14 +1119,15 @@ $('f').addEventListener('submit',async e=>{
     if(iconB64){$('stat').textContent="Envoi de l'icône…";await put(dir+'icon.png',iconB64,'Build '+id+' : icône')}
     if(iconB64)conLog('  ↑ icône envoyée','ok');
     upProg(.8);$('stat').textContent='Lancement de la compilation…';
-    const res=await put(dir+(mode()==='flutter'?'flutter.json':'config.json'),b64(new TextEncoder().encode(JSON.stringify(cfg,null,2))),'Build '+id+' : '+cfg.name);
+    const res=await put(dir+typeDe(mode()).json,b64(new TextEncoder().encode(JSON.stringify(cfg,null,2))),'Build '+id+' : '+cfg.name);
     conLog('  ↑ configuration envoyée','ok');
     const sha=res.commit.sha;setPhase(1);
     conLog('Commit '+sha.slice(0,7)+' poussé · GitHub Actions démarre…','tk',hhmmss(Date.now()));
     $('stat').textContent='Compilation en cours, laisse cette page ouverte.';
 
     const start=Date.now();let netFail=0,noRun=0,okNoRel=0,lastJob=null;
-    while(Date.now()-start<35*60*1000){
+    const LIMITE=(mode()==='python'?65:mode()==='reactnative'?45:35);
+    while(Date.now()-start<LIMITE*60*1000){
       await sleep(netFail?Math.min(30000,3000*netFail):4000);
       try{
         const rel=await api('/releases/tags/apk-'+id);
@@ -1130,7 +1143,7 @@ $('f').addEventListener('submit',async e=>{
             if(run.status==='completed'&&run.conclusion!=='success')return await conFail(run,job,id,cfg);
             if(run.status==='completed'&&run.conclusion==='success'&&++okNoRel>4)throw new Error('Le build a réussi mais l\u2019APK est introuvable dans les releases du dépôt.');
           }else if(!noRun)noRun=Date.now();
-          else if(Date.now()-noRun>4*60*1000)throw new Error('Aucune exécution GitHub Actions n\u2019a démarré en 4 min : le workflow « '+(mode()==='flutter'?'Build Flutter APK':'Build APK')+' » est absent ou désactivé dans « '+repo+' » (onglet Actions), ou Actions est désactivé pour ce dépôt.');
+          else if(Date.now()-noRun>4*60*1000)throw new Error('Aucune exécution GitHub Actions n\u2019a démarré en 4 min : le workflow « '+typeDe(mode()).wf+' » est absent ou désactivé dans « '+repo+' » (onglet Actions), ou Actions est désactivé pour ce dépôt.');
         }
         if(netFail){netFail=0;CON.lost=false;conLog('✔ Connexion rétablie','ok');$('stat').textContent='Compilation en cours, laisse cette page ouverte.'}
       }catch(e){
@@ -1139,7 +1152,7 @@ $('f').addEventListener('submit',async e=>{
         throw e;
       }
     }
-    throw new Error('Délai dépassé (35 min) : la compilation ne s\u2019est pas terminée.');
+    throw new Error('Délai dépassé ('+LIMITE+' min) : la compilation ne s\u2019est pas terminée.');
   }catch(err){
     if(pv.style.display==='block'){
       conLog('✖ '+err.message,'er');conBadge('ko');clearInterval(CON.tick);CON.done=true;
@@ -1849,11 +1862,26 @@ function telecharger(a,btn){
       toast(how==='fs'?'« '+a.name+' » enregistré dans Téléchargements.':'Téléchargement lancé.');
     }catch(e){toast('Échec : '+(e&&e.message||e));ouvrirChromeDl(a)}
   };
+  const mime='application/vnd.android.package-archive';
+  /* 1) Téléchargeur de l'application : notification avec barre de progression dans la barre d'état */
+  if(AD&&typeof AD.demarrer==='function'){
+    if(btn)btn.style.pointerEvents='none';
+    try{if(typeof AD.notifOk==='function'&&!AD.notifOk()){AD.notifDemander();toast('Autorise les notifications pour voir la progression.')}}catch(_){}
+    setTimeout(()=>{
+      let ok=false;
+      try{ok=AD.demarrer(url,a.name,mime,prive?token:'')}catch(e){console.warn('demarrer',e)}
+      if(btn)btn.style.pointerEvents='';
+      if(ok)toast('Téléchargement lancé : progression dans la barre de notifications.');
+      else repli();
+    },30);
+    return;
+  }
+  /* 2) Gestionnaire de téléchargement du système (anciennes versions de l'application) */
   if(AD&&typeof AD.systeme==='function'){
     if(btn)btn.style.pointerEvents='none';
-    setTimeout(()=>{   /* l'appel natif fait une requête réseau : on laisse d'abord l'interface respirer */
+    setTimeout(()=>{
       let ok=false;
-      try{ok=AD.systeme(url,a.name,'application/vnd.android.package-archive',prive?token:'')}catch(e){console.warn('systeme',e)}
+      try{ok=AD.systeme(url,a.name,mime,prive?token:'')}catch(e){console.warn('systeme',e)}
       if(btn)btn.style.pointerEvents='';
       if(ok)toast('Téléchargement lancé : suis la progression dans les notifications.');
       else repli();
@@ -1862,6 +1890,12 @@ function telecharger(a,btn){
   }
   repli();
 }
+/* Résultat renvoyé par le téléchargeur natif (fin ou échec) */
+window.addEventListener('appdl',e=>{
+  const d=e.detail||{};
+  if(d.etat==='fini')toast('« '+d.nom+' » enregistré dans Téléchargements.');
+  else if(d.etat==='echec')toast('Échec du téléchargement'+(d.msg?' : '+d.msg:'')+'.');
+});
 function meta(x){const b=x.body||'',g=r=>(b.match(r)||[])[1];return{ver:g(/Version\s*:\s*(.+)/)||g(/version ([^)]+)/i)||'',type:g(/Type\s*:\s*(\w+)/)||''}}
 async function apiDel(p){return fetch('https://api.github.com/repos/'+repo+p,{method:'DELETE',headers:{Accept:'application/vnd.github+json',Authorization:'Bearer '+token}})}
 async function chargerApps(){
@@ -1882,7 +1916,7 @@ async function chargerApps(){
       c.querySelector('.ico').textContent=(x.name||'?')[0].toUpperCase();
       afficherLogo(c.querySelector('.ico'),x);
       c.querySelector('b').textContent=x.name||a.name;
-      c.querySelector('.d1').textContent=[m.ver&&'Version '+m.ver,m.type==='flutter'?'Flutter':m.type==='web'?'Site web':''].filter(Boolean).join(' · ');
+      c.querySelector('.d1').textContent=[m.ver&&'Version '+m.ver,m.type?typeDe(m.type).label:''].filter(Boolean).join(' · ');
       c.querySelector('.d2').textContent=new Date(x.published_at||x.created_at).toLocaleDateString('fr-FR')+' · '+(a.size/1048576).toFixed(1)+' Mo';
       {const bd=c.querySelector('.dl');bd.onclick=()=>telecharger(a,bd)}
       c.querySelector('.ed').onclick=()=>modifier(x);
@@ -1925,7 +1959,7 @@ function majSource(){
   const lien=src()==='link';
   $('zipBox').style.display=lien?'none':'block';$('lnkBox').style.display=lien?'block':'none';
   const u=$('url').value.trim(),k=u?kindUrl(u):'';
-  $('lnkHint').textContent=!u?'ZIP direct, dépôt GitHub public ou site web.':k==='zip'?'Archive ZIP détectée : elle sera téléchargée à la compilation.':k==='github'?'Dépôt GitHub public détecté (branche par défaut, ou /tree/branche).':mode()==='flutter'?'Un lien de site web fonctionne seulement en mode Site web.':"Site web : l'application affichera cette page (connexion internet requise).";
+  $('lnkHint').textContent=!u?'ZIP direct, dépôt GitHub public ou site web.':k==='zip'?'Archive ZIP détectée : elle sera téléchargée à la compilation.':k==='github'?'Dépôt GitHub public détecté (branche par défaut, ou /tree/branche).':mode()!=='web'?'Un lien de site web fonctionne seulement en mode Site web.':"Site web : l'application affichera cette page (connexion internet requise).";
 }
 document.querySelectorAll('input[name=src],input[name=mode]').forEach(r=>r.addEventListener('change',majSource));
 $('url').addEventListener('input',majSource);majSource();
@@ -1942,7 +1976,7 @@ function choisir(nom,val){const r=document.querySelector('input[name='+nom+'][va
 function modifier(x){
   const c=cfgDe(x);
   edition={tag:x.tag_name,cfg:c,source:(x.assets||[]).some(a=>a.name==='source.zip')||!!c.sourceUrl};
-  choisir('mode',c.type==='flutter'?'flutter':'web');
+  choisir('mode',TYPES[c.type]?c.type:'web');
   $('name').value=c.name||x.name||'';$('pkg').value=c.pkg||$('pkg').value;
   $('vname').value=bumpVer(c.versionName||'1.0.0','patch');$('vcode').value=(+c.versionCode||1)+1;majVchips();
   $('orient').value=c.orientation||'auto';$('color').value=c.color||'#2a2f6b';$('full').checked=!!c.fullscreen;
@@ -1982,7 +2016,7 @@ async function sugShow(){
     b.innerHTML='<span class="si"></span><span class="sn"><b></b><small></small></span><span class="sg">Remplir</span>';
     b.querySelector('.si').textContent=(x.name||'?')[0].toUpperCase();
     b.querySelector('b').textContent=x.name;
-    b.querySelector('small').textContent=['v'+(c.versionName||'?')+' ('+(c.versionCode||'?')+')',c.pkg,c.type==='flutter'?'Flutter':'Site web'].filter(Boolean).join(' · ');
+    b.querySelector('small').textContent=['v'+(c.versionName||'?')+' ('+(c.versionCode||'?')+')',c.pkg,typeDe(c.type).label].filter(Boolean).join(' · ');
     b.addEventListener('pointerdown',e=>{e.preventDefault();sugHide();modifier(x)});
     box.appendChild(b);
   });

@@ -7,7 +7,7 @@ if sys.argv[1] == 'fetch':
     # Prépare builds/<id>/app.zip (et icon.png) depuis un lien, une application existante ou un site web.
     import subprocess, urllib.request, zipfile
     cfgp, d = sys.argv[2], sys.argv[3]
-    flutter = len(sys.argv) > 4 and sys.argv[4] == 'flutter'
+    flutter = len(sys.argv) > 4  # tout type autre que « web » refuse un lien de site
     cfg = json.load(open(cfgp, encoding='utf-8'))
     dest, icon = os.path.join(d, 'app.zip'), os.path.join(d, 'icon.png')
     url, frm, kind = cfg.get('sourceUrl', ''), cfg.get('fromRelease', ''), cfg.get('sourceKind', '')
@@ -91,7 +91,7 @@ TABLE = {
     'bluetooth': [('BLUETOOTH', 30), ('BLUETOOTH_ADMIN', 30), ('BLUETOOTH_CONNECT', 0), ('BLUETOOTH_SCAN', 0)],
     'phone': [('READ_PHONE_STATE', 0), ('CALL_PHONE', 0)],
 }
-BASE = ['INTERNET', 'ACCESS_NETWORK_STATE', 'ACCESS_WIFI_STATE', 'VIBRATE', 'WAKE_LOCK', 'FOREGROUND_SERVICE']
+BASE = ['INTERNET', 'ACCESS_NETWORK_STATE', 'ACCESS_WIFI_STATE', 'VIBRATE', 'WAKE_LOCK', 'FOREGROUND_SERVICE', 'POST_NOTIFICATIONS']
 SANS_DEMANDE = {'MODIFY_AUDIO_SETTINGS', 'MANAGE_EXTERNAL_STORAGE', 'BLUETOOTH', 'BLUETOOTH_ADMIN'}
 
 # ---------- Manifeste : autorisations + filtres de partage ----------
@@ -138,6 +138,11 @@ bool_ = lambda b: 'true' if b else 'false'
 JAVA = r'''package %PKG%;
 
 import android.app.DownloadManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import androidx.core.app.NotificationCompat;
 import android.content.Context;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -273,6 +278,155 @@ public class MainActivity extends BridgeActivity {
         dm.enqueue(r);
         return true;
       } catch (Exception e) { return false; }
+    }
+
+    /* ---------- Téléchargement avec notification de progression (barre d'état) ---------- */
+    private int compteur = 100;
+
+    @JavascriptInterface
+    public boolean notifOk() {
+      return Build.VERSION.SDK_INT < 33 || checkSelfPermission("android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @JavascriptInterface
+    public void notifDemander() {
+      if (notifOk()) return;
+      runOnUiThread(() -> { try { requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 4243); } catch (Exception e) { } });
+    }
+
+    /** Lance le téléchargement en arrière-plan : notification « en cours » avec barre de progression, puis « terminé ». */
+    @JavascriptInterface
+    public boolean demarrer(final String url, String nom, String mime, final String jeton) {
+      try {
+        final String n = nom.replaceAll("[\\\\/:*?\"<>|]", "_");
+        final String m = (mime == null || mime.isEmpty()) ? "application/octet-stream" : mime;
+        final int id = ++compteur;
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) return false;
+        if (Build.VERSION.SDK_INT >= 26) {
+          NotificationChannel ch = new NotificationChannel("baobab_dl", "Téléchargements", NotificationManager.IMPORTANCE_LOW);
+          ch.setDescription("Progression des téléchargements");
+          ch.setShowBadge(false);
+          nm.createNotificationChannel(ch);
+        }
+        notifDemander();
+        notifier(nm, id, n, 0, 0, false, true, false);
+        new Thread(() -> flux(nm, id, url, n, m, jeton), "baobab-dl").start();
+        return true;
+      } catch (Exception e) { return false; }
+    }
+
+    private void notifier(NotificationManager nm, int id, String nom, int pct, long fait, boolean connu, boolean encours, boolean echec) {
+      try {
+        NotificationCompat.Builder b = new NotificationCompat.Builder(MainActivity.this, "baobab_dl")
+          .setContentTitle(nom)
+          .setOnlyAlertOnce(true)
+          .setPriority(NotificationCompat.PRIORITY_LOW);
+        if (encours) {
+          b.setSmallIcon(android.R.drawable.stat_sys_download).setOngoing(true);
+          if (connu) b.setProgress(100, pct, false).setContentText(pct + " %");
+          else b.setProgress(0, 0, true).setContentText(fait > 0 ? (fait / 1024 / 1024) + " Mo" : "Connexion…");
+        } else {
+          b.setSmallIcon(echec ? android.R.drawable.stat_notify_error : android.R.drawable.stat_sys_download_done)
+           .setOngoing(false).setAutoCancel(true).setProgress(0, 0, false)
+           .setContentText(echec ? "Échec du téléchargement" : "Téléchargement terminé");
+          if (!echec) {
+            Intent i = new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS);
+            int fl = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0);
+            b.setContentIntent(PendingIntent.getActivity(MainActivity.this, id, i, fl));
+          }
+        }
+        nm.notify(id, b.build());
+      } catch (Exception e) { }
+    }
+
+    private void prevenir(final String etat, final String nom, final String msg) {
+      try {
+        JSONObject d = new JSONObject().put("etat", etat).put("nom", nom).put("msg", msg == null ? "" : msg);
+        final String js = "window.dispatchEvent(new CustomEvent('appdl',{detail:" + d.toString() + "}))";
+        runOnUiThread(() -> { if (getBridge() != null) getBridge().getWebView().evaluateJavascript(js, null); });
+      } catch (Exception e) { }
+    }
+
+    private void flux(NotificationManager nm, int id, String url, String nom, String mime, String jeton) {
+      HttpURLConnection c = null;
+      OutputStream o = null;
+      Uri cible = null;
+      File f = null;
+      try {
+        String u = url;
+        boolean avecJeton = jeton != null && !jeton.isEmpty();
+        for (int k = 0; k < 6; k++) {
+          c = (HttpURLConnection) new URL(u).openConnection();
+          c.setInstanceFollowRedirects(false);
+          c.setConnectTimeout(20000);
+          c.setReadTimeout(30000);
+          c.setRequestProperty("User-Agent", "apk-studio");
+          if (avecJeton && k == 0) {
+            c.setRequestProperty("Authorization", "Bearer " + jeton);
+            c.setRequestProperty("Accept", "application/octet-stream");
+            c.setRequestProperty("X-GitHub-Api-Version", "2022-11-28");
+          }
+          int code = c.getResponseCode();
+          if (code >= 300 && code < 400 && c.getHeaderField("Location") != null) {
+            u = new URL(new URL(u), c.getHeaderField("Location")).toString();
+            c.disconnect();
+            c = null;
+            continue;
+          }
+          if (code != 200) throw new Exception("HTTP " + code);
+          break;
+        }
+        if (c == null) throw new Exception("trop de redirections");
+        long total = Build.VERSION.SDK_INT >= 24 ? c.getContentLengthLong() : c.getContentLength();
+        if (Build.VERSION.SDK_INT >= 29) {
+          ContentValues v = new ContentValues();
+          v.put(MediaStore.MediaColumns.DISPLAY_NAME, nom);
+          v.put(MediaStore.MediaColumns.MIME_TYPE, mime);
+          v.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+          v.put(MediaStore.MediaColumns.IS_PENDING, 1);
+          cible = getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+          if (cible == null) throw new Exception("dossier Téléchargements inaccessible");
+          o = getContentResolver().openOutputStream(cible);
+        } else {
+          File d = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+          d.mkdirs();
+          f = new File(d, nom);
+          o = new FileOutputStream(f);
+        }
+        InputStream in = c.getInputStream();
+        byte[] buf = new byte[65536];
+        long fait = 0, dernier = 0;
+        int n, dernierPct = -1;
+        while ((n = in.read(buf)) > 0) {
+          o.write(buf, 0, n);
+          fait += n;
+          long t = System.currentTimeMillis();
+          int pct = total > 0 ? (int) (fait * 100 / total) : 0;
+          if (t - dernier > 400 && (pct != dernierPct || total <= 0)) {
+            dernier = t; dernierPct = pct;
+            notifier(nm, id, nom, pct, fait, total > 0, true, false);
+          }
+        }
+        o.flush(); o.close(); o = null;
+        if (cible != null) {
+          ContentValues v = new ContentValues();
+          v.put(MediaStore.MediaColumns.IS_PENDING, 0);
+          getContentResolver().update(cible, v, null, null);
+        } else if (f != null) {
+          MediaScannerConnection.scanFile(MainActivity.this, new String[]{f.getAbsolutePath()}, null, null);
+        }
+        notifier(nm, id, nom, 100, fait, true, false, false);
+        prevenir("fini", nom, null);
+      } catch (Exception e) {
+        try { if (o != null) o.close(); } catch (Exception e2) { }
+        try { if (cible != null) getContentResolver().delete(cible, null, null); } catch (Exception e2) { }
+        try { if (f != null) f.delete(); } catch (Exception e2) { }
+        notifier(nm, id, nom, 0, 0, false, false, true);
+        prevenir("echec", nom, e.getMessage());
+      } finally {
+        if (c != null) c.disconnect();
+      }
     }
 
     @JavascriptInterface
