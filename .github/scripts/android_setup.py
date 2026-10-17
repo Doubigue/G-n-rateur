@@ -803,6 +803,41 @@ if kind == 'flutter':
     open(mf, 'w', encoding='utf-8').write(s2)
     print('Alarmes : desugaring + autorisations ajoutés')
 
+    # --- Plugins qui exigent une déclaration dans le manifeste / un minSdk (ajouté) ---
+    _pub = open('pubspec.yaml', encoding='utf-8').read() if os.path.exists('pubspec.yaml') else ''
+    _mx = open(mf, encoding='utf-8').read()
+    _perm = []   # (nom, maxSdk)
+    _svc = ''
+    _min = 0
+    if 'flutter_foreground_task' in _pub:
+        _perm += [('FOREGROUND_SERVICE', 0), ('FOREGROUND_SERVICE_MEDIA_PROJECTION', 0)]
+        if 'com.pravera.flutter_foreground_task.service.ForegroundService' not in _mx:
+            _svc = ('    <service android:name="com.pravera.flutter_foreground_task.service.ForegroundService"'
+                    ' android:foregroundServiceType="mediaProjection" android:exported="false"/>\n')
+    if 'nearby_connections' in _pub:
+        _min = 23
+        _perm += [('CHANGE_WIFI_STATE', 0), ('CHANGE_NETWORK_STATE', 0), ('ACCESS_FINE_LOCATION', 0),
+                  ('BLUETOOTH', 30), ('BLUETOOTH_ADMIN', 30), ('BLUETOOTH_ADVERTISE', 0),
+                  ('BLUETOOTH_CONNECT', 0), ('BLUETOOTH_SCAN', 0), ('NEARBY_WIFI_DEVICES', 0)]
+    if 'flutter_webrtc' in _pub:
+        _min = max(_min, 21)
+    _add = ''.join('    <uses-permission android:name="android.permission.%s"%s/>\n'
+                   % (n, ' android:maxSdkVersion="%d"' % mx if mx else '')
+                   for n, mx in _perm if 'android.permission.%s"' % n not in _mx)
+    if _add:
+        _mx = _mx.replace('<application', _add + '    <application', 1)
+    if _svc:
+        _mx = _mx.replace('</application>', _svc + '  </application>', 1)
+    open(mf, 'w', encoding='utf-8').write(_mx)
+    if _min > 21:
+        for f in glob.glob('android/app/build.gradle*'):
+            t = open(f, encoding='utf-8').read()
+            t2 = re.sub(r'(minSdk(?:Version)?\s*=?\s*)flutter\.minSdkVersion', r'\g<1>%d' % _min, t)
+            if t2 != t:
+                open(f, 'w', encoding='utf-8').write(t2)
+    if _perm or _svc:
+        print('Plugins : autorisations/service ajoutés au manifeste (minSdk %s)' % (_min or 'inchangé'))
+
     # Sonneries des notifications : Android lit les sons dans res/raw (les assets Flutter ne suffisent pas)
     import shutil
     raw = 'android/app/src/main/res/raw'
