@@ -823,6 +823,8 @@ if kind == 'flutter':
             _svc = ('    <service android:name="com.pravera.flutter_foreground_task.service.ForegroundService"'
                     ' android:foregroundServiceType="' + _stype + '" tools:replace="android:foregroundServiceType"'
                     ' android:exported="false"/>\n')
+    if 'open_filex' in _pub:
+        _perm += [('REQUEST_INSTALL_PACKAGES', 0)]   # PATCH : mises à jour intégrées
     if 'nearby_connections' in _pub:
         _min = 23
         _perm += [('CHANGE_WIFI_STATE', 0), ('CHANGE_NETWORK_STATE', 0), ('ACCESS_FINE_LOCATION', 0),
