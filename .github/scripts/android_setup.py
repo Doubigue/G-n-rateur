@@ -813,7 +813,8 @@ if kind == 'flutter':
         _perm += [('FOREGROUND_SERVICE', 0), ('FOREGROUND_SERVICE_CONNECTED_DEVICE', 0)]
         if 'com.pravera.flutter_foreground_task.service.ForegroundService' not in _mx:
             _svc = ('    <service android:name="com.pravera.flutter_foreground_task.service.ForegroundService"'
-                    ' android:foregroundServiceType="connectedDevice" android:exported="false"/>\n')
+                    ' android:foregroundServiceType="connectedDevice" tools:replace="android:foregroundServiceType"'
+                    ' android:exported="false"/>\n')
     if 'nearby_connections' in _pub:
         _min = 23
         _perm += [('CHANGE_WIFI_STATE', 0), ('CHANGE_NETWORK_STATE', 0), ('ACCESS_FINE_LOCATION', 0),
@@ -828,6 +829,8 @@ if kind == 'flutter':
         _mx = _mx.replace('<application', _add + '    <application', 1)
     if _svc:
         _mx = _mx.replace('</application>', _svc + '  </application>', 1)
+        if 'xmlns:tools=' not in _mx:
+            _mx = _mx.replace('<manifest ', '<manifest xmlns:tools="http://schemas.android.com/tools" ', 1)
     open(mf, 'w', encoding='utf-8').write(_mx)
     if _min > 21:
         for f in glob.glob('android/app/build.gradle*'):
