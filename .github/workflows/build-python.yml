@@ -70,6 +70,29 @@ jobs:
           if [ "$(jq -r .icon "$CFG")" = "true" ]; then cp "$GITHUB_WORKSPACE/$DIR/icon.png" icon.png; fi
           python3 "$S/native_setup.py" spec "$CFG" "$ROOT/buildozer.spec"
 
+      - name: Clé de signature stable (mises à jour sans désinstaller)
+        run: |
+          mkdir -p ~/.android
+          K="$GITHUB_WORKSPACE/signing/debug.keystore"
+          if [ -f "$K" ]; then
+            cp "$K" ~/.android/debug.keystore
+            echo "Clé de signature existante réutilisée"
+          else
+            rm -f ~/.android/debug.keystore
+            keytool -genkeypair -keystore ~/.android/debug.keystore -storepass android -keypass android \
+              -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 36500 \
+              -dname "CN=Android Debug,O=Android,C=US"
+            mkdir -p "$GITHUB_WORKSPACE/signing"; cp ~/.android/debug.keystore "$K"
+            cd "$GITHUB_WORKSPACE"
+            git config user.name "github-actions"
+            git config user.email "github-actions@users.noreply.github.com"
+            git add -f signing/debug.keystore
+            git commit -qm "Clé de signature stable [skip ci]" || true
+            git pull --rebase -q || true
+            git push -q || true
+            echo "Nouvelle clé de signature créée et enregistrée dans signing/"
+          fi
+
       - name: Compiler l'APK
         run: |
           set -o pipefail
