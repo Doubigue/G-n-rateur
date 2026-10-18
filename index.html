@@ -733,7 +733,7 @@ const TYPES={
 };
 const typeDe=t=>TYPES[t]||TYPES.web;
 /* Ne retient que le run du workflow de ce build (ignore « pages build and deployment », etc.) */
-const runDuBuild=j=>((j&&j.workflow_runs)||[]).find(r=>r.name===typeDe(mode()).wf);
+const runDuBuild=j=>((j&&j.workflow_runs)||[]).find(r=>r.name===typeDe(window.__bm||mode()).wf);
 function zipTextes(){const T=typeDe(mode());
   $('zn').textContent=T.zn;$('zs').textContent=T.zs}
 $('zipClr').addEventListener('click',()=>{$('zip').value='';aiSync();$('zipClr').style.display='none';zipTextes();detecterLogo()});
@@ -1150,41 +1150,10 @@ $('f').addEventListener('submit',async e=>{
     conLog('Commit '+sha.slice(0,7)+' poussé · GitHub Actions démarre…','tk',hhmmss(Date.now()));
     $('stat').textContent='Compilation en cours, laisse cette page ouverte.';
 
-    const start=Date.now();let netFail=0,noRun=0,okNoRel=0,lastJob=null;
-    const LIMITE=(mode()==='python'?65:mode()==='reactnative'?45:35);
-    while(Date.now()-start<LIMITE*60*1000){
-      await sleep(netFail?Math.min(30000,3000*netFail):4000);
-      try{
-        const rel=await api('/releases/tags/apk-'+id);
-        if(rel.ok){const a=((await rel.json()).assets||[]).find(a=>/\.apk$/i.test(a.name));if(a){CON.done=true;await conFinish(sha,lastJob);conOk();return succeed(a)}}
-        const rr=await api('/actions/runs?head_sha='+sha);
-        if(!rr.ok&&[401,403,404].includes(rr.status))throw new Error('GitHub ('+rr.status+') : lecture des exécutions du workflow refusée. Le jeton doit avoir le droit « Actions : lecture » et le dépôt « '+repo+' » doit exister.');
-        if(rr.ok){
-          const run=runDuBuild(await rr.json());
-          if(run){
-            noRun=0;
-            const jr=await api('/actions/runs/'+run.id+'/jobs');let job=null;
-            if(jr.ok){job=(await jr.json()).jobs[0];if(job){lastJob=job;if(job.steps){steps2phase(job.steps);conSteps(job);if(run.status!=='completed')conLive(job)}}}
-            if(run.status==='completed'&&run.conclusion!=='success')return await conFail(run,job,id,cfg);
-            if(run.status==='completed'&&run.conclusion==='success'&&++okNoRel>4)throw new Error('Le build a réussi mais l\u2019APK est introuvable dans les releases du dépôt.');
-          }else if(!noRun)noRun=Date.now();
-          else if(Date.now()-noRun>4*60*1000)throw new Error('Aucune exécution GitHub Actions n\u2019a démarré en 4 min : le workflow « '+typeDe(mode()).wf+' » est absent ou désactivé dans « '+repo+' » (onglet Actions), ou Actions est désactivé pour ce dépôt.');
-        }
-        if(netFail){netFail=0;CON.lost=false;conLog('✔ Connexion rétablie','ok');$('stat').textContent='Compilation en cours, laisse cette page ouverte.'}
-      }catch(e){
-        /* coupure réseau passagère (écran éteint, changement de réseau…) : la compilation continue sur GitHub */
-        if(e instanceof TypeError){netFail++;if(!CON.lost){CON.lost=true;conLog('! Connexion perdue, nouvelle tentative…','wa')}$('stat').textContent='Connexion perdue, nouvelle tentative…';continue}
-        throw e;
-      }
-    }
-    throw new Error('Délai dépassé ('+LIMITE+' min) : la compilation ne s\u2019est pas terminée.');
-  }catch(err){
-    if(pv.style.display==='block'){
-      conLog('✖ '+err.message,'er');conBadge('ko');clearInterval(CON.tick);CON.done=true;
-      CON.errText=err.message;CON.fullText=CON.out.join('\n');$('conCopy').classList.add('hot');$('conStat').textContent='Échec';
-      fail(err.message);showFail(clientDiag(err));
-    }else{$('err').textContent=err.message;$('go').disabled=false}
-  }
+    const t0b=Date.now();savePending({id,sha,cfg,repo,start:t0b});
+    try{if(window.Notification&&Notification.permission==='default')Notification.requestPermission()}catch(_){}
+    await suivre(id,sha,cfg,t0b);
+  }catch(err){gererErreur(err)}
 });
 
 /* =====================================================================
@@ -2932,6 +2901,98 @@ function aiDraw(){
 $('aiBtn').addEventListener('click',()=>aiRun(''));
 $('fbAi').addEventListener('click',()=>aiRun([$('fbStep').textContent,$('fbMain').textContent,$('fbWhy').textContent,$('fbPre').textContent].join('\n')));
 aiSync();
+
+/* =====================================================================
+   Suivi de compilation durable, reprise après fermeture, bouton Retour
+   ===================================================================== */
+function gererErreur(err){
+    if(pv.style.display==='block'){
+      conLog('✖ '+err.message,'er');conBadge('ko');clearInterval(CON.tick);CON.done=true;
+      CON.errText=err.message;CON.fullText=CON.out.join('\n');$('conCopy').classList.add('hot');$('conStat').textContent='Échec';
+      fail(err.message);showFail(clientDiag(err));
+    }else{$('err').textContent=err.message;$('go').disabled=false}
+}
+async function suivre(id,sha,cfg,start){
+  window.__bm=cfg.type;
+  try{
+    let netFail=0,noRun=0,okNoRel=0,lastJob=null;
+    const LIMITE=(cfg.type==='python'?65:cfg.type==='reactnative'?45:35);
+    while(Date.now()-start<LIMITE*60*1000){
+      await sleep(netFail?Math.min(30000,3000*netFail):4000);
+      try{
+        const rel=await api('/releases/tags/apk-'+id);
+        if(rel.ok){const a=((await rel.json()).assets||[]).find(a=>/\.apk$/i.test(a.name));if(a){CON.done=true;await conFinish(sha,lastJob);conOk();notif('APK prête',cfg.name+' est compilée. Ouvre APK Studio pour la télécharger.');return succeed(a)}}
+        const rr=await api('/actions/runs?head_sha='+sha);
+        if(!rr.ok&&[401,403,404].includes(rr.status))throw new Error('GitHub ('+rr.status+') : lecture des exécutions du workflow refusée. Le jeton doit avoir le droit « Actions : lecture » et le dépôt « '+repo+' » doit exister.');
+        if(rr.ok){
+          const run=runDuBuild(await rr.json());
+          if(run){
+            noRun=0;
+            const jr=await api('/actions/runs/'+run.id+'/jobs');let job=null;
+            if(jr.ok){job=(await jr.json()).jobs[0];if(job){lastJob=job;if(job.steps){steps2phase(job.steps);conSteps(job);if(run.status!=='completed')conLive(job)}}}
+            if(run.status==='completed'&&run.conclusion!=='success'){notif('Compilation échouée',cfg.name+' : ouvre APK Studio pour voir l\u2019erreur.');return await conFail(run,job,id,cfg)}
+            if(run.status==='completed'&&run.conclusion==='success'&&++okNoRel>4)throw new Error('Le build a réussi mais l\u2019APK est introuvable dans les releases du dépôt.');
+          }else if(!noRun)noRun=Date.now();
+          else if(Date.now()-noRun>4*60*1000)throw new Error('Aucune exécution GitHub Actions n\u2019a démarré en 4 min : le workflow « '+typeDe(cfg.type).wf+' » est absent ou désactivé dans « '+repo+' » (onglet Actions), ou Actions est désactivé pour ce dépôt.');
+        }
+        if(netFail){netFail=0;CON.lost=false;conLog('✔ Connexion rétablie','ok');$('stat').textContent='Compilation en cours, laisse cette page ouverte.'}
+      }catch(e){
+        /* coupure réseau passagère (écran éteint, changement de réseau…) : la compilation continue sur GitHub */
+        if(e instanceof TypeError){netFail++;if(!CON.lost){CON.lost=true;conLog('! Connexion perdue, nouvelle tentative…','wa')}$('stat').textContent='Connexion perdue, nouvelle tentative…';continue}
+        throw e;
+      }
+    }
+    throw new Error('Délai dépassé ('+LIMITE+' min) : la compilation ne s\u2019est pas terminée.');
+  }finally{clearPending()}
+}
+function savePending(p){
+  try{localStorage.setItem('apk-pending',JSON.stringify(p))}catch(_){}
+  try{if(token&&!localStorage.getItem('apk-token'))sessionStorage.setItem('apk-pending-token',token)}catch(_){}
+}
+function clearPending(){try{localStorage.removeItem('apk-pending');sessionStorage.removeItem('apk-pending-token')}catch(_){}}
+function notif(t,b){
+  try{
+    if(!window.Notification||Notification.permission!=='granted'||!document.hidden)return;
+    const n=()=>{try{new Notification(t,{body:b})}catch(_){}};
+    if(navigator.serviceWorker&&navigator.serviceWorker.getRegistration)navigator.serviceWorker.getRegistration().then(r=>r&&r.showNotification?r.showNotification(t,{body:b}):n(),n);else n();
+  }catch(_){}
+}
+async function reprendre(){
+  let p=null;try{p=JSON.parse(localStorage.getItem('apk-pending')||'null')}catch(_){}
+  if(!p||!p.id||!p.sha||!p.cfg)return;
+  if(Date.now()-p.start>70*60*1000){clearPending();return}
+  repo=p.repo||$('repo').value.trim();
+  token=$('token').value.trim()||(()=>{try{return sessionStorage.getItem('apk-pending-token')||''}catch(_){return ''}})();
+  if(!repo||!token){clearPending();toast('Compilation en cours sur GitHub : reconnecte-toi dans Réglages pour la suivre.');return}
+  try{
+    goTab('create');$('go').disabled=true;initProg();conInit();CON.t0=p.start;
+    conHeader(p.cfg,null,true,'reprise du suivi après fermeture de la page');
+    conLog('↻ Reprise du suivi de la compilation '+p.id,'tk',hhmmss(Date.now()));
+    setPhase(1);$('stat').textContent='Compilation en cours, suivi repris…';
+    await suivre(p.id,p.sha,p.cfg,p.start);
+  }catch(e){gererErreur(e)}
+}
+(function(){
+  let leaving=false;
+  const enBuild=()=>{try{if(localStorage.getItem('apk-pending'))return true}catch(_){}return pv.style.display==='block'&&!CON.done};
+  if(!(history.state&&history.state.apk==='trap')){history.replaceState({apk:'base'},'');history.pushState({apk:'trap'},'')}
+  function demander(){
+    if(document.getElementById('quitBox'))return;
+    const b=document.createElement('div');b.id='quitBox';
+    b.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:24px';
+    const btn='flex:1;padding:14px;border-radius:14px;border:0;font:600 16px system-ui,sans-serif;cursor:pointer';
+    b.innerHTML='<div style="max-width:380px;width:100%;background:#151a2b;color:#eef0f7;border:1px solid #2b3350;border-radius:22px;padding:22px;font:16px/1.45 system-ui,sans-serif"><div style="font-size:19px;font-weight:700;margin-bottom:8px">Quitter APK Studio ?</div><div style="color:#aab2c8;margin-bottom:18px">'+(enBuild()?'Une compilation est en cours : elle continue sur GitHub et le suivi reprendra à ton retour.':'Tu peux rester pour continuer.')+'</div><div style="display:flex;gap:10px"><button id="qStay" style="'+btn+';background:#ff3f1a;color:#fff">Rester</button><button id="qLeave" style="'+btn+';background:#262d45;color:#eef0f7">Quitter</button></div></div>';
+    document.body.appendChild(b);
+    b.querySelector('#qStay').onclick=()=>{b.remove();history.pushState({apk:'trap'},'')};
+    b.querySelector('#qLeave').onclick=()=>{
+      leaving=true;b.remove();history.back();
+      setTimeout(()=>{try{window.close()}catch(_){}toast('Appuie encore sur Retour pour quitter.')},350);
+    };
+  }
+  addEventListener('popstate',e=>{if(!leaving&&e.state&&e.state.apk==='base')demander()});
+  addEventListener('beforeunload',e=>{if(!leaving&&enBuild()){e.preventDefault();e.returnValue=''}});
+  setTimeout(reprendre,400);
+})();
 </script>
 </body>
 </html>
