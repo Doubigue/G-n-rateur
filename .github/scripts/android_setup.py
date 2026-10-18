@@ -810,10 +810,10 @@ if kind == 'flutter':
     _svc = ''
     _min = 0
     if 'flutter_foreground_task' in _pub:
-        _perm += [('FOREGROUND_SERVICE', 0), ('FOREGROUND_SERVICE_MEDIA_PROJECTION', 0)]
+        _perm += [('FOREGROUND_SERVICE', 0), ('FOREGROUND_SERVICE_CONNECTED_DEVICE', 0)]
         if 'com.pravera.flutter_foreground_task.service.ForegroundService' not in _mx:
             _svc = ('    <service android:name="com.pravera.flutter_foreground_task.service.ForegroundService"'
-                    ' android:foregroundServiceType="mediaProjection" android:exported="false"/>\n')
+                    ' android:foregroundServiceType="connectedDevice" android:exported="false"/>\n')
     if 'nearby_connections' in _pub:
         _min = 23
         _perm += [('CHANGE_WIFI_STATE', 0), ('CHANGE_NETWORK_STATE', 0), ('ACCESS_FINE_LOCATION', 0),
