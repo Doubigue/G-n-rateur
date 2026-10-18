@@ -1,0 +1,26 @@
+{
+  "name": "DoubigueShare",
+  "pkg": "com.doubigue.appshare",
+  "versionName": "1.0.4",
+  "versionCode": 6,
+  "orientation": "auto",
+  "color": "#ffffff",
+  "fullscreen": false,
+  "icon": true,
+  "type": "flutter",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true
+}
