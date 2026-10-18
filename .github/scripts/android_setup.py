@@ -810,10 +810,18 @@ if kind == 'flutter':
     _svc = ''
     _min = 0
     if 'flutter_foreground_task' in _pub:
+        # PATCH Sentinel Cam : si l'app filme (flutter_webrtc), le service doit etre de type "camera"
+        # (sinon Android 14+ coupe la camera en arriere-plan / ecran eteint).
+        _cam = 'flutter_webrtc' in _pub
+        _stype = 'camera' if _cam else 'connectedDevice'
         _perm += [('FOREGROUND_SERVICE', 0), ('FOREGROUND_SERVICE_CONNECTED_DEVICE', 0)]
+        if _cam:
+            _perm += [('FOREGROUND_SERVICE_CAMERA', 0), ('CAMERA', 0), ('WAKE_LOCK', 0),
+                      ('REQUEST_IGNORE_BATTERY_OPTIMIZATIONS', 0), ('MODIFY_AUDIO_SETTINGS', 0),
+                      ('CHANGE_NETWORK_STATE', 0), ('ACCESS_NETWORK_STATE', 0)]
         if 'com.pravera.flutter_foreground_task.service.ForegroundService' not in _mx:
             _svc = ('    <service android:name="com.pravera.flutter_foreground_task.service.ForegroundService"'
-                    ' android:foregroundServiceType="connectedDevice" tools:replace="android:foregroundServiceType"'
+                    ' android:foregroundServiceType="' + _stype + '" tools:replace="android:foregroundServiceType"'
                     ' android:exported="false"/>\n')
     if 'nearby_connections' in _pub:
         _min = 23
@@ -821,7 +829,9 @@ if kind == 'flutter':
                   ('BLUETOOTH', 30), ('BLUETOOTH_ADMIN', 30), ('BLUETOOTH_ADVERTISE', 0),
                   ('BLUETOOTH_CONNECT', 0), ('BLUETOOTH_SCAN', 0), ('NEARBY_WIFI_DEVICES', 0)]
     if 'flutter_webrtc' in _pub:
-        _min = max(_min, 21)
+        _min = max(_min, 23)   # PATCH : 23 requis par Firebase / WebRTC
+    if 'cloud_firestore' in _pub or 'firebase_core' in _pub:
+        _min = max(_min, 23)
     _add = ''.join('    <uses-permission android:name="android.permission.%s"%s/>\n'
                    % (n, ' android:maxSdkVersion="%d"' % mx if mx else '')
                    for n, mx in _perm if 'android.permission.%s"' % n not in _mx)
