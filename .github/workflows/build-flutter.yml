@@ -113,7 +113,13 @@ jobs:
         run: |
           set -o pipefail
           flutter pub get 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
-          flutter build apk --release 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
+          flutter build apk --release 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log" || {
+            # Échec : ajoute au journal le détail des erreurs de fusion du manifeste
+            for R in $(find . -name 'manifest-merger-*-report.txt' 2>/dev/null); do
+              { echo "== RAPPORT FUSION MANIFESTE ($R) =="; grep -n -i -B1 -A4 -E 'error|conflict|cannot be smaller' "$R" | head -n 80; } 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
+            done
+            exit 1
+          }
 
       - name: Publier l'APK
         env:
