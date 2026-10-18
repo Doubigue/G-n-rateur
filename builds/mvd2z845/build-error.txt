@@ -1,0 +1,165 @@
+== Journal de compilation (mvd2z845) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mvd2z845/app.zip | icône : True
+Creating project work/app...
+Resolving dependencies in `work/app`...
+Downloading packages...
+Got dependencies in `work/app`.
+Wrote 35 files.
+
+All done!
+You can find general documentation for Flutter at: https://docs.flutter.dev/
+Detailed API documentation is available at: https://api.flutter.dev/
+If you prefer video documentation, consider: https://www.youtube.com/c/flutterdev
+
+In order to run your application, type:
+
+  $ cd work/app
+  $ flutter run
+
+Your application code is in work/app/lib/main.dart.
+
+compileSdk des plugins aligné dans : android/build.gradle.kts
+Autorisations : ['storage', 'media', 'allfiles', 'camera', 'micro', 'location', 'notifications', 'contacts', 'calendar', 'bluetooth', 'phone'] | partage : True | demande au démarrage : True
+Alarmes : desugaring + autorisations ajoutés
+Plugins : autorisations/service ajoutés au manifeste (minSdk 23)
+Resolving dependencies...
+Downloading packages...
++ args 2.7.0
++ code_assets 1.2.1 (2.1.0 available)
++ cross_file 0.3.5+5 (0.4.0 available)
++ crypto 3.0.7
++ csslib 1.0.2
+  cupertino_icons 1.0.9 (2.0.0 available)
++ dbus 0.7.15 (0.8.0 available)
++ device_info_plus 10.1.2 (13.3.0 available)
++ device_info_plus_platform_interface 7.0.3 (8.1.0 available)
++ extension 1.0.0
++ ffi 2.2.0
++ file 7.0.1
++ file_picker 8.3.7 (13.1.0 available)
++ fixnum 1.1.1
++ flutter_foreground_task 9.2.2 (11.0.3 available)
+< flutter_lints 4.0.0 (was 6.0.0) (6.0.0 available)
++ flutter_local_notifications 18.0.1 (22.3.2 available)
++ flutter_local_notifications_linux 5.0.0 (8.0.2 available)
++ flutter_local_notifications_platform_interface 8.0.0 (12.2.0 available)
++ flutter_plugin_android_lifecycle 2.0.35
++ flutter_web_plugins 0.0.0 from sdk flutter
++ hooks 2.0.2 (2.2.0 available)
++ html 0.15.7
++ http 1.6.0
++ http_parser 4.1.2
++ jni 1.1.0
++ jni_flutter 1.0.4+1
++ jni_util 1.0.0
+< lints 4.0.0 (was 6.1.0) (6.1.0 available)
++ logging 1.3.0
+  material_color_utilities 0.13.0 (0.13.1 available)
+  meta 1.18.3 (1.19.0 available)
++ nearby_connections 4.3.0 from path packages/nearby_connections
++ objective_c 9.5.0 (9.6.2 available)
++ open_filex 4.7.0 (5.0.0 available)
++ package_config 3.0.0
+  path 1.9.1 (from transitive dependency to direct dependency)
++ path_provider 2.1.6
++ path_provider_android 2.3.1
++ path_provider_foundation 2.6.0
++ path_provider_linux 2.2.2
++ path_provider_platform_interface 2.1.3
++ path_provider_windows 2.3.0
++ pdfx 2.11.0
++ permission_handler 11.4.0 (13.0.2 available)
++ permission_handler_android 12.1.0 (14.1.0 available)
++ permission_handler_apple 9.6.2
++ permission_handler_html 0.1.4+1
++ permission_handler_platform_interface 4.4.1
++ permission_handler_windows 0.2.2
++ petitparser 7.0.2 (7.1.0 available)
++ photo_view 0.15.0
++ platform 3.2.0
++ plugin_platform_interface 2.1.8
++ pub_semver 2.2.1
++ record_use 0.6.0 (1.1.1 available)
++ shared_preferences 2.5.6
++ shared_preferences_android 2.5.0
++ shared_preferences_foundation 2.5.7 (2.6.0 available)
++ shared_preferences_linux 2.4.1
++ shared_preferences_platform_interface 2.4.2
++ shared_preferences_web 2.4.3
++ shared_preferences_windows 2.4.1
++ synchronized 3.5.0
+  test_api 0.7.12 (0.7.15 available)
++ timezone 0.10.1 (0.11.2 available)
++ typed_data 1.4.0
++ universal_platform 1.1.0
++ uuid 4.6.0
+  vector_math 2.4.0 (2.4.3 available)
++ video_player 2.14.1
++ video_player_android 2.12.2
++ video_player_avfoundation 2.12.1
++ video_player_platform_interface 6.9.0
++ video_player_web 2.4.0
++ web 1.1.1
++ win32 5.15.0 (6.4.0 available)
++ win32_registry 1.1.5 (3.0.3 available)
++ xdg_directories 1.1.0
++ xml 7.0.1 (7.1.0 available)
++ yaml 3.1.4
+Changed 76 dependencies!
+29 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Upgrading build.gradle.kts
+Running Gradle task 'assembleRelease'...                        
+Loading package information...                                                  
+Loading local repository...                                                     
+
+WARNING: Your app uses the following plugins that apply Kotlin Gradle Plugin (KGP): device_info_plus, flutter_foreground_task, pdfx
+Future versions of Flutter will fail to build if your app uses plugins that apply KGP.
+
+Please check the changelogs of these plugins and upgrade to a version that supports Built-in Kotlin.
+If no such version exists, report the issue to the plugin. If necessary, here is a guide on filing
+an issue against a plugin: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-app-developers#report-incompatible-kotlin-gradle-plugin-usage-to-plugin-authors
+
+If you are a plugin author, please migrate your plugin to Built-in Kotlin using this guide: https://docs.flutter.dev/release/breaking-changes/migrate-to-built-in-kotlin/for-plugin-authors
+Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 5904 bytes (99.6% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+Checking the license for package CMake 3.22.1 in /usr/local/lib/android/sdk/licenses
+License for package CMake 3.22.1 accepted.
+Preparing "Install CMake 3.22.1 v.3.22.1".
+"Install CMake 3.22.1 v.3.22.1" ready.
+Installing CMake 3.22.1 in /usr/local/lib/android/sdk/cmake/3.22.1
+"Install CMake 3.22.1 v.3.22.1" complete.
+"Install CMake 3.22.1 v.3.22.1" finished.
+/home/runner/work/G-n-rateur/G-n-rateur/work/app/packages/nearby_connections/android/src/main/java/com/pkmnapps/nearby_connections/NearbyConnectionsPlugin.java:309: warning: [deprecation] getAuthenticationToken() in ConnectionInfo has been deprecated
+			args.put("authenticationToken", connectionInfo.getAuthenticationToken());
+			                                              ^
+/home/runner/work/G-n-rateur/G-n-rateur/work/app/packages/nearby_connections/android/src/main/java/com/pkmnapps/nearby_connections/NearbyConnectionsPlugin.java:361: warning: [deprecation] getAuthenticationToken() in ConnectionInfo has been deprecated
+			args.put("authenticationToken", connectionInfo.getAuthenticationToken());
+			                                              ^
+/home/runner/work/G-n-rateur/G-n-rateur/work/app/packages/nearby_connections/android/src/main/java/com/pkmnapps/nearby_connections/NearbyConnectionsPlugin.java:426: warning: [deprecation] asJavaFile() in com.google.android.gms.nearby.connection.Payload.File has been deprecated
+						File jf = pf.asJavaFile();
+						            ^
+3 warnings
+/home/runner/work/G-n-rateur/G-n-rateur/work/app/android/app/src/main/AndroidManifest.xml:9:79-105 Error:
+	Attribute uses-permission#android.permission.WRITE_EXTERNAL_STORAGE@maxSdkVersion value=(28) from AndroidManifest.xml:9:79-105
+	is also present at [:nearby_connections] AndroidManifest.xml:41:9-35 value=(29).
+	Suggestion: add 'tools:replace="android:maxSdkVersion"' to <uses-permission> element at AndroidManifest.xml:9:5-107 to override.
+/home/runner/work/G-n-rateur/G-n-rateur/work/app/android/app/src/main/AndroidManifest.xml:40:9-38 Error:
+	Attribute application@label value=(DoubigueShare) from AndroidManifest.xml:40:9-38
+	is also present at [:nearby_connections] AndroidManifest.xml:70:9-35 value=(LocalShare).
+	Suggestion: add 'tools:replace="android:label"' to <application> element at AndroidManifest.xml:39:5-88:17 to override.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:processReleaseMainManifest'.
+> Manifest merger failed with multiple errors, see logs
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 4m 25s
+Running Gradle task 'assembleRelease'...                          265.7s
+Gradle task assembleRelease failed with exit code 1
