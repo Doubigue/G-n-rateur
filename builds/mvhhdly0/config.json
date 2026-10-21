@@ -1,0 +1,22 @@
+{
+  "name": "HTML To Mp4",
+  "pkg": "com.doubigue.html2",
+  "versionName": "1.0.1",
+  "versionCode": 2,
+  "orientation": "auto",
+  "color": "#2a2f6b",
+  "fullscreen": false,
+  "icon": true,
+  "type": "web",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "micro",
+    "notifications"
+  ],
+  "share": true,
+  "askStart": true,
+  "sourceUrl": "https://doubigue.github.io/Convertisseur/",
+  "sourceKind": "site"
+}
