@@ -1,0 +1,26 @@
+{
+  "name": "HTML To Mp4 2",
+  "pkg": "com.doubigue.htmljava",
+  "versionName": "1.0.3",
+  "versionCode": 4,
+  "orientation": "auto",
+  "color": "#2a2f6b",
+  "fullscreen": false,
+  "icon": true,
+  "type": "native",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true
+}
