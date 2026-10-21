@@ -322,6 +322,23 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
 .ai-bar i{display:block;height:100%;width:40%;background:var(--org);border-radius:4px;animation:aib 1.1s ease-in-out infinite}
 @keyframes aib{0%{margin-left:-40%}100%{margin-left:100%}}
 .aic .ai-b{display:flex;gap:8px;margin-top:14px}.aic .ai-b .btn{flex:1;margin:0}
+
+/* ---------- Émulateur interactif ---------- */
+#tEmu .emu-shell{background:#171923;border-radius:26px;padding:16px;color:#f5f6fa;box-shadow:0 12px 32px #1112}
+.emu-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0}
+.emu-toolbar button,.emu-toolbar label{border:0;border-radius:12px;padding:10px 13px;background:#303442;color:#fff;font:600 12px Poppins,sans-serif;cursor:pointer}
+.emu-toolbar .emu-primary{background:var(--org)}
+.emu-frame-wrap{display:flex;justify-content:center;padding:12px 0}
+.emu-phone{width:min(100%,340px);height:590px;max-height:65vh;min-height:400px;background:#08090d;border:8px solid #30333c;border-radius:36px;padding:10px;box-shadow:0 12px 30px #0008;position:relative}
+.emu-notch{height:17px;width:88px;background:#08090d;border-radius:0 0 12px 12px;position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:2}
+.emu-screen{width:100%;height:100%;border:0;border-radius:23px;background:white}
+.emu-status{display:flex;justify-content:space-between;font-size:10px;padding:0 5px 5px;color:#f4f4f5}
+#emuMsg{font-size:12px;color:#c5c9d4;line-height:1.5}
+#emuFile{display:none}
+.emu-size{display:flex;gap:6px;align-items:center;color:#d6d8e0;font-size:12px}
+.emu-size select{width:auto;padding:8px 10px;background:#303442;color:#fff;border:0}
+.tabs{overflow-x:auto;justify-content:flex-start;scrollbar-width:thin}
+.tabs button{flex:0 0 68px;min-width:68px}
 </style>
 </head>
 <body>
@@ -431,6 +448,27 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
   <div id="act"></div>
 </section>
 </div>
+
+<section id="tEmu" style="display:none">
+  <div class="panel">
+    <h2><span>▶</span>Émulateur d’application</h2>
+    <p class="cstat">Teste ton site ou ton application web dans un téléphone virtuel avant la compilation de l’APK.</p>
+    <label class="drop" for="emuFile"><b>📦 Importer le ZIP du projet</b><span>Choisis une archive contenant index.html et ses ressources</span><input id="emuFile" type="file" accept=".zip,application/zip"></label>
+    <div class="emu-toolbar">
+      <button type="button" class="emu-primary" id="emuLoad">▶ Lancer l’aperçu</button>
+      <button type="button" id="emuReload">↻ Actualiser</button>
+      <button type="button" id="emuReset">Effacer</button>
+      <label for="emuFile">Choisir un autre ZIP</label>
+      <span class="emu-size">Écran <select id="emuSize"><option value="phone">Téléphone</option><option value="tablet">Tablette</option><option value="wide">Grand écran</option></select></span>
+    </div>
+    <div class="emu-shell">
+      <div class="emu-status"><span>● APK Studio Preview</span><span>▮▮▮　 Wi-Fi　 100%</span></div>
+      <div class="emu-frame-wrap"><div class="emu-phone" id="emuDevice"><div class="emu-notch"></div><iframe class="emu-screen" id="emuFrame" title="Aperçu interactif du projet" sandbox="allow-scripts allow-forms allow-modals allow-popups allow-downloads" referrerpolicy="no-referrer" srcdoc="<!doctype html><html lang='fr'><meta name='viewport' content='width=device-width,initial-scale=1'><body style='font:14px system-ui;padding:24px;color:#555;text-align:center'><h2>Votre aperçu apparaîtra ici</h2><p>Importez le ZIP de votre projet, puis appuyez sur « Lancer l’aperçu ».</p></body></html>"></iframe></div></div>
+      <div id="emuMsg" role="status">Prêt à tester. L’aperçu s’exécute dans un cadre isolé.</div>
+    </div>
+    <p class="h">Limites : les liens et ressources web externes nécessitent une connexion. Les fonctions natives Android (caméra, Bluetooth, notifications système, etc.) ne sont pas simulées. Les chemins de ressources complexes ou les applications nécessitant un serveur peuvent demander une configuration supplémentaire.</p>
+  </div>
+</section>
 
 <section id="tApps" style="display:none">
   <div class="apps-head"><h2>Mes applications</h2><button type="button" class="mini2" id="refApps">Actualiser</button></div>
@@ -658,6 +696,7 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
 <nav class="tabs" aria-label="Navigation">
   <button type="button" data-t="create" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Créer</button>
   <button type="button" data-t="apps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/></svg>Mes applis</button>
+  <button type="button" data-t="emu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg>Émulateur</button>
   <button type="button" data-t="git"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="9" r="2"/><path d="M6 7v10M18 11c0 4-6 3-12 6"/></svg>Dépôts</button>
   <button type="button" data-t="edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M14 3v5h5M9 15l5-5 1.5 1.5-5 5H9z"/></svg>Éditeur</button>
   <button type="button" data-t="vercel"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 4l9 16H3z"/></svg>Vercel</button>
@@ -1702,7 +1741,7 @@ $('vfDeploy').onclick=async()=>{
 };
 
 /* ---------- Onglets, toast ---------- */
-const TABS={create:'tCreate',apps:'tApps',git:'tGit',edit:'tEdit',vercel:'tVer',set:'tSet'};
+const TABS={create:'tCreate',apps:'tApps',emu:'tEmu',git:'tGit',edit:'tEdit',vercel:'tVer',set:'tSet'};
 function goTab(n){
   curTab=n;
   for(const k in TABS)$(TABS[k]).style.display=k===n?'block':'none';
@@ -2901,6 +2940,70 @@ function aiDraw(){
 $('aiBtn').addEventListener('click',()=>aiRun(''));
 $('fbAi').addEventListener('click',()=>aiRun([$('fbStep').textContent,$('fbMain').textContent,$('fbWhy').textContent,$('fbPre').textContent].join('\n')));
 aiSync();
+
+/* =====================================================================
+   Émulateur web interactif : aperçu d’un site ZIP dans un téléphone virtuel
+   ===================================================================== */
+let emuArchive=null, emuObjectUrls=[];
+const emuMime={html:'text/html',htm:'text/html',css:'text/css',js:'text/javascript',mjs:'text/javascript',json:'application/json',svg:'image/svg+xml',png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',gif:'image/gif',webp:'image/webp',ico:'image/x-icon',woff:'font/woff',woff2:'font/woff2',ttf:'font/ttf',mp4:'video/mp4',webm:'video/webm',mp3:'audio/mpeg',wav:'audio/wav'};
+function emuSay(t){const e=$('emuMsg');if(e)e.textContent=t}
+function emuClearUrls(){emuObjectUrls.forEach(u=>URL.revokeObjectURL(u));emuObjectUrls=[]}
+function emuResolvePath(base,rel){
+  try{if(/^(data:|blob:|https?:|\/\/|#|mailto:|tel:|javascript:)/i.test(rel))return rel;
+    const clean=decodeURIComponent(rel.split(/[?#]/)[0]);const parts=(base?base.split('/').slice(0,-1):[]);
+    clean.split('/').forEach(p=>{if(!p||p==='.')return;if(p==='..')parts.pop();else parts.push(p)});
+    return parts.join('/');
+  }catch(_){return rel}
+}
+async function emuBuild(){
+  const f=$('emuFile').files[0];if(!f){emuSay('Choisis d’abord le ZIP de ton projet.');return}
+  if(typeof JSZip==='undefined'){emuSay('La bibliothèque ZIP est indisponible. Vérifie la connexion Internet.');return}
+  if(f.size>80*1048576){emuSay('Archive trop volumineuse (limite de prévisualisation : 80 Mo).');return}
+  $('emuLoad').disabled=true;emuSay('Lecture du ZIP et préparation des ressources…');emuClearUrls();
+  try{
+    const z=await JSZip.loadAsync(f);const files=Object.keys(z.files).filter(n=>!z.files[n].dir&&!n.startsWith('__MACOSX/')&&!n.endsWith('.DS_Store'));
+    let htmlPath=files.find(n=>/^index\.html?$/i.test(n))||files.find(n=>/\/index\.html?$/i.test(n));
+    if(!htmlPath)throw new Error('Aucun index.html trouvé dans l’archive.');
+    const root=htmlPath.includes('/')?htmlPath.slice(0,htmlPath.lastIndexOf('/')+1):'';
+    const htmlFile=z.file(htmlPath);let html=await htmlFile.async('text');
+    const paths=new Map();
+    for(const n of files){
+      if(!/\.(css|js|mjs|png|jpe?g|gif|webp|svg|ico|woff2?|ttf|mp4|webm|mp3|wav|json|webmanifest)$/i.test(n))continue;
+      const ext=(n.split('.').pop()||'').toLowerCase();const blob=await z.file(n).async('blob');
+      const typed=new Blob([blob],{type:emuMime[ext]||blob.type||'application/octet-stream'});
+      const url=URL.createObjectURL(typed);emuObjectUrls.push(url);paths.set(n,url);
+    }
+    const findPath=(base,rel)=>{
+      const p=emuResolvePath(base,rel);if(paths.has(p))return paths.get(p);
+      const rooted=emuResolvePath(root,rel);if(paths.has(rooted))return paths.get(rooted);
+      const name=p.split('/').pop();const match=files.find(x=>x===p||x===rooted||x.endsWith('/'+name));
+      return match&&paths.has(match)?paths.get(match):rel;
+    };
+    // Réécriture des liens de ressources HTML courants vers des URL Blob locales.
+    html=html.replace(/\b(src|href|poster|data-src)\s*=\s*(["'])(.*?)\2/gi,(all,attr,q,val)=>{
+      if(/^(https?:|\/\/|data:|blob:|#|mailto:|tel:|javascript:)/i.test(val)||/^(https?:)?\/\//i.test(val))return all;
+      const url=findPath(htmlPath,val);return url!==val?attr+'='+q+url+q:all;
+    });
+    // Réécriture des url(...) CSS inline.
+    html=html.replace(/url\(\s*(["']?)(?!data:|https?:|\/\/|#)([^)"']+)\1\s*\)/gi,(all,q,val)=>{
+      const url=findPath(htmlPath,val.trim());return url!==val.trim()?'url("'+url+'")':all;
+    });
+    // CSP is intentionally not overridden; preview runs sandboxed without same-origin privileges.
+    $('emuFrame').srcdoc=html;
+    emuSay('Aperçu chargé : '+htmlPath+' · '+files.length+' fichiers dans le ZIP. Tu peux interagir avec l’application ci-dessus.');
+  }catch(e){emuSay('Impossible de lancer l’aperçu : '+(e.message||String(e)))}
+  finally{$('emuLoad').disabled=false}
+}
+$('emuLoad').addEventListener('click',emuBuild);
+$('emuReload').addEventListener('click',()=>{if(emuArchive||$('emuFile').files[0])emuBuild();else{try{$('emuFrame').contentWindow.location.reload()}catch(_){emuSay('Importe un ZIP pour démarrer.')}}});
+$('emuReset').addEventListener('click',()=>{emuClearUrls();$('emuFile').value='';$('emuFrame').srcdoc='<!doctype html><html lang="fr"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font:14px system-ui;padding:24px;text-align:center"><h2>Aperçu effacé</h2><p>Importe un ZIP pour recommencer.</p></body></html>';emuSay('Aperçu effacé.');});
+$('emuSize').addEventListener('change',()=>{
+ const d=$('emuDevice'),v=$('emuSize').value;
+ d.style.width=v==='tablet'?'min(100%,560px)':v==='wide'?'100%':'min(100%,340px)';
+ d.style.height=v==='tablet'?'min(65vh,720px)':v==='wide'?'min(65vh,620px)':'590px';
+ d.style.maxHeight='65vh';d.style.minHeight='400px';
+});
+$('emuFile').addEventListener('change',()=>{const f=$('emuFile').files[0];if(f)emuSay('Projet sélectionné : '+f.name+'. Appuie sur « Lancer l’aperçu ».')});
 
 /* =====================================================================
    Suivi de compilation durable, reprise après fermeture, bouton Retour

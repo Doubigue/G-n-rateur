@@ -898,3 +898,14 @@ if kind == 'flutter':
             print('Icône adaptative grande taille générée')
         except Exception as ex:
             print('Icône non générée :', ex)
+
+# ---------- Flutter : R8/ProGuard casse les bibliothèques natives (FFmpegKit, etc.) -> l'appli se ferme ----------
+if kind == 'flutter':
+    os.makedirs('android/app', exist_ok=True)
+    open('android/app/proguard-rules.pro', 'a', encoding='utf-8').write(
+        '\n# Ajouté par le générateur\n'
+        '-keep class com.antonkarpenko.** { *; }\n'
+        '-keep class com.arthenica.** { *; }\n'
+        '-keep class io.flutter.plugins.** { *; }\n'
+        '-dontwarn com.antonkarpenko.**\n-dontwarn com.arthenica.**\n')
+    print('Règles ProGuard ajoutées (android/app/proguard-rules.pro)')
