@@ -1,0 +1,70 @@
+name: Emulate APK
+
+# Lance une APK déjà compilée (Flutter, Kotlin/Java, React Native, Python, site web…)
+# dans un vrai émulateur Android et renvoie captures d'écran, plantage éventuel et journal.
+on:
+  push:
+    paths:
+      - 'builds/*/emulate.json'
+
+permissions:
+  contents: write
+
+jobs:
+  emulate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Détecter la demande
+        run: |
+          CFG=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E '^builds/[^/]+/emulate\.json$' | head -n1)
+          test -n "$CFG"
+          echo "DIR=$(dirname "$CFG")" >> "$GITHUB_ENV"
+          echo "ID=$(basename "$(dirname "$CFG")")" >> "$GITHUB_ENV"
+
+      - name: Télécharger l'APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          TAG=$(jq -r .tag "$DIR/emulate.json")
+          mkdir -p work
+          gh release download "$TAG" -p '*.apk' -D work
+          mv "$(ls work/*.apk | head -n1)" work/app.apk
+          ls -l work
+
+      - name: Activer KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Émulateur Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-boot-timeout: 600
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
+          script: bash .github/scripts/emulate.sh
+
+      - name: Publier le rapport
+        if: always()
+        run: |
+          [ -n "$DIR" ] || exit 0
+          R="$DIR/emu-report.json"
+          [ -f "$R" ] || jq -n '{ok:false,error:"L’émulateur Android n’a pas pu démarrer, ou l’APK n’a pas pu être téléchargée (voir l’onglet Actions du dépôt).",shots:[]}' > "$R"
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git rm -q "$DIR/emulate.json" || true
+          git add -f "$R"
+          git commit -qm "Rapport émulateur $ID [skip ci]" || exit 0
+          git pull --rebase -q || true
+          git push -q || true

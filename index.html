@@ -336,6 +336,20 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
 #emuMsg{font-size:12px;color:#c5c9d4;line-height:1.5}
 #emuFile{display:none}
 .emu-size{display:flex;gap:6px;align-items:center;color:#d6d8e0;font-size:12px}
+.er-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.er-row select,#erSteps{padding:10px 12px;border-radius:12px;border:1px solid #0002;background:var(--card);color:inherit;font:13px Poppins,sans-serif}
+.er-row select{flex:1;min-width:140px}
+#erSteps{width:100%;box-sizing:border-box;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.er-btn{border:0;border-radius:12px;padding:11px 15px;background:var(--org);color:#fff;font:600 13px Poppins,sans-serif;cursor:pointer}
+.er-btn.g{background:#303442}.er-btn:disabled{opacity:.5}
+#erMsg{font-size:12px;color:var(--mut);line-height:1.5;margin:8px 0}
+#erOut .ok{color:#1FA971;font-weight:700}#erOut .ko{color:#D6334A;font-weight:700}
+#erOut .shots{display:flex;gap:10px;overflow-x:auto;padding:10px 0}
+#erOut figure{margin:0;flex:0 0 auto;text-align:center;font-size:11px;color:var(--mut)}
+#erOut img{width:150px;border-radius:14px;border:1px solid #0003;display:block;cursor:zoom-in}
+#erOut img.big{width:min(86vw,320px);cursor:zoom-out}
+#erOut pre{background:#171923;color:#ffc9c9;padding:12px;border-radius:12px;font-size:11px;white-space:pre-wrap;word-break:break-word;max-height:260px;overflow:auto}
+#erOut pre.lg{color:#c5c9d4}
 .emu-size select{width:auto;padding:8px 10px;background:#303442;color:#fff;border:0}
 .tabs{overflow-x:auto;justify-content:flex-start;scrollbar-width:thin}
 .tabs button{flex:0 0 68px;min-width:68px}
@@ -451,8 +465,8 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
 
 <section id="tEmu" style="display:none">
   <div class="panel">
-    <h2><span>▶</span>Émulateur d’application</h2>
-    <p class="cstat">Teste ton site ou ton application web dans un téléphone virtuel avant la compilation de l’APK.</p>
+    <h2><span>▶</span>Aperçu instantané (site web / HTML)</h2>
+    <p class="cstat">Teste ton site ou ton application web dans un téléphone virtuel avant la compilation. Pour Flutter, Kotlin/Java, React Native ou Python, utilise l’émulateur Android réel plus bas.</p>
     <label class="drop" for="emuFile"><b>📦 Importer le ZIP du projet</b><span>Choisis une archive contenant index.html et ses ressources</span><input id="emuFile" type="file" accept=".zip,application/zip"></label>
     <div class="emu-toolbar">
       <button type="button" class="emu-primary" id="emuLoad">▶ Lancer l’aperçu</button>
@@ -467,6 +481,23 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
       <div id="emuMsg" role="status">Prêt à tester. L’aperçu s’exécute dans un cadre isolé.</div>
     </div>
     <p class="h">Limites : les liens et ressources web externes nécessitent une connexion. Les fonctions natives Android (caméra, Bluetooth, notifications système, etc.) ne sont pas simulées. Les chemins de ressources complexes ou les applications nécessitant un serveur peuvent demander une configuration supplémentaire.</p>
+  </div>
+  <div class="panel" id="emuReal">
+    <h2><span>🤖</span>Émulateur Android réel</h2>
+    <p class="cstat">Pour Flutter, Kotlin/Java, React Native, Python (Kivy) et site web : envoie le ZIP du projet, sans compiler d’APK toi-même. Le projet est compilé sur GitHub puis l’APK est installée et lancée dans un vrai Android (Pixel 6, Android 14) sur GitHub Actions : tu obtiens des captures d’écran, le plantage éventuel (« l’appli se ferme ») et le journal d’erreurs.</p>
+    <div class="er-row"><label><input type="radio" name="erSrc" value="zip" checked> Projet ZIP : compilation automatique puis test</label><label><input type="radio" name="erSrc" value="apk"> Application déjà compilée</label></div>
+    <div id="erZipBox">
+      <label class="drop" for="erZip"><b>📦 ZIP du projet</b><span id="erZipName">Flutter, Kotlin/Java, React Native, Python ou site web : pas besoin de compiler avant, tout est enchaîné.</span><input id="erZip" type="file" accept=".zip,application/zip" style="display:none"></label>
+      <div class="er-row"><span>Type</span><select id="erType" aria-label="Type de projet"><option value="auto">Détection automatique</option><option value="flutter">Flutter</option><option value="native">Kotlin / Java</option><option value="reactnative">React Native</option><option value="python">Python (Kivy)</option><option value="web">Site web</option></select></div>
+    </div>
+    <div id="erApkBox" style="display:none"><div class="er-row"><select id="erApp" aria-label="Application à tester"><option value="">Chargement…</option></select><button type="button" class="er-btn g" id="erRefresh">↻ Actualiser</button></div></div>
+    <div class="er-row"><span>Durée du test</span><select id="erSecs" aria-label="Durée"><option value="20">20 s</option><option value="40">40 s</option><option value="60">60 s</option></select></div>
+    <textarea id="erSteps" rows="4" spellcheck="false" autocapitalize="none" autocorrect="off" placeholder="Actions facultatives, une par ligne (écran 1080×2400) :&#10;wait 3&#10;tap 540 1200&#10;text bonjour&#10;key back&#10;swipe 540 1800 540 600"></textarea>
+    <small class="h">Actions possibles : wait N · tap X Y · swipe X1 Y1 X2 Y2 · text … · key back|home|enter|tab|delete|menu · shot. Une capture est prise après chaque action.</small>
+    <div class="er-row"><button type="button" class="er-btn" id="erRun">▶ Compiler et tester</button></div>
+    <div id="erMsg" role="status">Choisis le ZIP de ton projet : il est compilé puis testé automatiquement (Flutter : environ 10 à 15 min, Python : jusqu’à 45 min la première fois).</div>
+    <div id="erOut"></div>
+    <small class="h">Nécessite le workflow « Emulate APK » (.github/workflows/emulate-apk.yml) dans ton dépôt. Les fonctions matérielles (caméra, Bluetooth) ne sont pas simulées. Une APK sans bibliothèque x86_64 ne peut pas démarrer.</small>
   </div>
 </section>
 
@@ -848,8 +879,8 @@ function steps2phase(steps){
 function succeed(asset){edition=null;$('edBar').style.display='none';
   final=100;for(let k=0;k<PH.length;k++)st[k]=2;
   $('rb').className='ringbox state-ok';$('stat').textContent='Ton application est prête.';
-  $('act').innerHTML='<a class="btn" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a><button class="btn ghost" id="toApps">Mes applications</button><button class="btn ghost" id="again">Nouvelle application</button>';
-  $('again').onclick=reset;$('toApps').onclick=()=>goTab('apps');cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+  $('act').innerHTML='<a class="btn" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a><button class="btn ghost" id="toEmu">▶ Tester dans l’émulateur</button><button class="btn ghost" id="toApps">Mes applications</button><button class="btn ghost" id="again">Nouvelle application</button>';
+  $('again').onclick=reset;$('toApps').onclick=()=>goTab('apps');$('toEmu').onclick=()=>erOpen(window.__lastTag);cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
   const dl=$('act').querySelector('a');dl.onclick=e=>{e.preventDefault();telecharger(asset,dl)};
   if(navigator.vibrate)navigator.vibrate([60,40,60]);
 }
@@ -3006,6 +3037,162 @@ $('emuSize').addEventListener('change',()=>{
 $('emuFile').addEventListener('change',()=>{const f=$('emuFile').files[0];if(f)emuSay('Projet sélectionné : '+f.name+'. Appuie sur « Lancer l’aperçu ».')});
 
 /* =====================================================================
+   Émulateur Android réel (GitHub Actions) : Flutter, Kotlin/Java, React Native, Python, web
+   ===================================================================== */
+function erSay(t){$('erMsg').textContent=t}
+async function erLoadApps(sel){
+  repo=$('repo').value.trim();token=$('token').value.trim();
+  const s=$('erApp');
+  if(!repo||!token){s.innerHTML='<option value="">Connecte-toi dans Réglages</option>';return}
+  try{
+    const r=await api('/releases?per_page=100');if(!r.ok)throw new Error('GitHub ('+r.status+')');
+    const l=(await r.json()).filter(x=>x.tag_name.startsWith('apk-')&&(x.assets||[]).some(a=>/\.apk$/i.test(a.name)));
+    APPS=l;appsAt=Date.now();s.innerHTML='';
+    l.forEach(x=>{const m=meta(x),o=document.createElement('option');o.value=x.tag_name;
+      o.textContent=(x.name||x.tag_name)+(m.type?' · '+typeDe(m.type).label:'')+(m.ver?' · v'+m.ver:'');s.appendChild(o)});
+    if(!l.length)s.innerHTML='<option value="">Aucune application compilée</option>';
+    else if(sel)s.value=sel;
+  }catch(e){s.innerHTML='<option value="">Liste indisponible</option>';erSay('Liste impossible : '+e.message)}
+}
+function erShow(R,id){
+  const out=$('erOut');out.innerHTML='';
+  const add=(tag,txt,cls)=>{const e=document.createElement(tag);if(cls)e.className=cls;e.textContent=txt;out.appendChild(e);return e};
+  if(R.error&&!R.shots.length){erSay('Terminé.');add('p','✕ '+R.error,'ko');return}
+  const crashed=R.error&&R.ok;
+  erSay('Test terminé · '+(R.device||'')+' · '+R.seconds+' s');
+  add('p',R.ok?(crashed?'✕ '+R.error:(R.alive?'✓ L’application est restée ouverte pendant tout le test.':'✕ L’application n’est plus active à la fin du test.')):'✕ '+R.error,(R.ok&&!crashed&&R.alive)?'ok':'ko');
+  if(R.shots.length){
+    const w=document.createElement('div');w.className='shots';
+    R.shots.forEach(x=>{const f=document.createElement('figure'),i=document.createElement('img');
+      i.src='data:image/jpeg;base64,'+x.data;i.alt=x.label;i.onclick=()=>i.classList.toggle('big');
+      const c=document.createElement('figcaption');c.textContent=x.label;f.append(i,c);w.appendChild(f)});
+    out.appendChild(w);
+  }
+  if(R.crash){add('b','Plantage détecté');add('pre',R.crash)}
+  if(R.logTail){const d=document.createElement('details');const sm=document.createElement('summary');sm.textContent='Journal Android (erreurs et avertissements)';
+    const pr=document.createElement('pre');pr.className='lg';pr.textContent=R.logTail;d.append(sm,pr);out.appendChild(d)}
+  if(R.crash||R.error){const b=document.createElement('button');b.type='button';b.className='er-btn g';b.textContent='Copier le diagnostic';
+    b.onclick=()=>{const t='Test émulateur '+R.pkg+'\n'+(R.error||'')+'\n\n'+(R.crash||'')+'\n\n'+(R.logTail||'');
+      (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Diagnostic copié'),()=>toast('Copie impossible'))};
+    out.appendChild(b)}
+}
+function erSteps(){
+  const steps=$('erSteps').value.split('\n').map(x=>x.trim()).filter(Boolean).slice(0,30);
+  const bad=steps.find(x=>!/^(wait \d+|tap \d+ \d+|swipe \d+ \d+ \d+ \d+( \d+)?|text [\w .@-]+|key (back|home|enter|tab|delete|menu)|shot)$/i.test(x));
+  if(bad){erSay('Action non reconnue : « '+bad+' »');return null}
+  return steps;
+}
+/* Lance le test dans l'émulateur pour une APK déjà publiée (release « tag ») */
+async function erStart(tag,pkg,steps,tmp){
+  const id=Date.now().toString(36),dir='builds/'+id+'/';
+  erSay('Envoi de la demande d’émulation…');
+  const cfg={tag,pkg,seconds:+$('erSecs').value,steps};
+  const res=await put(dir+'emulate.json',b64(new TextEncoder().encode(JSON.stringify(cfg,null,2))),'Émulateur '+id+' : '+pkg);
+  const sha=res.commit.sha,t0=Date.now();let noRun=0;
+  while(Date.now()-t0<25*60*1000){
+    await sleep(6000);
+    try{
+      const rep=await ghFile(dir+'emu-report.json');
+      if(rep){erShow(JSON.parse(rep),id);if(tmp)erTmpBtn(tmp);return}
+      const rr=await api('/actions/runs?head_sha='+sha);
+      if(!rr.ok&&[401,403,404].includes(rr.status))throw new Error('GitHub ('+rr.status+') : lecture des exécutions refusée (droit « Actions : lecture »).');
+      if(rr.ok){
+        const runs=(await rr.json()).workflow_runs||[],run=runs.find(r=>/Emulate/i.test(r.name));
+        if(run){noRun=0;erSay('Émulateur Android en cours ('+Math.round((Date.now()-t0)/1000)+' s) : '+(run.status==='completed'?'récupération du rapport…':'démarrage d’Android, installation et test de l’application…'))}
+        else if(!noRun)noRun=Date.now();
+        else if(Date.now()-noRun>3*60*1000)throw new Error('Aucune exécution démarrée : le workflow « Emulate APK » est absent ou désactivé dans « '+repo+' » (onglet Actions).');
+      }
+    }catch(e){if(!(e instanceof TypeError)&&!(e instanceof SyntaxError))throw e}
+  }
+  throw new Error('Délai dépassé (25 min).');
+}
+/* Bouton pour supprimer l'APK de test créée par la compilation automatique */
+function erTmpBtn(tmp){
+  const b=document.createElement('button');b.type='button';b.className='er-btn g';b.style.marginTop='10px';b.textContent='Supprimer l’APK de test';
+  b.onclick=async()=>{b.disabled=true;const d=await apiDel('/releases/'+tmp.relId);await apiDel('/git/refs/tags/'+tmp.tag);
+    if(d.ok||d.status===404){b.remove();toast('APK de test supprimée');APPS=[]}else{b.disabled=false;toast('Suppression impossible ('+d.status+')')}};
+  $('erOut').appendChild(b);
+}
+/* Compile le projet ZIP avec le workflow du bon type, puis lance le test */
+async function erBuild(steps){
+  const f=$('erZip').files[0];
+  if(!f)return erSay('Choisis le ZIP de ton projet.');
+  if(f.size>40*1048576)return erSay('ZIP trop volumineux (40 Mo max).');
+  if(typeof JSZip==='undefined')return erSay('La bibliothèque ZIP est indisponible. Vérifie la connexion Internet.');
+  let names;
+  try{const z=await JSZip.loadAsync(f);names=Object.keys(z.files).filter(n=>!z.files[n].dir&&!n.startsWith('__MACOSX'))}
+  catch(_){return erSay('Ce fichier n’est pas un ZIP valide.')}
+  let type=$('erType').value;
+  if(type==='auto')type=['flutter','native','python','reactnative','web'].find(t=>TYPES[t].ok(names));
+  if(!type)return erSay('Type de projet non reconnu : ajoute pubspec.yaml (Flutter), settings.gradle (Kotlin/Java), main.py (Python), package.json (React Native) ou index.html.');
+  if(!TYPES[type].ok(names))return erSay(TYPES[type].err);
+  const T=TYPES[type],id=Date.now().toString(36),dir='builds/'+id+'/',tag='apk-'+id;
+  const nom=f.name.replace(/\.zip$/i,'').replace(/[^\w -]/g,'').trim().slice(0,28)||'projet';
+  const cfg={name:'Test '+nom,pkg:'com.apkstudio.t'+id.replace(/[^a-z0-9]/g,''),versionName:'1.0.0',versionCode:1,orientation:'auto',color:'#FF6B00',fullscreen:false,icon:false,type,permissions:['storage','media','notifications'],share:false,askStart:false};
+  erSay('Envoi du projet ('+T.label+', '+(f.size/1048576).toFixed(1)+' Mo)…');
+  await put(dir+'app.zip',await fileB64(f),'Test '+id+' : archive');
+  const res=await put(dir+T.json,b64(new TextEncoder().encode(JSON.stringify(cfg,null,2))),'Test '+id+' : '+cfg.name);
+  const sha=res.commit.sha,t0=Date.now(),LIM=(type==='python'?65:type==='reactnative'?45:35)*60*1000;
+  let noRun=0,okNoRel=0;
+  while(Date.now()-t0<LIM){
+    await sleep(6000);
+    try{
+      const rel=await api('/releases/tags/'+tag);
+      if(rel.ok){const R=await rel.json();if((R.assets||[]).some(a=>/\.apk$/i.test(a.name))){
+        erSay('Compilation réussie. Démarrage de l’émulateur…');
+        return await erStart(tag,cfg.pkg,steps,{tag,relId:R.id})}}
+      const rr=await api('/actions/runs?head_sha='+sha);
+      if(!rr.ok&&[401,403,404].includes(rr.status))throw new Error('GitHub ('+rr.status+') : lecture des exécutions refusée (droit « Actions : lecture »).');
+      if(rr.ok){
+        const runs=(await rr.json()).workflow_runs||[],run=runs.find(r=>r.name===T.wf);
+        if(run){
+          noRun=0;let step='';
+          try{const jr=await api('/actions/runs/'+run.id+'/jobs');if(jr.ok){const j=(await jr.json()).jobs[0];const cur=j&&(j.steps||[]).find(x=>x.status==='in_progress');if(cur)step=cur.name}}catch(_){}
+          erSay('Compilation '+T.label+' en cours ('+Math.round((Date.now()-t0)/60000)+' min)'+(step?' : '+step:'')+'. Laisse cette page ouverte.');
+          if(run.status==='completed'&&run.conclusion!=='success'){
+            let raw='';for(let k=0;k<3&&!raw;k++){try{raw=await ghFile(dir+'build-error.txt')}catch(_){}if(!raw&&k<2)await sleep(2500)}
+            const out=$('erOut');out.innerHTML='';const p=document.createElement('p');p.className='ko';p.textContent='✕ La compilation a échoué : le projet ne peut pas être testé.';out.appendChild(p);
+            if(raw){const pr=document.createElement('pre');pr.textContent=raw.split('\n').slice(-40).join('\n');out.appendChild(pr)}
+            return erSay('Compilation échouée.');
+          }
+          if(run.status==='completed'&&run.conclusion==='success'&&++okNoRel>5)throw new Error('La compilation a réussi mais l’APK est introuvable dans les releases du dépôt.');
+        }else if(!noRun)noRun=Date.now();
+        else if(Date.now()-noRun>4*60*1000)throw new Error('Aucune exécution démarrée : le workflow « '+T.wf+' » est absent ou désactivé dans « '+repo+' » (onglet Actions).');
+      }
+    }catch(e){if(!(e instanceof TypeError))throw e}
+  }
+  throw new Error('Délai dépassé : la compilation ne s’est pas terminée.');
+}
+async function erRun(){
+  repo=$('repo').value.trim();token=$('token').value.trim();
+  if(!repo||!token)return erSay('Ajoute ton dépôt et ton jeton dans Réglages.');
+  const steps=erSteps();if(!steps)return;
+  const zip=document.querySelector('input[name="erSrc"]:checked').value==='zip';
+  $('erRun').disabled=true;$('erOut').innerHTML='';
+  try{
+    if(zip)await erBuild(steps);
+    else{
+      const tag=$('erApp').value;if(!tag)return erSay('Choisis une application déjà compilée.');
+      const x=APPS.find(a=>a.tag_name===tag),pkg=(((x&&x.body)||'').match(/Paquet\s*:\s*([\w.]+)/)||[])[1];
+      if(!pkg)return erSay('Nom de paquet introuvable pour cette application.');
+      await erStart(tag,pkg,steps,null);
+    }
+  }catch(e){erSay('Erreur : '+e.message)}
+  finally{$('erRun').disabled=false}
+}
+function erSrcUpdate(skip){
+  const zip=document.querySelector('input[name="erSrc"]:checked').value==='zip';
+  $('erZipBox').style.display=zip?'':'none';$('erApkBox').style.display=zip?'none':'';
+  $('erRun').textContent=zip?'▶ Compiler et tester':'▶ Lancer dans l’émulateur Android';
+  if(!zip&&!skip&&(!$('erApp').options.length||$('erApp').value===''))erLoadApps();
+}
+document.querySelectorAll('input[name="erSrc"]').forEach(r=>r.addEventListener('change',()=>erSrcUpdate()));
+$('erZip').addEventListener('change',()=>{const f=$('erZip').files[0];if(f)$('erZipName').textContent='Projet sélectionné : '+f.name+' ('+(f.size/1048576).toFixed(1)+' Mo)'});
+$('erRun').addEventListener('click',erRun);
+$('erRefresh').addEventListener('click',()=>erLoadApps($('erApp').value));
+function erOpen(tag){goTab('emu');document.querySelector('input[name="erSrc"][value="apk"]').checked=true;erSrcUpdate(true);erLoadApps(tag);$('emuReal').scrollIntoView({behavior:'smooth'})}
+
+/* =====================================================================
    Suivi de compilation durable, reprise après fermeture, bouton Retour
    ===================================================================== */
 function gererErreur(err){
@@ -3016,7 +3203,7 @@ function gererErreur(err){
     }else{$('err').textContent=err.message;$('go').disabled=false}
 }
 async function suivre(id,sha,cfg,start){
-  window.__bm=cfg.type;
+  window.__bm=cfg.type;window.__lastTag='apk-'+id;
   try{
     let netFail=0,noRun=0,okNoRel=0,lastJob=null;
     const LIMITE=(cfg.type==='python'?65:cfg.type==='reactnative'?45:35);
