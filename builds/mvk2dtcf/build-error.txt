@@ -1,0 +1,63 @@
+== Journal de compilation (mvk2dtcf) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mvk2dtcf/app.zip | icône : True
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/MyDM/app/build.gradle.kts | applicationId = com.doubigue.videomade | version = 1.0.0 (1)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/MyDM/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/MyDM/app
+Downloading https://services.gradle.org/distributions/gradle-8.9-bin.zip
+............10%.............20%.............30%.............40%.............50%.............60%.............70%.............80%.............90%.............100%
+
+Welcome to Gradle 8.9!
+
+Here are the highlights of this release:
+ - Enhanced Error and Warning Messages
+ - IDE Integration Improvements
+ - Daemon JVM Information
+
+For more details see https://docs.gradle.org/8.9/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:checkDebugAarMetadata FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:checkDebugAarMetadata'.
+> Could not resolve all files for configuration ':app:debugRuntimeClasspath'.
+   > Could not find com.frostwire:jlibtorrent:2.0.12.9.
+     Searched in the following locations:
+       - https://dl.google.com/dl/android/maven2/com/frostwire/jlibtorrent/2.0.12.9/jlibtorrent-2.0.12.9.pom
+       - https://repo.maven.apache.org/maven2/com/frostwire/jlibtorrent/2.0.12.9/jlibtorrent-2.0.12.9.pom
+     Required by:
+         project :app
+   > Could not find com.frostwire:jlibtorrent-android-arm64:2.0.12.9.
+     Searched in the following locations:
+       - https://dl.google.com/dl/android/maven2/com/frostwire/jlibtorrent-android-arm64/2.0.12.9/jlibtorrent-android-arm64-2.0.12.9.pom
+       - https://repo.maven.apache.org/maven2/com/frostwire/jlibtorrent-android-arm64/2.0.12.9/jlibtorrent-android-arm64-2.0.12.9.pom
+     Required by:
+         project :app
+   > Could not find com.frostwire:jlibtorrent-android-arm:2.0.12.9.
+     Searched in the following locations:
+       - https://dl.google.com/dl/android/maven2/com/frostwire/jlibtorrent-android-arm/2.0.12.9/jlibtorrent-android-arm-2.0.12.9.pom
+       - https://repo.maven.apache.org/maven2/com/frostwire/jlibtorrent-android-arm/2.0.12.9/jlibtorrent-android-arm-2.0.12.9.pom
+     Required by:
+         project :app
+   > Could not find com.frostwire:jlibtorrent-android-x86_64:2.0.12.9.
+     Searched in the following locations:
+       - https://dl.google.com/dl/android/maven2/com/frostwire/jlibtorrent-android-x86_64/2.0.12.9/jlibtorrent-android-x86_64-2.0.12.9.pom
+       - https://repo.maven.apache.org/maven2/com/frostwire/jlibtorrent-android-x86_64/2.0.12.9/jlibtorrent-android-x86_64-2.0.12.9.pom
+     Required by:
+         project :app
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m 13s
+1 actionable task: 1 executed
