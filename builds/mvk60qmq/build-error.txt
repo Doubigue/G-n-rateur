@@ -1,0 +1,105 @@
+== Journal de compilation (mvk60qmq) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mvk60qmq/app.zip | icône : True
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/VirtuelMix/app/build.gradle.kts | applicationId = com.doubigue.virtual | version = 1.0.2 (3)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/VirtuelMix/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/VirtuelMix/app
+
+Welcome to Gradle 9.8.1!
+
+Here are the highlights of this release:
+ - Java 27 support
+ - Maven mirror settings reuse
+ - Linked problem locations in build output
+
+For more details see https://docs.gradle.org/9.8.1/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.8.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :app
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/VirtuelMix/app/build.gradle.kts:16:5: 'fun BaseAppModuleExtension.kotlinOptions(configure: Action<KotlinJvmOptions>): Unit' is deprecated. The kotlinOptions types are deprecated, please migrate to the compilerOptions types. More details are here: https://kotl.in/u1r8ln.
+WARNING: We recommend using a newer Android Gradle plugin to use compileSdk = 35
+
+This Android Gradle plugin (8.5.2) was tested up to compileSdk = 34.
+
+You are strongly encouraged to update your project to use a newer
+Android Gradle plugin that has been tested with compileSdk = 35.
+
+If you are already using the latest version of the Android Gradle plugin,
+you may need to wait until a newer version with support for compileSdk = 35 is available.
+
+For more information refer to the compatibility table:
+https://d.android.com/r/tools/api-level-support
+
+To suppress this warning, add/update
+    android.suppressUnsupportedCompileSdk=35
+to this project's gradle.properties.
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:mergeDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+
+> Task :app:processDebugMainManifest
+/home/runner/work/G-n-rateur/G-n-rateur/work/src/VirtuelMix/app/src/main/AndroidManifest.xml:30:5-50:19 Warning:
+	application@android:icon was tagged at AndroidManifest.xml:30 to replace other declarations but no other declaration present
+/home/runner/work/G-n-rateur/G-n-rateur/work/src/VirtuelMix/app/src/main/AndroidManifest.xml:30:5-50:19 Warning:
+	application@android:theme was tagged at AndroidManifest.xml:30 to replace other declarations but no other declaration present
+
+> Task :app:processDebugManifest
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:mergeDebugStartupProfile
+> Task :app:mergeDebugJniLibFolders
+> Task :app:checkDebugDuplicateClasses FAILED
+> Task :app:processDebugManifestForPackage
+> Task :app:mergeDebugNativeLibs
+
+[Incubating] Problems report is available at: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/VirtuelMix/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:checkDebugDuplicateClasses' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing com.android.build.gradle.internal.tasks.CheckDuplicatesRunnable
+   > Duplicate class android.support.v4.app.INotificationSideChannel found in modules core-1.13.1.aar -> core-1.13.1-runtime (androidx.core:core:1.13.1) and support-v4-23.1.1.aar -> support-v4-23.1.1-runtime (com.android.support:support-v4:23.1.1)
+     Duplicate class android.support.v4.app.INotificationSideChannel$Stub found in modules core-1.13.1.aar -> core-1.13.1-runtime (androidx.core:core:1.13.1) and support-v4-23.1.1.aar -> support-v4-23.1.1-runtime (com.android.support:support-v4:23.1.1)
+     Duplicate class android.support.v4.app.INotificationSideChannel$Stub$Proxy found in modules core-1.13.1.aar -> core-1.13.1-runtime (androidx.core:core:1.13.1) and support-v4-23.1.1.aar -> support-v4-23.1.1-runtime (com.android.support:support-v4:23.1.1)
+     Duplicate class android.support.v4.os.IResultReceiver found in modules core-1.13.1.aar -> core-1.13.1-runtime (androidx.core:core:1.13.1) and support-v4-23.1.1.aar -> support-v4-23.1.1-runtime (com.android.support:support-v4:23.1.1)
+     Duplicate class android.support.v4.os.IResultReceiver$Stub found in modules core-1.13.1.aar -> core-1.13.1-runtime (androidx.core:core:1.13.1) and support-v4-23.1.1.aar -> support-v4-23.1.1-runtime (com.android.support:support-v4:23.1.1)
+     Duplicate class android.support.v4.os.IResultReceiver$Stub$Proxy found in modules core-1.13.1.aar -> core-1.13.1-runtime (androidx.core:core:1.13.1) and support-v4-23.1.1.aar -> support-v4-23.1.1-runtime (com.android.support:support-v4:23.1.1)
+     Duplicate class android.support.v4.os.ResultReceiver found in modules core-1.13.1.aar -> core-1.13.1-runtime (androidx.core:core:1.13.1) and support-v4-23.1.1.aar -> support-v4-23.1.1-runtime (com.android.support:support-v4:23.1.1)
+     Duplicate class android.support.v4.os.ResultReceiver$1 found in modules core-1.13.1.aar -> core-1.13.1-runtime (androidx.core:core:1.13.1) and support-v4-23.1.1.aar -> support-v4-23.1.1-runtime (com.android.support:support-v4:23.1.1)
+     Duplicate class android.support.v4.os.ResultReceiver$MyResultReceiver found in modules core-1.13.1.aar -> core-1.13.1-runtime (androidx.core:core:1.13.1) and support-v4-23.1.1.aar -> support-v4-23.1.1-runtime (com.android.support:support-v4:23.1.1)
+     Duplicate class android.support.v4.os.ResultReceiver$MyRunnable found in modules core-1.13.1.aar -> core-1.13.1-runtime (androidx.core:core:1.13.1) and support-v4-23.1.1.aar -> support-v4-23.1.1-runtime (com.android.support:support-v4:23.1.1)
+     
+     Go to the documentation to learn how to <a href="d.android.com/r/tools/classpath-sync-errors">Fix dependency resolution errors</a>.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.8.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 1m 16s
+21 actionable tasks: 21 executed
