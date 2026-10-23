@@ -1,0 +1,27 @@
+{
+  "name": "Vidéo Made",
+  "pkg": "com.doubigue.videomade",
+  "versionName": "1.0.3",
+  "versionCode": 4,
+  "orientation": "auto",
+  "color": "#ffffff",
+  "fullscreen": false,
+  "icon": true,
+  "type": "native",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true,
+  "replaces": "apk-mvkul06b"
+}
