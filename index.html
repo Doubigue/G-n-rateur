@@ -404,7 +404,7 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
       <h2><span>2</span>Fichiers</h2>
       <div class="seg wrap" role="radiogroup" aria-label="Type de projet"><label><input type="radio" name="mode" value="web" checked><span>Site web</span></label><label><input type="radio" name="mode" value="flutter"><span>Flutter</span></label><label><input type="radio" name="mode" value="native"><span>Kotlin / Java</span></label><label><input type="radio" name="mode" value="reactnative"><span>React Native</span></label><label><input type="radio" name="mode" value="python"><span>Python (Kivy)</span></label></div>
       <div id="zipBox"><div class="seg" role="radiogroup" aria-label="Source du projet" style="margin-bottom:6px"><label><input type="radio" name="src" value="zip" checked><span>ZIP</span></label><label><input type="radio" name="src" value="link"><span>Lien</span></label></div>
-      <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FF3F1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 100 Mo max</span><input id="zip" type="file" accept=".zip,application/zip"></label><button type="button" class="clr" id="zipClr">✕ Vider le fichier</button><button type="button" class="mini2" id="aiBtn" style="display:none;margin-top:10px">✨ Analyser avec l'IA</button></div>
+      <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FF3F1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,application/zip"></label><button type="button" class="clr" id="zipClr">✕ Vider le fichier</button><button type="button" class="mini2" id="aiBtn" style="display:none;margin-top:10px">✨ Analyser avec l'IA</button></div>
       <div id="lnkBox" style="display:none"><label for="url">Lien source</label><input id="url" type="url" inputmode="url" autocapitalize="none" autocorrect="off" placeholder="https://…"><small class="h" id="lnkHint"></small></div>
       <label for="icon">Logo (optionnel, tout format conservé) : PNG, JPG, WebP, SVG…</label>
       <input id="icon" type="file" accept="image/*">
@@ -417,6 +417,7 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
       <div id="perms"></div>
       <label class="sw"><input id="share" type="checkbox" checked><i></i>Accepter les partages de fichiers</label>
       <label class="sw"><input id="ask" type="checkbox" checked><i></i>Demander les autorisations au premier lancement</label>
+      <label class="sw"><input id="omni" type="checkbox" checked><i></i>Modifier le code avec OmniCode Studio (si installé)</label>
       <small class="h">Le bouton Partager d'Android listera l'application. « Tous les fichiers » ouvre un réglage Android à la première ouverture.</small>
     </div>
 
@@ -591,6 +592,7 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
     <div class="crumb" id="eCrumb"></div>
     <div class="eactions"><button type="button" class="mini2" id="eNewFile">＋ Fichier</button><button type="button" class="mini2" id="eNewDir">＋ Dossier</button></div>
     <div class="eactions"><button type="button" class="mini2" id="eDlRepo">⬇ Télécharger le dépôt (ZIP)</button><button type="button" class="mini2" id="eDlDir" style="display:none">⬇ Ce dossier (ZIP)</button></div>
+    <div class="eactions"><button type="button" class="mini2" id="eOmniRepo" style="display:none">✎ Tout le dépôt dans OmniCode</button></div>
     <label class="sw"><input id="eDlNb" type="checkbox" checked><i></i>Sans les builds (builds/, build/, node_modules)</label>
     <small class="h" id="eDlSt"></small>
     <input id="eSearchF" class="search" type="search" placeholder="Rechercher un fichier" autocapitalize="none" autocorrect="off" autocomplete="off">
@@ -784,21 +786,21 @@ function iconeAff(){
 }
 async function detecterLogo(){
   autoLogo=null;const f=$('zip').files[0];
-  if(f&&src()==='zip'&&f.size<=100*1048576){try{autoLogo=await logoDansZip(await JSZip.loadAsync(f))}catch(_){}}
+  if(f&&src()==='zip'&&f.size<=40*1048576){try{autoLogo=await logoDansZip(await JSZip.loadAsync(f))}catch(_){}}
   iconeAff();
 }
 $('icon').addEventListener('change',iconeAff);iconeAff();
 function zipInfo(){aiSync();const f=$('zip').files[0];if(!f)return;$('zn').textContent=f.name;$('zs').textContent=(f.size/1048576).toFixed(1)+' Mo';$('zipClr').style.display='block';detecterLogo()}
 const TYPES={
-  web:{label:'Site web',long:'Web (Capacitor)',json:'config.json',wf:'Build APK',zn:'Déposer le ZIP du site',zs:'index.html + ressources · 100 Mo max',
+  web:{label:'Site web',long:'Web (Capacitor)',json:'config.json',wf:'Build APK',zn:'Déposer le ZIP du site',zs:'index.html + ressources · 40 Mo max',
     ok:n=>n.some(x=>/(^|\/)index\.html$/i.test(x)),err:'index.html est introuvable dans le ZIP.'},
-  flutter:{label:'Flutter',long:'Flutter',json:'flutter.json',wf:'Build Flutter APK',zn:'Déposer le projet Flutter (ZIP)',zs:'pubspec.yaml + lib/, ou simplement main.dart · 100 Mo max',
+  flutter:{label:'Flutter',long:'Flutter',json:'flutter.json',wf:'Build Flutter APK',zn:'Déposer le projet Flutter (ZIP)',zs:'pubspec.yaml + lib/, ou simplement main.dart · 40 Mo max',
     ok:n=>n.some(x=>/(^|\/)pubspec\.yaml$/i.test(x)||/\.dart$/i.test(x)),err:'Aucun pubspec.yaml ni fichier .dart dans le ZIP.'},
-  native:{label:'Kotlin / Java',long:'Android natif (Gradle)',json:'native.json',wf:'Build Android natif APK',zn:'Déposer le projet Android (ZIP)',zs:'Projet Android Studio : settings.gradle + app/ · 100 Mo max',
+  native:{label:'Kotlin / Java',long:'Android natif (Gradle)',json:'native.json',wf:'Build Android natif APK',zn:'Déposer le projet Android (ZIP)',zs:'Projet Android Studio : settings.gradle + app/ · 40 Mo max',
     ok:n=>n.some(x=>/(^|\/)settings\.gradle(\.kts)?$/i.test(x)),err:'Aucun settings.gradle(.kts) dans le ZIP : envoie un projet Android Studio complet.'},
-  reactnative:{label:'React Native',long:'React Native / Expo',json:'reactnative.json',wf:'Build React Native APK',zn:'Déposer le projet React Native (ZIP)',zs:'package.json + App.js (Expo ou RN) · 100 Mo max',
+  reactnative:{label:'React Native',long:'React Native / Expo',json:'reactnative.json',wf:'Build React Native APK',zn:'Déposer le projet React Native (ZIP)',zs:'package.json + App.js (Expo ou RN) · 40 Mo max',
     ok:n=>n.some(x=>/(^|\/)package\.json$/i.test(x)),err:'Aucun package.json dans le ZIP.'},
-  python:{label:'Python (Kivy)',long:'Python / Kivy (Buildozer)',json:'python.json',wf:'Build Python APK',zn:'Déposer le projet Python (ZIP)',zs:'main.py (+ buildozer.spec facultatif) · 100 Mo max',
+  python:{label:'Python (Kivy)',long:'Python / Kivy (Buildozer)',json:'python.json',wf:'Build Python APK',zn:'Déposer le projet Python (ZIP)',zs:'main.py (+ buildozer.spec facultatif) · 40 Mo max',
     ok:n=>n.some(x=>/(^|\/)main\.py$/i.test(x)),err:'Aucun main.py dans le ZIP.'}
 };
 const typeDe=t=>TYPES[t]||TYPES.web;
@@ -1194,7 +1196,7 @@ $('f').addEventListener('submit',async e=>{
       sourceKind=kindUrl(url);
       if(sourceKind==='site'&&mode()!=='web')throw new Error('Un lien de site web fonctionne seulement en mode Site web.');
     }else if(zip){
-      if(zip.size>100*1048576)throw new Error('ZIP trop volumineux (100 Mo max).');
+      if(zip.size>40*1048576)throw new Error('ZIP trop volumineux (40 Mo max).');
       z=await JSZip.loadAsync(zip).catch(()=>{throw new Error('ZIP invalide.')});
       const ok=Object.keys(z.files).filter(n=>!n.startsWith('__MACOSX'));
       if(!typeDe(mode()).ok(ok))throw new Error(typeDe(mode()).err);
@@ -1204,7 +1206,7 @@ $('f').addEventListener('submit',async e=>{
     const iconB64=iconFile?await iconPng(iconFile):null;
     initProg();conInit();
     const id=Date.now().toString(36),dir='builds/'+id+'/';
-    const cfg={name:$('name').value.trim(),pkg:$('pkg').value.trim().toLowerCase(),versionName:$('vname').value.trim(),versionCode:+$('vcode').value,orientation:$('orient').value,color:$('color').value,fullscreen:$('full').checked,icon:!!iconB64,type:mode(),permissions:permsChoisies(),share:$('share').checked,askStart:$('ask').checked};
+    const cfg={name:$('name').value.trim(),pkg:$('pkg').value.trim().toLowerCase(),versionName:$('vname').value.trim(),versionCode:+$('vcode').value,orientation:$('orient').value,color:$('color').value,fullscreen:$('full').checked,icon:!!iconB64,type:mode(),permissions:permsChoisies(),share:$('share').checked,askStart:$('ask').checked,omnicode:$('omni').checked};
     if(lien){cfg.sourceUrl=url;cfg.sourceKind=sourceKind}else if(!zip)cfg.fromRelease=edition.tag;
     if(edition){cfg.replaces=edition.tag;if(!cfg.icon&&edition.cfg.icon){cfg.icon=true;cfg.iconFrom=edition.tag}}
     conHeader(cfg,zip,lien,url);
@@ -2045,7 +2047,7 @@ function modifier(x){
   $('vname').value=bumpVer(c.versionName||'1.0.0','patch');$('vcode').value=(+c.versionCode||1)+1;majVchips();
   $('orient').value=c.orientation||'auto';$('color').value=c.color||'#2a2f6b';$('full').checked=!!c.fullscreen;
   const set=new Set(c.permissions||[]);pcb().forEach(b=>b.checked=set.has(b.value));$('all').checked=pcb().every(b=>b.checked);
-  $('share').checked=c.share!==false;$('ask').checked=c.askStart!==false;
+  $('share').checked=c.share!==false;$('ask').checked=c.askStart!==false;$('omni').checked=c.omnicode!==false;
   if(c.sourceUrl){choisir('src','link');$('url').value=c.sourceUrl;majSource()}else choisir('src','zip');
   $('zip').value='';aiSync();$('icon').value='';autoLogo=null;iconeAff();
   if(edition.source&&!c.sourceUrl){$('zn').textContent='Source conservée dans l\'application';$('zs').textContent='Dépose un ZIP seulement pour la remplacer'}
@@ -2124,7 +2126,7 @@ function reinitialiser(){
   edition=null;$('edBar').style.display='none';
   $('f').reset();
   choisir('mode','web');choisir('src','zip');autoLogo=null;iconeAff();
-  $('zn').textContent='Déposer le ZIP du site';$('zs').textContent='index.html + ressources · 100 Mo max';
+  $('zn').textContent='Déposer le ZIP du site';$('zs').textContent='index.html + ressources · 40 Mo max';
   prev();majSource();$('err').textContent='';
 }
 let tr;
@@ -2428,6 +2430,7 @@ async function eLoadTree(){
 $('eBr').onchange=eLoadTree;$('eRef').onclick=()=>{if(E.repo)eLoadTree()};
 $('eSearchF').addEventListener('input',eDrawFiles);
 function eDrawFiles(){
+  $('eOmniRepo').style.display=omniProjOk()?'':'none';
   const box=$('eList'),q=$('eSearchF').value.trim().toLowerCase(),cr=$('eCrumb');
   cr.innerHTML='';
   $('eDlDir').style.display=E.dir?'':'none';
@@ -2614,6 +2617,105 @@ addEventListener('omnicode',e=>{
   E.omniSkip=true;try{eShowEditor()}finally{E.omniSkip=false}  /* affiche l'état et les erreurs d'enregistrement */
   $('eSave').click();                                        /* « Garder » (local) ou « Enregistrer » (GitHub) */
 });
+/* ---- OmniCode Studio : dépôt entier. ZIP décompressé dans OmniCode (un onglet par type de fichier) ;
+        « Valider » renvoie tout le ZIP, et seuls les fichiers réellement modifiés sont commités (1 seul commit). ---- */
+let OMNIP=null;
+function omniProjOk(){try{return !!(window.AndroidOmniCode&&AndroidOmniCode.hasProject&&AndroidOmniCode.hasProject())}catch(_){return false}}
+const BIN_EXT=/\.(png|jpe?g|gif|webp|bmp|ico|icns|svgz|mp[34]|m4a|wav|ogg|webm|mov|avi|zip|jar|aar|apk|aab|so|a|o|class|dex|gz|tgz|7z|rar|pdf|ttf|otf|woff2?|eot|keystore|jks|bin|exe|dll)$/i;
+const OMNI_CH=393216;
+async function eOmniRepo(){
+  if(!E.repo||E.busy||E.dl)return;
+  if(!omniProjOk()){toast("OmniCode Studio est introuvable ou trop ancien. Installe sa dernière version, puis régénère cette application avec « Modifier le code avec OmniCode Studio ».");return}
+  if(typeof JSZip==='undefined'){toast('JSZip indisponible : vérifie ta connexion Internet.');return}
+  const files=E.tree.filter(x=>x.type==='blob'&&!eDlSkip(x.path)&&!BIN_EXT.test(x.path)&&!x.path.startsWith('.git/')&&(x.size||0)<=EDIT_MAX);
+  if(!files.length){toast('Aucun fichier texte à modifier dans ce dépôt.');return}
+  if(files.length>300&&!confirm(files.length+' fichiers vont être chargés depuis GitHub : cela peut prendre du temps. Continuer ?'))return;
+  E.dl=true;
+  const id='p'+Date.now().toString(36),shas=new Map(),zip=new JSZip(),repo=E.repo,branch=E.branch;let done=0;
+  try{
+    await pool(files,6,async f=>{
+      zip.file(f.path,await eBlobBytes(f.sha));shas.set(f.path,f.sha);
+      eDlStat('Préparation '+(++done)+'/'+files.length+'…');
+    });
+    eDlStat('Création du ZIP…');
+    const u8=await zip.generateAsync({type:'uint8array',compression:'DEFLATE',compressionOptions:{level:6}});
+    if(u8.length>70*1048576)throw new Error('Dépôt trop volumineux pour OmniCode ('+fmt(u8.length)+').');
+    if(!AndroidOmniCode.zipBegin(id))throw new Error('OmniCode est occupé : réessaie dans un instant.');
+    for(let o=0,k=0;o<u8.length;o+=OMNI_CH,k++){
+      if(!AndroidOmniCode.zipChunk(id,b64(u8.subarray(o,o+OMNI_CH))))throw new Error('Transfert vers OmniCode interrompu.');
+      if(k%6===0){eDlStat('Envoi à OmniCode '+Math.round(o/u8.length*100)+' %…');await sleep(0)}
+    }
+    OMNIP={id,repo,branch,shas};
+    if(!AndroidOmniCode.zipOpen(id,repo.split('/')[1])){OMNIP=null;throw new Error("Impossible d'ouvrir OmniCode.")}
+    eDlStat(files.length+' fichier(s) ouverts dans OmniCode. Modifie, puis « Valider & Renvoyer ».');
+  }catch(e){
+    OMNIP=null;try{AndroidOmniCode.zipDone()}catch(_){}
+    eDlStat('Échec : '+e.message);toast('Échec : '+e.message);
+  }finally{E.dl=false}
+}
+$('eOmniRepo').onclick=eOmniRepo;
+addEventListener('omnicode',async e=>{
+  const d=e.detail||{};if(!d.zip||!OMNIP||d.id!==OMNIP.id)return;
+  const o=OMNIP;OMNIP=null;
+  if(!d.ok){try{AndroidOmniCode.zipDone()}catch(_){}eDlStat('');toast('OmniCode : modifications annulées.');return}
+  E.dl=true;let buf=null;
+  try{
+    eDlStat('Réception du projet…');
+    const n=AndroidOmniCode.zipSize();buf=new Uint8Array(n);
+    for(let off=0;off<n;){
+      const part=b64ToBytes(AndroidOmniCode.zipRead(off,Math.min(OMNI_CH,n-off)));
+      if(!part.length)throw new Error('Lecture du ZIP interrompue.');
+      buf.set(part,off);off+=part.length;
+    }
+    AndroidOmniCode.zipDone();
+    await eOmniApply(o,await JSZip.loadAsync(buf));
+  }catch(err){
+    eDlStat('Échec : '+err.message);toast('Échec : '+err.message);
+    if(buf&&buf.length){   /* filet de sécurité : le travail n'est pas perdu */
+      try{await enregistrerTelechargements(new Blob([buf],{type:'application/zip'}),o.repo.split('/')[1]+'-omnicode.zip');toast('Échec : '+err.message+' — ton ZIP modifié est dans Téléchargements.')}catch(_){}
+    }
+  }finally{E.dl=false}
+});
+async function eOmniApply(o,z){
+  const r=o.repo,br=o.branch;
+  if(!(window.crypto&&crypto.subtle))throw new Error('Calcul SHA indisponible dans ce contexte.');
+  const seen=new Set(),changed=[];
+  eDlStat('Comparaison avec le dépôt…');
+  for(const name of Object.keys(z.files)){
+    const f=z.files[name];if(f.dir)continue;
+    const sg=name.split('/');
+    if(name.startsWith('/')||sg.some(x=>x===''||x==='..'||x==='.git'))continue;
+    const u8=await f.async('uint8array'),sha=await gitSha(u8),old=o.shas.get(name);
+    seen.add(name);
+    if(sha!==old)changed.push({path:name,u8,sha,isNew:old===undefined});
+  }
+  let removed=[...o.shas.keys()].filter(p=>!seen.has(p));
+  if(removed.length&&!confirm(removed.length+' fichier(s) ont disparu du projet. Les supprimer aussi du dépôt ?'))removed=[];
+  if(!changed.length&&!removed.length){eDlStat('');toast('Aucune modification.');return}
+  const ref=await retry(()=>gh('/repos/'+r+'/git/ref/heads/'+encPath(br))),head=ref.object.sha;
+  const cm=await retry(()=>gh('/repos/'+r+'/git/commits/'+head)),baseTree=cm.tree.sha;
+  const tr=await retry(()=>gh('/repos/'+r+'/git/trees/'+baseTree+'?recursive=1'));
+  const remote=new Map(tr.tree.filter(t=>t.type==='blob').map(t=>[t.path,t]));
+  if(!tr.truncated){   /* le dépôt a-t-il bougé pendant l'édition ? */
+    const bad=[...changed.map(c=>c.path),...removed].filter(p=>{const x=remote.get(p),ex=o.shas.get(p);return ex===undefined?(x&&!changed.find(c=>c.path===p&&c.sha===x.sha)):(!x||x.sha!==ex)});
+    if(bad.length)throw new Error('Le dépôt a changé pendant l\'édition ('+bad.slice(0,3).join(', ')+(bad.length>3?'…':'')+'). Rien n\'a été envoyé.');
+  }
+  const entries=[];let k=0;
+  await pool(changed,2,async c=>{
+    const j=await retry(()=>gh('/repos/'+r+'/git/blobs',{method:'POST',body:{content:b64(c.u8),encoding:'base64'}}));
+    entries.push({path:c.path,mode:(remote.get(c.path)||{}).mode||'100644',type:'blob',sha:j.sha});
+    eDlStat('Envoi '+(++k)+'/'+changed.length+'…');
+  });
+  removed.forEach(p=>entries.push({path:p,mode:'100644',type:'blob',sha:null}));
+  const tree=await retry(()=>gh('/repos/'+r+'/git/trees',{method:'POST',body:{base_tree:baseTree,tree:entries}}));
+  const msg='Modifier '+changed.length+' fichier(s) depuis OmniCode'+(removed.length?' · supprimer '+removed.length:'');
+  const nc=await retry(()=>gh('/repos/'+r+'/git/commits',{method:'POST',body:{message:msg,tree:tree.sha,parents:[head]}}));
+  try{await gh('/repos/'+r+'/git/refs/heads/'+encPath(br),{method:'PATCH',body:{sha:nc.sha,force:false}})}
+  catch(e){if(e.status===422)throw new Error('La branche a changé pendant l\'envoi. Rien n\'a été publié.');throw e}
+  eDlStat(changed.length+' fichier(s) enregistrés sur GitHub ('+br+')'+(removed.length?' · '+removed.length+' supprimé(s)':''));
+  toast('Enregistré sur GitHub ('+br+') : '+changed.length+' modifié(s)'+(removed.length?', '+removed.length+' supprimé(s)':'')+'.');
+  if(E.repo===r&&E.branch===br){const dir=E.dir;await eLoadTree();E.dir=dir;eDrawFiles()}
+}
 function eShowEditor(){
   if(!E.omniSkip&&E.cur&&omniOk()){
     const id='o'+Date.now().toString(36);let ok=false;
@@ -3140,7 +3242,7 @@ function erTmpBtn(tmp){
 async function erBuild(steps){
   const f=$('erZip').files[0];
   if(!f)return erSay('Choisis le ZIP de ton projet.');
-  if(f.size>100*1048576)return erSay('ZIP trop volumineux (100 Mo max).');
+  if(f.size>40*1048576)return erSay('ZIP trop volumineux (40 Mo max).');
   if(typeof JSZip==='undefined')return erSay('La bibliothèque ZIP est indisponible. Vérifie la connexion Internet.');
   let names;
   try{const z=await JSZip.loadAsync(f);names=Object.keys(z.files).filter(n=>!z.files[n].dir&&!n.startsWith('__MACOSX'))}

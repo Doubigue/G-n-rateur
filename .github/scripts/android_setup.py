@@ -114,7 +114,7 @@ for g in groups:
         add(n, mx)
 s = s.replace('<application', ''.join(lines) + '    <application', 1)
 if omni and 'com.omnicode.editor.ACTION_EDIT_CODE' not in s:
-    s = s.replace('<application', '    <queries>\n        <intent>\n            <action android:name="com.omnicode.editor.ACTION_EDIT_CODE"/>\n        </intent>\n    </queries>\n    <application', 1)
+    s = s.replace('<application', '    <queries>\n        <package android:name="com.omnicode.editor"/>\n        <intent>\n            <action android:name="com.omnicode.editor.ACTION_EDIT_CODE"/>\n        </intent>\n        <intent>\n            <action android:name="com.omnicode.editor.ACTION_EDIT_PROJECT"/>\n            <data android:mimeType="application/zip"/>\n        </intent>\n    </queries>\n    <application', 1)
 if 'storage' in groups or 'allfiles' in groups:
     s = s.replace('<application', '<application android:requestLegacyExternalStorage="true"', 1)
 if share:
@@ -138,6 +138,22 @@ found = sorted(glob.glob('android/app/src/main/**/MainActivity.*', recursive=Tru
 pkg = re.search(r'^package\s+([\w.]+)', open(found, encoding='utf-8').read(), re.M).group(1)
 bool_ = lambda b: 'true' if b else 'false'
 
+# ---------- OmniCode : fichier partagé (ZIP du dépôt) via un FileProvider dédié ----------
+if omni and kind == 'capacitor':
+    m_ = open(m, encoding='utf-8').read()
+    if 'OmniFileProvider' not in m_:
+        m_ = m_.replace('</application>', '''    <provider android:name="%s.OmniFileProvider" android:authorities="${applicationId}.omnishare"
+        android:exported="false" android:grantUriPermissions="true">
+      <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/omni_paths"/>
+    </provider>
+  </application>''' % pkg, 1)
+        open(m, 'w', encoding='utf-8').write(m_)
+    os.makedirs('android/app/src/main/res/xml', exist_ok=True)
+    open('android/app/src/main/res/xml/omni_paths.xml', 'w', encoding='utf-8').write(
+        '<?xml version="1.0" encoding="utf-8"?>\n<paths>\n  <cache-path name="omni" path="omni/"/>\n</paths>\n')
+    open(os.path.join(os.path.dirname(found), 'OmniFileProvider.java'), 'w', encoding='utf-8').write(
+        'package %s;\n\nimport androidx.core.content.FileProvider;\n\npublic class OmniFileProvider extends FileProvider {}\n' % pkg)
+
 JAVA = r'''package %PKG%;
 
 import android.app.DownloadManager;
@@ -146,10 +162,12 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.FileProvider;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import android.content.ClipData;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -170,6 +188,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -193,11 +212,18 @@ public class MainActivity extends BridgeActivity {
   private static final String OMNI_OUT = "com.omnicode.editor.extra.UPDATED_CODE";
   private static final String OMNI_SECRET = "OMNICODE_SECURE_KEY_2026";
   private static final int OMNI_MAX = 200000;   // limite Binder (~1 Mo) : au-delà, repli sur l'éditeur intégré
+  private static final String OMNI_PROJECT_ACTION = "com.omnicode.editor.ACTION_EDIT_PROJECT";
+  private static final String OMNI_NAME = "com.omnicode.editor.extra.PROJECT_NAME";
+  private static final long OMNI_ZIP_MAX = 80L * 1024 * 1024;
   private String omniPending = null;
+  private boolean omniZipMode = false;
+  private File omniZip = null;              // cache/omni/projet.zip, partagé avec OmniCode par URI
+  private OutputStream omniZipOut = null;
   private final ActivityResultLauncher<Intent> omniLauncher = registerForActivityResult(
     new ActivityResultContracts.StartActivityForResult(), r -> {
       String id = omniPending; omniPending = null;
       if (id == null) return;                       // processus recréé : plus de demande à rattacher
+      if (omniZipMode) { omniZipMode = false; omniDeliverZip(id, r.getResultCode() == RESULT_OK); return; }
       String code = null;
       if (r.getResultCode() == RESULT_OK && r.getData() != null) code = r.getData().getStringExtra(OMNI_OUT);
       omniDeliver(id, code);
@@ -229,12 +255,110 @@ public class MainActivity extends BridgeActivity {
     } catch (Exception e) { }
   }
 
+  /** Résultat « dépôt entier » : événement « omnicode », detail = {id, ok, zip:true, size}. */
+  private void omniDeliverZip(String id, boolean ok) {
+    try {
+      long size = (ok && omniZip != null && omniZip.exists()) ? omniZip.length() : 0;
+      String json = new JSONObject().put("id", id).put("ok", size > 0).put("zip", true).put("size", size).toString();
+      if (getBridge() == null) return;
+      getBridge().getWebView().post(() -> getBridge().getWebView().evaluateJavascript(
+        "window.dispatchEvent(new CustomEvent('omnicode',{detail:" + json + "}))", null));
+    } catch (Exception e) { }
+  }
+
+  private void omniZipClose() {
+    try { if (omniZipOut != null) omniZipOut.close(); } catch (Exception e) { }
+    omniZipOut = null;
+  }
+
   /** JS : AndroidOmniCode.available() puis AndroidOmniCode.edit(id, code, langage). */
   private class OmniCodeBridge {
     @JavascriptInterface
     public boolean available() {
       try { return getPackageManager().resolveActivity(new Intent(OMNI_ACTION).setPackage(OMNI_PKG), 0) != null; }
       catch (Exception e) { return false; }
+    }
+
+    /** Dépôt entier : OmniCode récent installé ? */
+    @JavascriptInterface
+    public boolean hasProject() {
+      try {
+        Intent t = new Intent(OMNI_PROJECT_ACTION).setPackage(OMNI_PKG).setType("application/zip");
+        return getPackageManager().resolveActivity(t, 0) != null;
+      } catch (Exception e) { return false; }
+    }
+
+    /** 1) zipBegin  2) zipChunk x n (base64)  3) zipOpen. Le ZIP passe par un fichier du cache, jamais par un Intent. */
+    @JavascriptInterface
+    public boolean zipBegin(String id) {
+      try {
+        if (omniPending != null) return false;
+        omniZipClose();
+        File dir = new File(getCacheDir(), "omni");
+        dir.mkdirs();
+        omniZip = new File(dir, "projet.zip");
+        omniZipOut = new FileOutputStream(omniZip, false);
+        return true;
+      } catch (Exception e) { omniZipOut = null; return false; }
+    }
+
+    @JavascriptInterface
+    public boolean zipChunk(String id, String b64) {
+      try {
+        if (omniZipOut == null || omniZip == null) return false;
+        byte[] b = Base64.decode(b64, Base64.DEFAULT);
+        if (omniZip.length() + b.length > OMNI_ZIP_MAX) return false;
+        omniZipOut.write(b);
+        return true;
+      } catch (Exception e) { return false; }
+    }
+
+    @JavascriptInterface
+    public boolean zipOpen(final String id, final String name) {
+      if (id == null || id.isEmpty() || omniPending != null || omniZip == null || omniZipOut == null) return false;
+      try { omniZipOut.flush(); } catch (Exception e) { omniZipClose(); return false; }
+      omniZipClose();
+      if (!hasProject()) return false;
+      omniPending = id;
+      omniZipMode = true;
+      runOnUiThread(() -> {
+        try {
+          Uri u = FileProvider.getUriForFile(MainActivity.this, getPackageName() + ".omnishare", omniZip);
+          Intent i = new Intent(OMNI_PROJECT_ACTION).setPackage(OMNI_PKG);
+          i.setDataAndType(u, "application/zip");
+          i.setClipData(ClipData.newRawUri("projet", u));
+          i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+          i.putExtra(OMNI_NAME, (name == null || name.isEmpty()) ? "Projet" : name).putExtra(OMNI_KEY, OMNI_SECRET);
+          omniLauncher.launch(i);
+        } catch (Exception e) {
+          omniPending = null; omniZipMode = false;
+          omniDeliverZip(id, false);
+        }
+      });
+      return true;
+    }
+
+    /** Lecture du ZIP renvoyé par OmniCode, par morceaux base64. */
+    @JavascriptInterface
+    public int zipSize() { return (omniZip != null && omniZip.exists()) ? (int) omniZip.length() : 0; }
+
+    @JavascriptInterface
+    public String zipRead(int off, int len) {
+      try (RandomAccessFile f = new RandomAccessFile(omniZip, "r")) {
+        long rest = f.length() - off;
+        if (off < 0 || rest <= 0) return "";
+        byte[] b = new byte[(int) Math.min((long) len, rest)];
+        f.seek(off);
+        f.readFully(b);
+        return Base64.encodeToString(b, Base64.NO_WRAP);
+      } catch (Exception e) { return ""; }
+    }
+
+    @JavascriptInterface
+    public void zipDone() {
+      omniZipClose();
+      try { if (omniZip != null) omniZip.delete(); } catch (Exception e) { }
+      omniZip = null;
     }
 
     /** @return false si l'éditeur est absent, occupé ou si le code est trop gros (la page garde alors son éditeur). */
