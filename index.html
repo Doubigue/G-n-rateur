@@ -2596,7 +2596,30 @@ async function eOpenFile(r){
   }catch(e){toast(e.message)}
   finally{E.busy=false}
 }
+/* ---- OmniCode Studio : si l'appli est installée (pont natif AndroidOmniCode), l'édition s'y fait ; sinon CodeMirror ---- */
+let OMNI=null;
+function omniOk(){try{return !!(window.AndroidOmniCode&&AndroidOmniCode.available())}catch(_){return false}}
+function omniLang(path){
+  const x=(String(path).split('.').pop()||'').toLowerCase();
+  return {htm:'html',js:'javascript',mjs:'javascript',cjs:'javascript',md:'markdown',py:'python'}[x]||x||'text';
+}
+addEventListener('omnicode',e=>{
+  const d=e.detail||{};if(!OMNI||d.id!==OMNI.id)return;
+  const o=OMNI;OMNI=null;
+  if(E.cur!==o.cur)return;                                   /* le fichier ouvert a changé entre-temps */
+  if(!d.ok){E.cur=null;toast('OmniCode : modification annulée.');return}
+  const t=String(d.code).replace(/\r\n/g,'\n');
+  if(t===E.orig){E.cur=null;toast('Aucune modification.');return}
+  codeEditor.setValue(t);                                    /* déclenche eDirty(true) */
+  E.omniSkip=true;try{eShowEditor()}finally{E.omniSkip=false}  /* affiche l'état et les erreurs d'enregistrement */
+  $('eSave').click();                                        /* « Garder » (local) ou « Enregistrer » (GitHub) */
+});
 function eShowEditor(){
+  if(!E.omniSkip&&E.cur&&omniOk()){
+    const id='o'+Date.now().toString(36);let ok=false;
+    try{ok=AndroidOmniCode.edit(id,codeEditor.getValue(),omniLang(E.cur.path))}catch(_){}
+    if(ok){OMNI={id,cur:E.cur};return}                       /* sinon (absent, trop gros…) : éditeur intégré */
+  }
   $('eEd').classList.add('on');codeEditor.scrollTo(0,0);
   const fix=()=>{try{codeEditor.refresh()}catch(_){}};
   requestAnimationFrame(fix);setTimeout(fix,80);setTimeout(()=>{fix();codeEditor.focus()},220);

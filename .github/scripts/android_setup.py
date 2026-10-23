@@ -77,6 +77,7 @@ cfg = json.load(open(cfgpath, encoding='utf-8'))
 groups = cfg.get('permissions') or []
 share = cfg.get('share', True) is not False
 ask = cfg.get('askStart', True) is not False
+omni = cfg.get('omnicode') is True   # pont OmniCode Studio (désactivé par défaut)
 
 TABLE = {
     'storage': [('READ_EXTERNAL_STORAGE', 32), ('WRITE_EXTERNAL_STORAGE', 32)],
@@ -112,6 +113,8 @@ for g in groups:
     for n, mx in TABLE.get(g, []):
         add(n, mx)
 s = s.replace('<application', ''.join(lines) + '    <application', 1)
+if omni and 'com.omnicode.editor.ACTION_EDIT_CODE' not in s:
+    s = s.replace('<application', '    <queries>\n        <intent>\n            <action android:name="com.omnicode.editor.ACTION_EDIT_CODE"/>\n        </intent>\n    </queries>\n    <application', 1)
 if 'storage' in groups or 'allfiles' in groups:
     s = s.replace('<application', '<application android:requestLegacyExternalStorage="true"', 1)
 if share:
@@ -143,7 +146,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import androidx.core.app.NotificationCompat;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -177,6 +183,26 @@ public class MainActivity extends BridgeActivity {
   private static final boolean SHARE = %SHARE%;
   private static String pending = null;
 
+  // ---- OmniCode Studio : contrat partagé (identique à OmniCodeContract.kt) ----
+  private static final boolean OMNI = %OMNI%;
+  private static final String OMNI_PKG = "com.omnicode.editor";
+  private static final String OMNI_ACTION = "com.omnicode.editor.ACTION_EDIT_CODE";
+  private static final String OMNI_CODE = "com.omnicode.editor.extra.CODE_CONTENT";
+  private static final String OMNI_LANG = "com.omnicode.editor.extra.FILE_LANGUAGE";
+  private static final String OMNI_KEY = "com.omnicode.editor.extra.API_KEY";
+  private static final String OMNI_OUT = "com.omnicode.editor.extra.UPDATED_CODE";
+  private static final String OMNI_SECRET = "OMNICODE_SECURE_KEY_2026";
+  private static final int OMNI_MAX = 200000;   // limite Binder (~1 Mo) : au-delà, repli sur l'éditeur intégré
+  private String omniPending = null;
+  private final ActivityResultLauncher<Intent> omniLauncher = registerForActivityResult(
+    new ActivityResultContracts.StartActivityForResult(), r -> {
+      String id = omniPending; omniPending = null;
+      if (id == null) return;                       // processus recréé : plus de demande à rattacher
+      String code = null;
+      if (r.getResultCode() == RESULT_OK && r.getData() != null) code = r.getData().getStringExtra(OMNI_OUT);
+      omniDeliver(id, code);
+    });
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -186,11 +212,52 @@ public class MainActivity extends BridgeActivity {
         public String take() { String p = pending; pending = null; return p; }
       }, "AndroidShare");
       getBridge().getWebView().addJavascriptInterface(new Telechargeur(), "AndroidDownload");
+      if (OMNI) getBridge().getWebView().addJavascriptInterface(new OmniCodeBridge(), "AndroidOmniCode");
     }
     if (SHARE) lire(getIntent());
     if (ASK) getWindow().getDecorView().postDelayed(this::demander, 800);
   }
 
+
+  /** Renvoie le résultat à la page : événement « omnicode », detail = {id, ok, code}. */
+  private void omniDeliver(String id, String code) {
+    try {
+      String json = new JSONObject().put("id", id).put("ok", code != null).put("code", code == null ? "" : code).toString();
+      if (getBridge() == null) return;
+      getBridge().getWebView().post(() -> getBridge().getWebView().evaluateJavascript(
+        "window.dispatchEvent(new CustomEvent('omnicode',{detail:" + json + "}))", null));
+    } catch (Exception e) { }
+  }
+
+  /** JS : AndroidOmniCode.available() puis AndroidOmniCode.edit(id, code, langage). */
+  private class OmniCodeBridge {
+    @JavascriptInterface
+    public boolean available() {
+      try { return getPackageManager().resolveActivity(new Intent(OMNI_ACTION).setPackage(OMNI_PKG), 0) != null; }
+      catch (Exception e) { return false; }
+    }
+
+    /** @return false si l'éditeur est absent, occupé ou si le code est trop gros (la page garde alors son éditeur). */
+    @JavascriptInterface
+    public boolean edit(String id, String code, String language) {
+      if (id == null || id.isEmpty() || omniPending != null || !available()) return false;
+      final String c = code == null ? "" : code;
+      if (c.length() > OMNI_MAX) return false;
+      final String lang = (language == null || language.isEmpty()) ? "html" : language;
+      omniPending = id;
+      runOnUiThread(() -> {
+        try {
+          Intent i = new Intent(OMNI_ACTION).setPackage(OMNI_PKG);   // setPackage : la clé ne peut pas être interceptée
+          i.putExtra(OMNI_CODE, c).putExtra(OMNI_LANG, lang).putExtra(OMNI_KEY, OMNI_SECRET);
+          omniLauncher.launch(i);
+        } catch (ActivityNotFoundException | SecurityException e) {
+          omniPending = null;
+          omniDeliver(id, null);
+        }
+      });
+      return true;
+    }
+  }
 
   /** Écrit un fichier dans le dossier Téléchargements (MediaStore dès Android 10, sans autorisation). */
   private class Telechargeur {
@@ -714,7 +781,8 @@ code = (JAVA if kind == 'capacitor' else KOTLIN)
 code = (code.replace('%PKG%', pkg)
         .replace('%PERMS%', ', '.join('"android.permission.%s"' % p for p in rt))
         .replace('%ALLFILES%', bool_('allfiles' in groups))
-        .replace('%ASK%', bool_(ask)).replace('%SHARE%', bool_(share)))
+        .replace('%ASK%', bool_(ask)).replace('%SHARE%', bool_(share))
+        .replace('%OMNI%', bool_(omni)))
 os.remove(found)
 open(os.path.join(os.path.dirname(found), 'MainActivity.' + ext), 'w', encoding='utf-8').write(code)
 
