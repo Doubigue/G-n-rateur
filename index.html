@@ -404,7 +404,7 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
       <h2><span>2</span>Fichiers</h2>
       <div class="seg wrap" role="radiogroup" aria-label="Type de projet"><label><input type="radio" name="mode" value="web" checked><span>Site web</span></label><label><input type="radio" name="mode" value="flutter"><span>Flutter</span></label><label><input type="radio" name="mode" value="native"><span>Kotlin / Java</span></label><label><input type="radio" name="mode" value="reactnative"><span>React Native</span></label><label><input type="radio" name="mode" value="python"><span>Python (Kivy)</span></label></div>
       <div id="zipBox"><div class="seg" role="radiogroup" aria-label="Source du projet" style="margin-bottom:6px"><label><input type="radio" name="src" value="zip" checked><span>ZIP</span></label><label><input type="radio" name="src" value="link"><span>Lien</span></label></div>
-      <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FF3F1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,application/zip"></label><button type="button" class="clr" id="zipClr">✕ Vider le fichier</button><button type="button" class="mini2" id="aiBtn" style="display:none;margin-top:10px">✨ Analyser avec l'IA</button></div>
+      <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FF3F1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 100 Mo max</span><input id="zip" type="file" accept=".zip,application/zip"></label><button type="button" class="clr" id="zipClr">✕ Vider le fichier</button><button type="button" class="mini2" id="aiBtn" style="display:none;margin-top:10px">✨ Analyser avec l'IA</button></div>
       <div id="lnkBox" style="display:none"><label for="url">Lien source</label><input id="url" type="url" inputmode="url" autocapitalize="none" autocorrect="off" placeholder="https://…"><small class="h" id="lnkHint"></small></div>
       <label for="icon">Logo (optionnel, tout format conservé) : PNG, JPG, WebP, SVG…</label>
       <input id="icon" type="file" accept="image/*">
@@ -784,21 +784,21 @@ function iconeAff(){
 }
 async function detecterLogo(){
   autoLogo=null;const f=$('zip').files[0];
-  if(f&&src()==='zip'&&f.size<=40*1048576){try{autoLogo=await logoDansZip(await JSZip.loadAsync(f))}catch(_){}}
+  if(f&&src()==='zip'&&f.size<=100*1048576){try{autoLogo=await logoDansZip(await JSZip.loadAsync(f))}catch(_){}}
   iconeAff();
 }
 $('icon').addEventListener('change',iconeAff);iconeAff();
 function zipInfo(){aiSync();const f=$('zip').files[0];if(!f)return;$('zn').textContent=f.name;$('zs').textContent=(f.size/1048576).toFixed(1)+' Mo';$('zipClr').style.display='block';detecterLogo()}
 const TYPES={
-  web:{label:'Site web',long:'Web (Capacitor)',json:'config.json',wf:'Build APK',zn:'Déposer le ZIP du site',zs:'index.html + ressources · 40 Mo max',
+  web:{label:'Site web',long:'Web (Capacitor)',json:'config.json',wf:'Build APK',zn:'Déposer le ZIP du site',zs:'index.html + ressources · 100 Mo max',
     ok:n=>n.some(x=>/(^|\/)index\.html$/i.test(x)),err:'index.html est introuvable dans le ZIP.'},
-  flutter:{label:'Flutter',long:'Flutter',json:'flutter.json',wf:'Build Flutter APK',zn:'Déposer le projet Flutter (ZIP)',zs:'pubspec.yaml + lib/, ou simplement main.dart · 40 Mo max',
+  flutter:{label:'Flutter',long:'Flutter',json:'flutter.json',wf:'Build Flutter APK',zn:'Déposer le projet Flutter (ZIP)',zs:'pubspec.yaml + lib/, ou simplement main.dart · 100 Mo max',
     ok:n=>n.some(x=>/(^|\/)pubspec\.yaml$/i.test(x)||/\.dart$/i.test(x)),err:'Aucun pubspec.yaml ni fichier .dart dans le ZIP.'},
-  native:{label:'Kotlin / Java',long:'Android natif (Gradle)',json:'native.json',wf:'Build Android natif APK',zn:'Déposer le projet Android (ZIP)',zs:'Projet Android Studio : settings.gradle + app/ · 40 Mo max',
+  native:{label:'Kotlin / Java',long:'Android natif (Gradle)',json:'native.json',wf:'Build Android natif APK',zn:'Déposer le projet Android (ZIP)',zs:'Projet Android Studio : settings.gradle + app/ · 100 Mo max',
     ok:n=>n.some(x=>/(^|\/)settings\.gradle(\.kts)?$/i.test(x)),err:'Aucun settings.gradle(.kts) dans le ZIP : envoie un projet Android Studio complet.'},
-  reactnative:{label:'React Native',long:'React Native / Expo',json:'reactnative.json',wf:'Build React Native APK',zn:'Déposer le projet React Native (ZIP)',zs:'package.json + App.js (Expo ou RN) · 40 Mo max',
+  reactnative:{label:'React Native',long:'React Native / Expo',json:'reactnative.json',wf:'Build React Native APK',zn:'Déposer le projet React Native (ZIP)',zs:'package.json + App.js (Expo ou RN) · 100 Mo max',
     ok:n=>n.some(x=>/(^|\/)package\.json$/i.test(x)),err:'Aucun package.json dans le ZIP.'},
-  python:{label:'Python (Kivy)',long:'Python / Kivy (Buildozer)',json:'python.json',wf:'Build Python APK',zn:'Déposer le projet Python (ZIP)',zs:'main.py (+ buildozer.spec facultatif) · 40 Mo max',
+  python:{label:'Python (Kivy)',long:'Python / Kivy (Buildozer)',json:'python.json',wf:'Build Python APK',zn:'Déposer le projet Python (ZIP)',zs:'main.py (+ buildozer.spec facultatif) · 100 Mo max',
     ok:n=>n.some(x=>/(^|\/)main\.py$/i.test(x)),err:'Aucun main.py dans le ZIP.'}
 };
 const typeDe=t=>TYPES[t]||TYPES.web;
@@ -1194,7 +1194,7 @@ $('f').addEventListener('submit',async e=>{
       sourceKind=kindUrl(url);
       if(sourceKind==='site'&&mode()!=='web')throw new Error('Un lien de site web fonctionne seulement en mode Site web.');
     }else if(zip){
-      if(zip.size>40*1048576)throw new Error('ZIP trop volumineux (40 Mo max).');
+      if(zip.size>100*1048576)throw new Error('ZIP trop volumineux (100 Mo max).');
       z=await JSZip.loadAsync(zip).catch(()=>{throw new Error('ZIP invalide.')});
       const ok=Object.keys(z.files).filter(n=>!n.startsWith('__MACOSX'));
       if(!typeDe(mode()).ok(ok))throw new Error(typeDe(mode()).err);
@@ -2124,7 +2124,7 @@ function reinitialiser(){
   edition=null;$('edBar').style.display='none';
   $('f').reset();
   choisir('mode','web');choisir('src','zip');autoLogo=null;iconeAff();
-  $('zn').textContent='Déposer le ZIP du site';$('zs').textContent='index.html + ressources · 40 Mo max';
+  $('zn').textContent='Déposer le ZIP du site';$('zs').textContent='index.html + ressources · 100 Mo max';
   prev();majSource();$('err').textContent='';
 }
 let tr;
@@ -3140,7 +3140,7 @@ function erTmpBtn(tmp){
 async function erBuild(steps){
   const f=$('erZip').files[0];
   if(!f)return erSay('Choisis le ZIP de ton projet.');
-  if(f.size>40*1048576)return erSay('ZIP trop volumineux (40 Mo max).');
+  if(f.size>100*1048576)return erSay('ZIP trop volumineux (100 Mo max).');
   if(typeof JSZip==='undefined')return erSay('La bibliothèque ZIP est indisponible. Vérifie la connexion Internet.');
   let names;
   try{const z=await JSZip.loadAsync(f);names=Object.keys(z.files).filter(n=>!z.files[n].dir&&!n.startsWith('__MACOSX'))}
