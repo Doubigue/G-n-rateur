@@ -70,17 +70,9 @@ jobs:
           printf '\norg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g\n' >> android/gradle.properties
 
           if [ "$(jq -r .icon "$CFG")" = "true" ]; then
-            IM=$(command -v magick || command -v convert)
-            RES="$MOD/src/main/res"
-            find "$RES" -name 'ic_launcher*' -delete 2>/dev/null || true
-            for p in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
-              d=${p%%:*}; s=${p##*:}
-              mkdir -p "$RES/mipmap-$d"
-              for n in ic_launcher ic_launcher_round; do
-                "$IM" "$GITHUB_WORKSPACE/$DIR/icon.png" -resize ${s}x${s} "$RES/mipmap-$d/$n.png"
-              done
-            done
+            python3 "$S/icon_setup.py" gradle "$MOD/src/main/res" "$GITHUB_WORKSPACE/$DIR/icon.png" "$(jq -r .color "$CFG")"
           fi
+          python3 "$S/fonction_setup.py" "$MOD" "$CFG" "$GITHUB_WORKSPACE/$DIR/app.zip" "$GITHUB_WORKSPACE/$DIR/icon.png"
 
       - name: Clé de signature stable (mises à jour sans désinstaller)
         run: |

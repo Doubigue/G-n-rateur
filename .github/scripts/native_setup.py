@@ -213,6 +213,11 @@ def patch_spec(cfg, specp):
     t = regler(t, 'requirements', ','.join(req))
     if cfg.get('icon') and os.path.exists(os.path.join(os.path.dirname(specp), 'icon.png')):
         t = regler(t, 'icon.filename', '%(source.dir)s/icon.png')
+    d_spec = os.path.dirname(specp)
+    if cfg.get('icon') and os.path.exists(os.path.join(d_spec, 'icon_fg.png')) and os.path.exists(os.path.join(d_spec, 'icon_bg.png')):
+        # icône adaptative pleine taille (générée par icon_setup.py)
+        t = regler(t, 'icon.adaptive_foreground.filename', '%(source.dir)s/icon_fg.png')
+        t = regler(t, 'icon.adaptive_background.filename', '%(source.dir)s/icon_bg.png')
     ecrire(specp, t)
     print('buildozer.spec :', specp, '| requirements =', ','.join(req))
 

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Fonction</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#FAF6F3;--card:#fff;--ink:#141A22;--mut:#6B7280;--line:#ECE6E1;--chip:#F0EDEA;--acc:#FF3F1A;--tint:#FFE8E0;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#10141B;--card:#1A2029;--ink:#EEF1F5;--mut:#9AA3B0;--line:#2A323E;--chip:#232B37;--tint:#3A2018}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border-bottom:1px solid var(--line)}
+#back{border:0;background:var(--chip);color:var(--ink);width:38px;height:38px;border-radius:12px;font-size:20px;line-height:1;cursor:pointer;flex:none}
+#logo{width:44px;height:44px;border-radius:12px;object-fit:cover;flex:none;background:var(--chip);display:none}
+.hi{min-width:0;flex:1}
+.hi b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hi small{color:var(--mut);font-size:12px}
+nav{display:flex;gap:6px;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--line)}
+nav button{flex:1;border:0;border-radius:12px;padding:9px 6px;background:transparent;color:var(--mut);font:600 13px system-ui,sans-serif;cursor:pointer}
+nav button.on{background:var(--tint);color:var(--acc)}
+main{flex:1;min-height:0;position:relative}
+section{position:absolute;inset:0;overflow-y:auto;padding:16px 16px 28px;display:none;-webkit-overflow-scrolling:touch}
+section.on{display:block}
+#sAnim{padding:0;overflow:hidden}
+#sAnim.on{display:flex;flex-direction:column}
+#frame{flex:1;width:100%;border:0;background:#fff}
+.md h1{font-size:22px;margin:.2em 0 .5em}.md h2{font-size:18px;margin:1.3em 0 .4em}.md h3{font-size:15.5px;margin:1.1em 0 .3em}
+.md p{margin:.6em 0}.md ul,.md ol{padding-left:22px;margin:.5em 0}.md li{margin:.25em 0}
+.md code{background:var(--chip);padding:1px 6px;border-radius:6px;font:13px ui-monospace,Menlo,monospace}
+.md pre{background:var(--chip);padding:12px;border-radius:12px;overflow-x:auto}.md pre code{background:none;padding:0}
+.md blockquote{margin:.8em 0;padding:.2em 12px;border-left:3px solid var(--acc);color:var(--mut)}
+.md hr{border:0;border-top:1px solid var(--line);margin:1.2em 0}
+.md a{color:var(--acc)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid figure{margin:0;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.grid img{display:block;width:100%;aspect-ratio:9/16;object-fit:cover;background:var(--chip)}
+.grid figcaption{padding:6px 10px;font-size:12px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{text-align:center;color:var(--mut);padding:56px 20px}.empty big{display:block;font-size:34px;margin-bottom:8px}
+#lb{position:fixed;inset:0;background:#000;display:none;align-items:center;justify-content:center;z-index:9}
+#lb.on{display:flex}#lb img{max-width:100%;max-height:100%;object-fit:contain}
+#lb button{position:absolute;border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:50%;width:44px;height:44px;font-size:22px}
+#lbX{top:14px;right:14px}#lbP{left:10px;top:50%}#lbN{right:10px;top:50%}
+#lbC{position:absolute;bottom:16px;left:0;right:0;text-align:center;color:#fff;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <button id="back" aria-label="Retour">‹</button>
+  <img id="logo" alt="">
+  <div class="hi"><b id="appName">Application</b><small id="appVer"></small></div>
+</header>
+<nav id="tabs">
+  <button data-s="sDesc" class="on">Description</button>
+  <button data-s="sCaps" id="tCaps">Captures</button>
+  <button data-s="sAnim">Animation</button>
+</nav>
+<main>
+  <section id="sDesc" class="on"><div id="md" class="md"></div></section>
+  <section id="sCaps"><div id="grid" class="grid"></div></section>
+  <section id="sAnim"><iframe id="frame" title="Animation"></iframe></section>
+</main>
+<div id="lb"><button id="lbX" aria-label="Fermer">✕</button><button id="lbP" aria-label="Précédente">‹</button><button id="lbN" aria-label="Suivante">›</button><img id="lbI" alt=""><div id="lbC"></div></div>
+
+<script>
+/* Données écrites à la compilation par .github/scripts/fonction_setup.py (démo si ouvert seul dans un navigateur) */
+const DATA=/*__DATA_START__*/{"name":"Mon application","version":"1.0.0","icon":null,"description":"# Mon application\n\nExemple de description.\n\n## Fonctions\n\n- Créer un élément\n- **Modifier** et supprimer\n- Partager",
+"captures":[],"animation":null}/*__DATA_END__*/;
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+/* ---- Markdown minimal (titres, listes, gras/italique, code, citations, liens, séparateurs) ---- */
+function inline(t){
+  t=esc(t);
+  t=t.replace(/`([^`]+)`/g,'<code>$1</code>');
+  t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/__([^_]+)__/g,'<strong>$1</strong>');
+  t=t.replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>');
+  t=t.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  return t;
+}
+function md(src){
+  const L=String(src||'').replace(/\r\n?/g,'\n').split('\n');let o='',i=0,list=null,para=[];
+  const flushP=()=>{if(para.length){o+='<p>'+inline(para.join(' '))+'</p>';para=[]}};
+  const closeL=()=>{if(list){o+='</'+list+'>';list=null}};
+  while(i<L.length){
+    const l=L[i];
+    if(/^```/.test(l)){flushP();closeL();let c=[];i++;while(i<L.length&&!/^```/.test(L[i]))c.push(L[i++]);i++;o+='<pre><code>'+esc(c.join('\n'))+'</code></pre>';continue}
+    let m;
+    if((m=l.match(/^(#{1,3})\s+(.*)$/))){flushP();closeL();o+='<h'+m[1].length+'>'+inline(m[2])+'</h'+m[1].length+'>';i++;continue}
+    if(/^\s*([-*_])\1\1+\s*$/.test(l)){flushP();closeL();o+='<hr>';i++;continue}
+    if((m=l.match(/^\s*[-*+]\s+(.*)$/))){flushP();if(list!=='ul'){closeL();o+='<ul>';list='ul'}o+='<li>'+inline(m[1])+'</li>';i++;continue}
+    if((m=l.match(/^\s*\d+[.)]\s+(.*)$/))){flushP();if(list!=='ol'){closeL();o+='<ol>';list='ol'}o+='<li>'+inline(m[1])+'</li>';i++;continue}
+    if((m=l.match(/^>\s?(.*)$/))){flushP();closeL();o+='<blockquote>'+inline(m[1])+'</blockquote>';i++;continue}
+    if(!l.trim()){flushP();closeL();i++;continue}
+    closeL();para.push(l.trim());i++;
+  }
+  flushP();closeL();return o;
+}
+
+/* ---- En-tête ---- */
+$('appName').textContent=DATA.name||'Application';
+$('appVer').textContent=DATA.version?'Version '+DATA.version:'';
+if(DATA.icon){const g=$('logo');g.src=DATA.icon;g.style.display='block'}
+document.title='Fonction · '+(DATA.name||'');
+
+/* ---- Description ---- */
+$('md').innerHTML=DATA.description&&DATA.description.trim()?md(DATA.description):'<div class="empty"><big>📝</big>Aucune description fournie pour cette application.</div>';
+
+/* ---- Captures + visionneuse ---- */
+const caps=DATA.captures||[];let cur=0;
+$('tCaps').textContent='Captures'+(caps.length?' ('+caps.length+')':'');
+$('grid').innerHTML=caps.length?caps.map((c,k)=>'<figure data-k="'+k+'"><img loading="lazy" src="'+esc(c.src)+'" alt="'+esc(c.name)+'"><figcaption>'+esc(c.name)+'</figcaption></figure>').join(''):'';
+if(!caps.length){$('grid').outerHTML='<div class="empty"><big>🖼️</big>Aucune capture d’écran.<br><small>Ajoute des images dans le dossier Captures du projet.</small></div>'}
+function show(k){cur=(k+caps.length)%caps.length;$('lbI').src=caps[cur].src;$('lbC').textContent=(cur+1)+' / '+caps.length+' · '+caps[cur].name;$('lb').classList.add('on')}
+document.addEventListener('click',e=>{const f=e.target.closest('figure[data-k]');if(f)show(+f.dataset.k)});
+$('lbX').onclick=()=>$('lb').classList.remove('on');
+$('lbP').onclick=()=>show(cur-1);$('lbN').onclick=()=>show(cur+1);
+let x0=null;$('lb').addEventListener('touchstart',e=>{x0=e.touches[0].clientX},{passive:true});
+$('lb').addEventListener('touchend',e=>{if(x0==null)return;const d=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(d)>50)show(cur+(d<0?1:-1))});
+
+/* ---- Animation (chargée à la première ouverture de l'onglet) ---- */
+let animOk=false;
+function loadAnim(){
+  if(animOk)return;animOk=true;
+  if(DATA.animation)$('frame').src=DATA.animation;
+  else $('sAnim').innerHTML='<div class="empty"><big>🎬</big>Aucune animation.<br><small>Ajoute un fichier .html dans le dossier Animation du projet.</small></div>';
+}
+
+/* ---- Onglets ---- */
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('main section').forEach(s=>s.classList.toggle('on',s.id===b.dataset.s));
+  if(b.dataset.s==='sAnim')loadAnim();
+});
+const hash=(location.hash||'').replace('#','');
+if(hash==='captures')$('tCaps').click();else if(hash==='animation')document.querySelector('[data-s=sAnim]').click();
+
+/* ---- Retour : ferme la visionneuse, sinon l'écran ---- */
+window.__back=()=>{if($('lb').classList.contains('on')){$('lb').classList.remove('on');return true}return false};
+$('back').onclick=()=>{if(window.__back())return;if(window.Fonction&&Fonction.close)Fonction.close();else history.back()};
+</script>
+</body>
+</html>

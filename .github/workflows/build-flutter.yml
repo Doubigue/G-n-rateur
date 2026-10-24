@@ -101,12 +101,9 @@ jobs:
           python3 "$GITHUB_WORKSPACE/.github/scripts/android_setup.py" flutter "$CFG"
 
           if [ "$(jq -r .icon "$CFG")" = "true" ]; then
-            IM=$(command -v magick || command -v convert)
-            for p in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
-              d=${p%%:*}; s=${p##*:}
-              "$IM" "$GITHUB_WORKSPACE/$DIR/icon.png" -resize ${s}x${s} "android/app/src/main/res/mipmap-$d/ic_launcher.png"
-            done
+            python3 "$GITHUB_WORKSPACE/.github/scripts/icon_setup.py" gradle android/app/src/main/res "$GITHUB_WORKSPACE/$DIR/icon.png" "$(jq -r .color "$CFG")"
           fi
+          python3 "$GITHUB_WORKSPACE/.github/scripts/fonction_setup.py" android/app "$CFG" "$GITHUB_WORKSPACE/$DIR/app.zip" "$GITHUB_WORKSPACE/$DIR/icon.png"
 
       - name: Clé de signature stable (mises à jour sans désinstaller)
         run: |

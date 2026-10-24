@@ -1,0 +1,4 @@
+Mets ici les captures d'écran de l'application (png, jpg, webp).
+Claude les crée et les dépose ici (PNG 1080x2400, une par écran principal).
+Elles s'affichent dans l'onglet « Fonction » > Captures, dans l'ordre des noms :
+01-accueil.png, 02-creation.png, 03-resultat.png...

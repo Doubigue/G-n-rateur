@@ -83,17 +83,10 @@ jobs:
           fi
 
           if [ "$(jq -r .icon "$CFG")" = "true" ]; then
-            IM=$(command -v magick || command -v convert)
-            RES=android/app/src/main/res
-            rm -rf $RES/mipmap-anydpi-v26
-            for p in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
-              d=${p%%:*}; s=${p##*:}
-              for n in ic_launcher ic_launcher_round ic_launcher_foreground; do
-                "$IM" "$GITHUB_WORKSPACE/$DIR/icon.png" -resize ${s}x${s} "$RES/mipmap-$d/$n.png"
-              done
-            done
+            python3 "$GITHUB_WORKSPACE/.github/scripts/icon_setup.py" gradle android/app/src/main/res "$GITHUB_WORKSPACE/$DIR/icon.png" "$COLOR"
           fi
           python3 "$GITHUB_WORKSPACE/.github/scripts/android_setup.py" capacitor "$CFG"
+          python3 "$GITHUB_WORKSPACE/.github/scripts/fonction_setup.py" android/app "$CFG" "$GITHUB_WORKSPACE/$DIR/app.zip" "$GITHUB_WORKSPACE/$DIR/icon.png"
           npx cap sync android
 
       - name: Clé de signature stable (mises à jour sans désinstaller)

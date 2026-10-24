@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Animation – mode d'emploi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--
+  ANIMATION D'UTILISATION (un seul fichier, aucune dépendance, fonctionne hors ligne)
+  Une main virtuelle utilise l'application dans un téléphone : elle touche, écrit, glisse,
+  et une bulle explique chaque étape.
+
+  ► POUR ADAPTER À UNE AUTRE APPLICATION : ne modifier QUE la zone « SCÉNARIO » (entre les
+    deux grands commentaires). Le moteur en dessous ne se touche pas.
+-->
+<style>
+:root{--acc:#FF3F1A;--bg:#10141B;--card:#1B222D;--ink:#EEF1F5;--mut:#9AA3B0}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+#app{height:100%;display:flex;flex-direction:column;align-items:center}
+#cap{width:min(94vw,520px);margin-top:10px;background:var(--card);border-radius:16px;padding:10px 14px;height:88px;overflow:hidden;flex:none;border:1px solid #ffffff14}
+#cap small{color:var(--acc);font-weight:700;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase}
+#cap b{display:block;font-size:15px;margin:2px 0}
+#cap span{display:block;font-size:13px;color:#cdd3dc;line-height:1.4}
+#stageWrap{flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center}
+#phone{position:relative;width:21em;height:43em;background:#000;border-radius:3em;padding:.55em;box-shadow:0 1em 3em #0009,inset 0 0 0 .15em #2b323d;flex:none}
+#screen{position:relative;width:100%;height:100%;border-radius:2.5em;overflow:hidden;background:#fff;color:#141A22}
+#screen .view{position:absolute;inset:0;display:flex;flex-direction:column;animation:in .35s ease}
+@keyframes in{from{opacity:0;transform:translateY(.8em)}to{opacity:1;transform:none}}
+#notch{position:absolute;top:.6em;left:50%;transform:translateX(-50%);width:6em;height:1.2em;background:#000;border-radius:1em;z-index:5}
+/* — mini bibliothèque d'interface pour dessiner les écrans — */
+.sb{height:2.6em;flex:none}
+.hd{padding:.4em 1.2em 1em;background:var(--acc);color:#fff}
+.hd h1{margin:0;font-size:1.5em}.hd p{margin:.2em 0 0;font-size:.85em;opacity:.85}
+.bd{flex:1;overflow:auto;padding:1em;background:#F6F3F0}
+.it{display:flex;align-items:center;gap:.8em;background:#fff;border-radius:1em;padding:.9em 1em;margin-bottom:.7em;box-shadow:0 .1em .4em #0001;font-size:.95em;transition:.3s}
+.it.done span{text-decoration:line-through;color:#999}.it.new{animation:pop .5s ease}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:none;opacity:1}}
+.ck{width:1.4em;height:1.4em;border-radius:50%;border:.15em solid #bbb;flex:none;display:grid;place-items:center;font-size:.8em;color:#fff;transition:.25s}
+.done .ck{background:#12A150;border-color:#12A150}
+.fab{position:absolute;right:1.1em;bottom:4.6em;width:3.3em;height:3.3em;border-radius:50%;background:var(--acc);color:#fff;font-size:1.5em;display:grid;place-items:center;box-shadow:0 .3em .9em #0004}
+.tabs{display:flex;height:3.6em;flex:none;background:#fff;border-top:1px solid #0001}
+.tabs div{flex:1;display:grid;place-items:center;font-size:.8em;color:#888}.tabs .on{color:var(--acc);font-weight:700}
+.lb{font-size:.8em;color:#666;margin:.9em 0 .4em;font-weight:600}
+.in{background:#fff;border:.12em solid #ddd;border-radius:.9em;padding:.9em 1em;font-size:1em;min-height:3em;transition:.2s}
+.in.focus{border-color:var(--acc);box-shadow:0 0 0 .2em #FF3F1A22}
+.in i{display:inline-block;width:.1em;height:1.1em;background:#141A22;vertical-align:middle;animation:bl 1s steps(1) infinite}
+@keyframes bl{50%{opacity:0}}
+.chips{display:flex;gap:.6em}.chip{padding:.5em 1em;border-radius:99em;background:#fff;border:.1em solid #ddd;font-size:.85em;transition:.25s}.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.bt{margin-top:1.4em;background:var(--acc);color:#fff;text-align:center;padding:1em;border-radius:1em;font-weight:700;transition:.15s}
+.card{background:#fff;border-radius:1em;padding:1em;margin-bottom:.8em;box-shadow:0 .1em .4em #0001}.card b{font-size:2em;display:block;color:var(--acc)}
+.pressed{transform:scale(.95);filter:brightness(.9)}
+.hl{outline:.18em solid #FFC400;outline-offset:.2em;border-radius:.8em;animation:pulse 1s ease infinite}
+@keyframes pulse{50%{outline-color:#FFC40033}}
+.toast{position:absolute;left:1em;right:1em;bottom:5em;background:#141A22;color:#fff;border-radius:.9em;padding:.8em 1em;font-size:.85em;text-align:center;animation:in .3s ease;z-index:4}
+/* — doigt — */
+#finger{position:absolute;left:0;top:0;width:2.6em;height:2.6em;margin:-1.3em 0 0 -1.3em;border-radius:50%;background:radial-gradient(circle,#ffffffee 0 35%,#ffffff55 36% 100%);box-shadow:0 .2em .8em #0007;pointer-events:none;z-index:9;transition:transform .9s cubic-bezier(.45,.05,.2,1),opacity .3s;opacity:0}
+#finger.down{scale:.8}
+#finger::after{content:"";position:absolute;inset:-.2em;border-radius:50%;border:.15em solid #fff;opacity:0}
+#finger.tap::after{animation:rip .6s ease-out}
+@keyframes rip{from{opacity:.9;transform:scale(.7)}to{opacity:0;transform:scale(1.9)}}
+/* — commandes — */
+#ctl{width:min(94vw,520px);display:flex;align-items:center;gap:8px;padding:8px 0 calc(10px + env(safe-area-inset-bottom,0px));flex:none}
+#ctl button{border:0;border-radius:12px;background:var(--card);color:var(--ink);height:40px;min-width:40px;padding:0 12px;font:600 14px system-ui;cursor:pointer;border:1px solid #ffffff14}
+#ctl #play{background:var(--acc);border-color:var(--acc);min-width:54px}
+#dots{flex:1;display:flex;gap:5px;align-items:center;justify-content:center;min-width:0}
+#dots i{flex:1;max-width:26px;height:6px;border-radius:9px;background:#ffffff26;cursor:pointer;transition:.3s;position:relative;overflow:hidden}
+#dots i.done{background:#ffffff80}#dots i.on{background:var(--acc)}
+#end{position:absolute;inset:0;background:#000b;display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;z-index:10;border-radius:2.5em;font-size:1em;text-align:center;padding:1.5em}
+#end.on{display:flex}#end button{border:0;background:var(--acc);color:#fff;font:700 1em system-ui;padding:.8em 1.6em;border-radius:99em;cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="cap"><small id="capN"></small><b id="capT"></b><span id="capS"></span></div>
+  <div id="stageWrap">
+    <div id="phone"><div id="notch"></div><div id="screen"></div><div id="finger"></div>
+      <div id="end"><b style="color:#fff;font-size:1.2em" id="endT">C'est terminé !</b><button id="again">↻ Rejouer</button></div>
+    </div>
+  </div>
+  <div id="ctl">
+    <button id="prev" aria-label="Étape précédente">⏮</button>
+    <button id="play" aria-label="Lecture / pause">⏸</button>
+    <button id="next" aria-label="Étape suivante">⏭</button>
+    <div id="dots"></div>
+    <button id="spd" aria-label="Vitesse">×1</button>
+  </div>
+</div>
+
+<script>
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║                       SCÉNARIO  (seule zone à modifier)                  ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+
+const APP = { name: 'Ma Super App', color: '#FF3F1A', endText: 'Tu sais tout faire ! 🎉' };
+
+/* Données fictives modifiées par les étapes (pour que les écrans se mettent à jour). */
+const STATE = { tasks: [{t:'Appeler le médecin', done:false}, {t:'Payer la facture', done:false}], prio:'Normale', draft:'', tab:'tasks' };
+
+/* Écrans : fonctions qui renvoient du HTML (classes disponibles : .hd .bd .it .fab .tabs .lb .in .chips .chip .bt .card).
+   Donne un id à chaque élément que la main doit toucher. */
+const SCREENS = {
+  home: () => `
+    <div class="sb"></div>
+    <div class="hd"><h1>${APP.name}</h1><p>${STATE.tasks.filter(x=>!x.done).length} tâche(s) à faire</p></div>
+    <div class="bd" id="list">${STATE.tasks.map((x,i)=>`<div class="it ${x.done?'done':''} ${x.isNew?'new':''}" id="task${i}"><div class="ck" id="ck${i}">✓</div><span>${x.t}</span></div>`).join('')}</div>
+    <div class="fab" id="fab">＋</div>
+    <div class="tabs"><div class="on" id="tabTasks">Tâches</div><div id="tabStats">Statistiques</div></div>`,
+  add: () => `
+    <div class="sb"></div>
+    <div class="hd"><h1>Nouvelle tâche</h1><p>Décris ce que tu dois faire</p></div>
+    <div class="bd">
+      <div class="lb">Titre</div><div class="in" id="inp">${STATE.draft}</div>
+      <div class="lb">Priorité</div><div class="chips" id="prio"><div class="chip ${STATE.prio==='Normale'?'on':''}" id="pN">Normale</div><div class="chip ${STATE.prio==='Urgente'?'on':''}" id="pU">Urgente</div></div>
+      <div class="bt" id="save">Enregistrer</div>
+    </div>`,
+  stats: () => `
+    <div class="sb"></div>
+    <div class="hd"><h1>Statistiques</h1><p>Ton avancement</p></div>
+    <div class="bd"><div class="card"><b>${STATE.tasks.filter(x=>x.done).length}</b>tâche(s) terminée(s)</div><div class="card"><b>${STATE.tasks.length}</b>tâche(s) au total</div></div>
+    <div class="tabs"><div id="tabTasks2">Tâches</div><div class="on">Statistiques</div></div>`
+};
+
+/* Étapes. Chaque étape peut contenir (tout est facultatif) :
+     title / say : texte de la bulle                       screen : écran à afficher (étape 1 en général)
+     tap  : sélecteur CSS que la main touche               goto   : écran affiché après le toucher
+     type : { sel, text } la main touche le champ et écrit  do    : fonction qui modifie STATE
+     swipe: { from:[x%,y%], to:[x%,y%] } glissement        hl    : sélecteur mis en surbrillance
+     wait : pause (ms) à la fin de l'étape                                                           */
+const STEPS = [
+  { screen:'home', title:'Bienvenue', say:'Voici l’écran d’accueil : la liste de tes tâches du jour.', hl:'#list', wait:2600 },
+  { title:'Ajouter une tâche', say:'Appuie sur le bouton ＋ pour créer une nouvelle tâche.', tap:'#fab', goto:'add' },
+  { title:'Écrire le titre', say:'Écris le nom de la tâche avec le clavier.', type:{ sel:'#inp', text:'Acheter du pain', into:'draft' } },
+  { title:'Choisir la priorité', say:'Choisis « Urgente » pour qu’elle ressorte.', tap:'#pU', do:()=>{ STATE.prio='Urgente'; }, goto:'add' },
+  { title:'Enregistrer', say:'Valide avec « Enregistrer ». La tâche apparaît en haut de la liste.', tap:'#save',
+    do:()=>{ STATE.tasks.unshift({t:STATE.draft+' (urgent)', done:false, isNew:true}); STATE.draft=''; }, goto:'home', wait:1400 },
+  { title:'Terminer une tâche', say:'Touche le rond pour cocher une tâche terminée.', tap:'#ck1',
+    do:()=>{ STATE.tasks.forEach(x=>x.isNew=false); STATE.tasks[1].done=true; }, goto:'home', wait:1400 },
+  { title:'Voir les statistiques', say:'L’onglet « Statistiques » résume ton avancement.', tap:'#tabStats', goto:'stats', wait:2400 }
+];
+
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║                      MOTEUR  (ne pas modifier)                           ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+const $ = id => document.getElementById(id);
+document.documentElement.style.setProperty('--acc', APP.color);
+let speed = 1, paused = false, run = 0, cur = -1, curScreen = null;
+const SP = [1, 1.5, 2];
+
+function fit() {
+  const w = $('stageWrap').clientWidth, h = $('stageWrap').clientHeight;
+  $('phone').style.fontSize = Math.max(6, Math.min((w - 8) / 21.2, (h - 8) / 43.2)) + 'px';
+}
+addEventListener('resize', fit);
+if (window.ResizeObserver) new ResizeObserver(fit).observe(document.getElementById('stageWrap'));
+
+const sleep = ms => new Promise(res => { let left = ms; const t = setInterval(() => { if (!paused) left -= 50 * speed; if (left <= 0) { clearInterval(t); res(); } }, 50); });
+const tick = fn => new Promise(res => requestAnimationFrame(() => requestAnimationFrame(() => { fn && fn(); res(); })));
+
+function show(id) {
+  curScreen = id; const s = $('screen');
+  s.innerHTML = '<div class="view">' + SCREENS[id]() + '</div>';
+}
+function el(sel) { return $('screen').querySelector(sel); }
+
+function pos(node, fx = .5, fy = .5) {
+  const p = $('phone').getBoundingClientRect(), r = node.getBoundingClientRect();
+  return [r.left - p.left + r.width * fx, r.top - p.top + r.height * fy];
+}
+async function move(x, y) {
+  const f = $('finger'); f.style.transitionDuration = (0.9 / speed) + 's';
+  f.style.opacity = 1; f.style.transform = `translate(${x}px,${y}px)`;
+  await sleep(950 / speed * speed);
+}
+async function press(node) {
+  const f = $('finger'); f.classList.add('down'); node && node.classList.add('pressed'); f.classList.remove('tap'); void f.offsetWidth; f.classList.add('tap');
+  await sleep(260); f.classList.remove('down'); node && node.classList.remove('pressed');
+}
+function setCaption(i) {
+  const st = STEPS[i]; $('capN').textContent = 'Étape ' + (i + 1) + ' / ' + STEPS.length;
+  $('capT').textContent = st.title || ''; $('capS').textContent = st.say || '';
+  [...$('dots').children].forEach((d, k) => d.className = k < i ? 'done' : k === i ? 'on' : '');
+}
+
+/* Applique une étape sans animation (utilisé pour rejouer jusqu'à une étape choisie) */
+function applyInstant(st) {
+  if (st.screen) show(st.screen);
+  if (st.type && st.type.text) STATE[st.type.into || 'draft'] = st.type.text;
+  if (st.do) st.do();
+  if (st.goto) show(st.goto); else if (st.do && curScreen) show(curScreen);
+}
+
+async function play(st, i, my) {
+  setCaption(i);
+  if (st.screen) { show(st.screen); await sleep(500); }
+  if (my !== run) return;
+  const hl = st.hl && el(st.hl); if (hl) hl.classList.add('hl');
+  if (st.tap) {
+    const n = el(st.tap); if (n) { const [x, y] = pos(n); await move(x, y); if (my !== run) return; await press(n); }
+  }
+  if (st.type) {
+    const n = el(st.type.sel);
+    if (n) {
+      const [x, y] = pos(n, .5, .5); await move(x, y); if (my !== run) return; await press(n); n.classList.add('focus');
+      let txt = ''; for (const ch of st.type.text) { if (my !== run) return; txt += ch; n.innerHTML = txt + '<i></i>'; await sleep(95); }
+      STATE[st.type.into || 'draft'] = st.type.text; n.innerHTML = txt; await sleep(500);
+    }
+  }
+  if (st.swipe) {
+    const p = $('phone'), W = p.clientWidth, H = p.clientHeight, [a, b] = [st.swipe.from, st.swipe.to];
+    await move(W * a[0] / 100, H * a[1] / 100); if (my !== run) return;
+    $('finger').classList.add('down'); await move(W * b[0] / 100, H * b[1] / 100); $('finger').classList.remove('down');
+  }
+  if (hl) hl.classList.remove('hl');
+  if (st.do) st.do();
+  if (st.goto) show(st.goto); else if (st.do && curScreen) show(curScreen);
+  await sleep(st.wait || 1500);
+}
+
+async function start(from = 0) {
+  const my = ++run; $('end').classList.remove('on'); $('finger').style.opacity = 0;
+  Object.assign(STATE, JSON.parse(JSON.stringify(STATE0)));
+  for (let k = 0; k < from; k++) applyInstant(STEPS[k]);
+  for (let i = from; i < STEPS.length; i++) {
+    cur = i; await play(STEPS[i], i, my); if (my !== run) return;
+  }
+  $('finger').style.opacity = 0; $('endT').textContent = APP.endText || 'C’est terminé !';
+  [...$('dots').children].forEach(d => d.className = 'done'); $('end').classList.add('on');
+}
+
+const STATE0 = JSON.parse(JSON.stringify(STATE));
+STEPS.forEach((s, k) => { const d = document.createElement('i'); d.onclick = () => start(k); $('dots').appendChild(d); });
+$('play').onclick = () => { paused = !paused; $('play').textContent = paused ? '▶' : '⏸'; };
+$('prev').onclick = () => start(Math.max(0, cur - 1));
+$('next').onclick = () => start(Math.min(STEPS.length - 1, cur + 1));
+$('spd').onclick = () => { speed = SP[(SP.indexOf(speed) + 1) % SP.length]; $('spd').textContent = '×' + speed; };
+$('again').onclick = () => { paused = false; $('play').textContent = '⏸'; start(0); };
+fit(); setTimeout(() => { fit(); start(0); }, 150);
+</script>
+</body>
+</html>

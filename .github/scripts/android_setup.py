@@ -389,6 +389,22 @@ public class MainActivity extends BridgeActivity {
     private Uri uri;
     private File fichier;
 
+    /** JS : AndroidDownload.choisir(url, nom) : liste des applications qui acceptent ce lien. */
+    @JavascriptInterface
+    public boolean choisir(final String url, final String nom) {
+      try {
+        Intent v = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        v.addCategory(Intent.CATEGORY_BROWSABLE);
+        final Intent c = Intent.createChooser(v, "Télécharger avec…");
+        runOnUiThread(new Runnable() {
+          public void run() {
+            try { startActivity(c); } catch (Exception ignored) { }
+          }
+        });
+        return true;
+      } catch (Exception e) { return false; }
+    }
+
     @JavascriptInterface
     public synchronized boolean begin(String nom, String mime) {
       abort();

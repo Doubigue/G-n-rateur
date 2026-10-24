@@ -67,7 +67,8 @@ jobs:
           echo "ROOT=$ROOT" >> "$GITHUB_ENV"
           cd "$ROOT"
           [ -f buildozer.spec ] || buildozer init
-          if [ "$(jq -r .icon "$CFG")" = "true" ]; then cp "$GITHUB_WORKSPACE/$DIR/icon.png" icon.png; fi
+          if [ "$(jq -r .icon "$CFG")" = "true" ]; then python3 "$S/icon_setup.py" spec . "$GITHUB_WORKSPACE/$DIR/icon.png" "$(jq -r .color "$CFG")"; fi
+          echo "Onglet Fonction : non disponible pour les projets Python (Kivy) dans cette version."
           python3 "$S/native_setup.py" spec "$CFG" "$ROOT/buildozer.spec"
 
       - name: Clé de signature stable (mises à jour sans désinstaller)
