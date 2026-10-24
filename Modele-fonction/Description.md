@@ -4,9 +4,9 @@ Une phrase qui dit à quoi sert l'application et pour qui.
 
 ## Fonctions
 
-- **Première fonction** : ce qu'elle fait, en une ligne
-- **Deuxième fonction** : ce qu'elle fait, en une ligne
-- **Troisième fonction** : ce qu'elle fait, en une ligne
+- 🚀 **Première fonction** : ce qu'elle fait, en une ligne
+- 🎨 **Deuxième fonction** : ce qu'elle fait, en une ligne
+- 🔔 **Troisième fonction** : ce qu'elle fait, en une ligne
 
 ## Comment l'utiliser
 

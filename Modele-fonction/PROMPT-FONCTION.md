@@ -7,7 +7,8 @@ Joins aussi le fichier `Animation/animation.html` du dossier Modele-fonction.
 
 1) Description.md (en français)
    - Titre + une phrase : à quoi sert l'appli.
-   - « Fonctions » : une ligne par fonction, y compris celles que je viens de demander.
+   - « Fonctions » : une ligne par fonction, y compris celles que je viens de demander, au format
+     « - 🎬 **Nom court** : ce qu'elle fait » (un emoji devant : il devient l'icône animée de la carte).
    - « Comment l'utiliser » : étapes numérotées.
    - « Captures » : nom de fichier + écran pour chaque capture (01-accueil.png…).
 

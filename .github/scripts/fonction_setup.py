@@ -133,12 +133,23 @@ def main():
     desc_zip, caps, anim, page = lire_projet(zpath)
     desc = (cfg.get('description') or '').strip() or desc_zip
 
+    # style d'animation choisi dans le générateur : on ajoute seulement une feuille de style,
+    # le scénario et les données de l'animation restent intacts
+    css = cfg.get('animCss')
+    if isinstance(css, str) and css and '<' not in css and len(css) < 20000 and page and page in anim:
+        h = anim[page].decode('utf-8', 'replace')
+        tag = '<style id="omni-style">' + css + '</style>'
+        h = re.sub(r'</head>', lambda m: tag + '</head>', h, count=1, flags=re.I) if re.search(r'</head>', h, re.I) else tag + h
+        anim[page] = h.encode('utf-8')
+        print("Animation : style « %s » appliqué" % cfg.get('animStyle', '?'))
+
     out = os.path.join(main_dir, 'assets', 'omni_fonction')
     shutil.rmtree(out, ignore_errors=True)
     os.makedirs(os.path.join(out, 'captures'), exist_ok=True)
 
     data = {'name': cfg.get('name') or 'Application', 'version': cfg.get('versionName') or '',
-            'icon': None, 'description': desc, 'captures': [], 'animation': None}
+            'icon': None, 'description': desc, 'captures': [], 'animation': None,
+            'color': cfg.get('color') if re.fullmatch(r'#[0-9a-fA-F]{6}', str(cfg.get('color') or '')) else None}
 
     for i, (nom, octets) in enumerate(caps, 1):
         fich = '%02d_%s' % (i, propre(nom))
