@@ -1,0 +1,28 @@
+{
+  "name": "Save Mail",
+  "pkg": "com.doubigue.mail",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "orientation": "auto",
+  "color": "#2a2f6b",
+  "fullscreen": false,
+  "icon": true,
+  "type": "native",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true,
+  "omnicode": true,
+  "description": "# SafeEmail Keeper\nGardez tous vos comptes email, clés de secours et méthodes de sécurité au même endroit, chiffrés sur votre téléphone.\n\n## Fonctions\n- 📧 **Comptes email** : ajoutez et modifiez vos adresses avec mot de passe et numéro de récupération.\n- 🔑 **Clés de secours** : chaque clé est une puce que l'on peut ajouter, retirer ou mettre à jour.\n- ✂️ **Barrer une clé** : un simple tap barre la clé déjà utilisée, avec une rayure animée.\n- 🛡️ **Méthodes de sécurité** : notez 2FA, YubiKey, questions secrètes et email de secours.\n- 👁️ **Mot de passe** : affichez, masquez ou copiez le mot de passe en un geste.\n- 📜 **Journal** : suivez chaque action dans une frise animée.\n- 📄 **Export PDF global** : un seul PDF élégant avec tous les comptes.\n- 🗜️ **Export ZIP** : une archive avec un PDF stylé par email.\n\n## Comment l'utiliser\n1. Touchez le bouton + pour ajouter un compte.\n2. Saisissez l'email, le mot de passe et le numéro de récupération.\n3. Ajoutez vos clés de secours une à une.\n4. Touchez une clé utilisée pour la barrer.\n5. Ajoutez vos méthodes de sécurité.\n6. Touchez Enregistrer pour valider.\n7. Ouvrez l'onglet Journal pour revoir l'historique.\n8. Ouvrez Export pour créer le PDF global ou le ZIP.\n\n## Astuces\n> Appui long sur une clé : elle est supprimée.\n> Masquez les mots de passe avant de partager un PDF.\n\n## Captures\n- 01-accueil.png : liste des comptes\n- 02-compte.png : saisie d'un compte\n- 03-cles.png : clés de secours, une barrée\n- 04-journal.png : journal d'activités\n- 05-export.png : export PDF et ZIP"
+}
