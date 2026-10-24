@@ -22,6 +22,8 @@ except ImportError:  # pragma: no cover
                 ['sudo', 'apt-get', 'install', '-y', 'python3-pil']):
         if subprocess.run(cmd).returncode == 0:
             break
+    import importlib
+    importlib.invalidate_caches()  # sans ça, Python ne voit pas le paquet qu'on vient d'installer
     from PIL import Image, ImageChops, ImageDraw
 
 LEGACY = {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144, 'xxxhdpi': 192}

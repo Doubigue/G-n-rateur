@@ -1239,6 +1239,8 @@ async function conFail(run,job,id,cfg){
     if(raw){L=cleanLog(raw);conLog('— extrait enregistré par le workflow (400 dernières lignes) —','tk');L.forEach(l=>conLog(l.length>1500?l.slice(0,1500)+' …':l,clsFor(l)))}
   }
   L=L||[];
+  /* le diagnostic ne doit pas lire l'étape « Enregistrer le journal d'erreur » (elle vient APRÈS l'échec réel) */
+  {const cut=L.findIndex(l=>/\[ -n "\$DIR" \] \|\| exit 0/.test(l));if(cut>0)L=L.slice(0,cut)}
   let notes=[];
   if(job){try{const r=await api('/check-runs/'+job.id+'/annotations');if(r.ok)notes=(await r.json()).filter(a=>a.annotation_level==='failure'&&a.message).map(a=>a.message)}catch(_){}}
   const f=job&&(job.steps||[]).find(s=>s.conclusion==='failure');
