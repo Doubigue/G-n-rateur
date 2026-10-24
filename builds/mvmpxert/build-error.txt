@@ -1,0 +1,16 @@
+== Journal de compilation (mvmpxert) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mvmpxert/app.zip | icône : True
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/MyDM/app/build.gradle.kts | applicationId = com.doubigue.videomade | version = 1.0.11 (12)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/MyDM/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/MyDM/app
+Traceback (most recent call last):
+  File "/home/runner/work/G-n-rateur/G-n-rateur/.github/scripts/icon_setup.py", line 17, in <module>
+    from PIL import Image, ImageChops, ImageDraw
+ModuleNotFoundError: No module named 'PIL'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/runner/work/G-n-rateur/G-n-rateur/.github/scripts/icon_setup.py", line 25, in <module>
+    from PIL import Image, ImageChops, ImageDraw
+ModuleNotFoundError: No module named 'PIL'
