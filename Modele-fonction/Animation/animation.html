@@ -52,15 +52,34 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 .hl{outline:.18em solid #FFC400;outline-offset:.2em;border-radius:.8em;animation:pulse 1s ease infinite}
 @keyframes pulse{50%{outline-color:#FFC40033}}
 .toast{position:absolute;left:1em;right:1em;bottom:5em;background:#141A22;color:#fff;border-radius:.9em;padding:.8em 1em;font-size:.85em;text-align:center;animation:in .3s ease;z-index:4}
-/* — doigt — */
-#finger{position:absolute;left:0;top:0;width:2.6em;height:2.6em;margin:-1.3em 0 0 -1.3em;border-radius:50%;background:radial-gradient(circle,#ffffffee 0 35%,#ffffff55 36% 100%);box-shadow:0 .2em .8em #0007;pointer-events:none;z-index:9;transition:transform .9s cubic-bezier(.45,.05,.2,1),opacity .3s;opacity:0}
-#finger.down{scale:.8}
-#finger::after{content:"";position:absolute;inset:-.2em;border-radius:50%;border:.15em solid #fff;opacity:0}
-#finger.tap::after{animation:rip .6s ease-out}
-@keyframes rip{from{opacity:.9;transform:scale(.7)}to{opacity:0;transform:scale(1.9)}}
+/* — avatar : main ou curseur de souris — */
+#finger{position:absolute;left:0;top:0;width:0;height:0;z-index:9;pointer-events:none;transition:transform .9s cubic-bezier(.45,.05,.2,1),opacity .3s;opacity:0}
+#fy{position:absolute;left:0;top:0;width:0;height:0;transition:transform .9s cubic-bezier(.2,.75,.35,1)}
+#av{position:absolute;left:0;top:0;transform-origin:0 0;transition:transform .14s ease-out}
+#av svg{position:absolute;overflow:visible;filter:drop-shadow(0 .25em .35em #0009);animation:bob 2.4s ease-in-out infinite}
+#av .sv-hand{width:3.4em;height:4.53em;left:-1.53em;top:-.17em}
+#av .sv-cur{width:1.7em;height:2.55em;left:-.1em;top:-.1em}
+#finger.is-hand .sv-cur,#finger.is-cur .sv-hand{display:none}
+#finger.down #av{transform:scale(.84) translateY(.2em)}
+#rip{position:absolute;left:-1.5em;top:-1.5em;width:3em;height:3em;border-radius:50%;border:.16em solid var(--acc);background:#ffffff33;opacity:0;transform:scale(.3)}
+#rip.go{animation:rip .65s ease-out}
+@keyframes rip{0%{opacity:.95;transform:scale(.3)}100%{opacity:0;transform:scale(1.6)}}
+@keyframes bob{50%{transform:translateY(.16em) rotate(1.5deg)}}
+/* — clavier qui se déploie pendant la saisie — */
+#kbw{position:absolute;left:.55em;right:.55em;bottom:.55em;height:11.2em;overflow:hidden;border-radius:0 0 2.5em 2.5em;z-index:6;pointer-events:none}
+#kb{position:absolute;inset:0;background:#1e232d;padding:.6em .4em 1.1em;display:flex;flex-direction:column;gap:.4em;transform:translateY(105%);transition:transform .38s cubic-bezier(.2,.8,.2,1)}
+#kb.on{transform:none}
+#kb .r{display:flex;gap:.28em;justify-content:center;flex:1}
+#kb .k{flex:1;max-width:1.8em;background:#3b4252;color:#eef1f5;border-radius:.4em;display:grid;place-items:center;font-size:.8em;transition:.08s}
+#kb .k.w{max-width:none;flex:1.6}#kb .k.sp{max-width:none;flex:5}
+#kb .k.p{background:#fff;color:#111;transform:translateY(-.25em) scale(1.12);box-shadow:0 .3em .5em #0006}
+/* — légende : le texte entre en glissant à chaque étape — */
+#cap.sw small{animation:cin .4s ease both}#cap.sw b{animation:cin .4s .06s ease both}#cap.sw span{animation:cin .4s .12s ease both}
+@keyframes cin{from{opacity:0;transform:translateY(.5em)}to{opacity:1;transform:none}}
 /* — commandes — */
 #ctl{width:min(94vw,520px);display:flex;align-items:center;gap:8px;padding:8px 0 calc(10px + env(safe-area-inset-bottom,0px));flex:none}
 #ctl button{border:0;border-radius:12px;background:var(--card);color:var(--ink);height:40px;min-width:40px;padding:0 12px;font:600 14px system-ui;cursor:pointer;border:1px solid #ffffff14}
+#ctl #avt{min-width:44px;font-size:17px;padding:0}
 #ctl #play{background:var(--acc);border-color:var(--acc);min-width:54px}
 #dots{flex:1;display:flex;gap:5px;align-items:center;justify-content:center;min-width:0}
 #dots i{flex:1;max-width:26px;height:6px;border-radius:9px;background:#ffffff26;cursor:pointer;transition:.3s;position:relative;overflow:hidden}
@@ -73,7 +92,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
 <div id="app">
   <div id="cap"><small id="capN"></small><b id="capT"></b><span id="capS"></span></div>
   <div id="stageWrap">
-    <div id="phone"><div id="notch"></div><div id="screen"></div><div id="finger"></div>
+    <div id="phone"><div id="notch"></div><div id="screen"></div><div id="kbw"><div id="kb"></div></div><div id="finger" class="is-hand"><div id="fy"><div id="av"><svg class="sv-hand" viewBox="0 0 60 80"></svg><svg class="sv-cur" viewBox="0 0 16 24"></svg></div><div id="rip"></div></div></div>
       <div id="end"><b style="color:#fff;font-size:1.2em" id="endT">C'est terminé !</b><button id="again">↻ Rejouer</button></div>
     </div>
   </div>
@@ -82,6 +101,7 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
     <button id="play" aria-label="Lecture / pause">⏸</button>
     <button id="next" aria-label="Étape suivante">⏭</button>
     <div id="dots"></div>
+    <button id="avt" aria-label="Main ou curseur de souris" title="Main / curseur">✋</button>
     <button id="spd" aria-label="Vitesse">×1</button>
   </div>
 </div>
@@ -91,7 +111,8 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family
    ║                       SCÉNARIO  (seule zone à modifier)                  ║
    ╚══════════════════════════════════════════════════════════════════════════╝ */
 
-const APP = { name: 'Ma Super App', color: '#FF3F1A', endText: 'Tu sais tout faire ! 🎉' };
+/* avatar : 'hand' (main qui touche l'écran) ou 'cursor' (curseur de souris). Le bouton ✋/🖱 permet aussi de changer en direct. */
+const APP = { name: 'Ma Super App', color: '#FF3F1A', endText: 'Tu sais tout faire ! 🎉', avatar: 'hand' };
 
 /* Données fictives modifiées par les étapes (pour que les écrans se mettent à jour). */
 const STATE = { tasks: [{t:'Appeler le médecin', done:false}, {t:'Payer la facture', done:false}], prio:'Normale', draft:'', tab:'tasks' };
@@ -125,7 +146,7 @@ const SCREENS = {
      tap  : sélecteur CSS que la main touche               goto   : écran affiché après le toucher
      type : { sel, text } la main touche le champ et écrit  do    : fonction qui modifie STATE
      swipe: { from:[x%,y%], to:[x%,y%] } glissement        hl    : sélecteur mis en surbrillance
-     wait : pause (ms) à la fin de l'étape                                                           */
+     wait : pause (ms) à la fin de l'étape       kb:false : pas de clavier pendant la saisie                                                           */
 const STEPS = [
   { screen:'home', title:'Bienvenue', say:'Voici l’écran d’accueil : la liste de tes tâches du jour.', hl:'#list', wait:2600 },
   { title:'Ajouter une tâche', say:'Appuie sur le bouton ＋ pour créer une nouvelle tâche.', tap:'#fab', goto:'add' },
@@ -166,17 +187,24 @@ function pos(node, fx = .5, fy = .5) {
   const p = $('phone').getBoundingClientRect(), r = node.getBoundingClientRect();
   return [r.left - p.left + r.width * fx, r.top - p.top + r.height * fy];
 }
-async function move(x, y) {
-  const f = $('finger'); f.style.transitionDuration = (0.9 / speed) + 's';
-  f.style.opacity = 1; f.style.transform = `translate(${x}px,${y}px)`;
-  await sleep(950 / speed * speed);
+async function move(x, y, dur = .9) {
+  const f = $('finger'), fy = $('fy');
+  if (f.style.opacity !== '1') {            /* entrée : la main monte depuis le bas de l'écran */
+    const p = $('phone'); f.style.transition = fy.style.transition = 'none';
+    f.style.transform = `translateX(${p.clientWidth * .5}px)`; fy.style.transform = `translateY(${p.clientHeight * 1.04}px)`;
+    void f.offsetWidth; f.style.transition = fy.style.transition = '';
+  }
+  const d = (dur / speed) + 's'; f.style.transitionDuration = d; fy.style.transitionDuration = d;   /* x et y n'ont pas la même courbe : la trajectoire est un arc */
+  f.style.opacity = 1; f.style.transform = `translateX(${x}px)`; fy.style.transform = `translateY(${y}px)`;
+  await sleep(dur * 1000 + 50);
 }
 async function press(node) {
-  const f = $('finger'); f.classList.add('down'); node && node.classList.add('pressed'); f.classList.remove('tap'); void f.offsetWidth; f.classList.add('tap');
+  const f = $('finger'), r = $('rip'); f.classList.add('down'); node && node.classList.add('pressed');
+  r.classList.remove('go'); void r.offsetWidth; r.classList.add('go');
   await sleep(260); f.classList.remove('down'); node && node.classList.remove('pressed');
 }
 function setCaption(i) {
-  const st = STEPS[i]; $('capN').textContent = 'Étape ' + (i + 1) + ' / ' + STEPS.length;
+  const st = STEPS[i]; $('cap').classList.remove('sw'); void $('cap').offsetWidth; $('cap').classList.add('sw'); $('capN').textContent = 'Étape ' + (i + 1) + ' / ' + STEPS.length;
   $('capT').textContent = st.title || ''; $('capS').textContent = st.say || '';
   [...$('dots').children].forEach((d, k) => d.className = k < i ? 'done' : k === i ? 'on' : '');
 }
@@ -201,8 +229,16 @@ async function play(st, i, my) {
     const n = el(st.type.sel);
     if (n) {
       const [x, y] = pos(n, .5, .5); await move(x, y); if (my !== run) return; await press(n); n.classList.add('focus');
-      let txt = ''; for (const ch of st.type.text) { if (my !== run) return; txt += ch; n.innerHTML = txt + '<i></i>'; await sleep(95); }
-      STATE[st.type.into || 'draft'] = st.type.text; n.innerHTML = txt; await sleep(500);
+      const useKb = st.kb !== false; let shift = 0, vw = $('screen').querySelector('.view');
+      if (useKb) {   /* comme sur un vrai téléphone : l'écran remonte pour que le champ reste visible au-dessus du clavier */
+        kbShow(true); const em = parseFloat(getComputedStyle($('phone')).fontSize);
+        const over = n.getBoundingClientRect().bottom - $('kbw').getBoundingClientRect().top;
+        if (vw && over > -1.2 * em) { shift = over + 1.2 * em; vw.style.transition = 'transform .38s cubic-bezier(.2,.8,.2,1)'; vw.style.transform = `translateY(${-shift}px)`; move(x, y - shift, .38); }
+        await sleep(450); if (my !== run) return;
+      }
+      let txt = ''; for (const ch of st.type.text) { if (my !== run) return; txt += ch; n.innerHTML = txt + '<i></i>'; keyFlash(ch); await sleep(95); }
+      STATE[st.type.into || 'draft'] = st.type.text; n.innerHTML = txt; await sleep(500); if (my !== run) return;
+      if (useKb) { kbShow(false); if (shift && vw) { vw.style.transform = ''; move(x, y, .3); } await sleep(350); }
     }
   }
   if (st.swipe) {
@@ -210,6 +246,7 @@ async function play(st, i, my) {
     await move(W * a[0] / 100, H * a[1] / 100); if (my !== run) return;
     $('finger').classList.add('down'); await move(W * b[0] / 100, H * b[1] / 100); $('finger').classList.remove('down');
   }
+  if (my !== run) { if (hl) hl.classList.remove('hl'); return; }   /* étape abandonnée (saut, précédent, suivant) : ne rien modifier */
   if (hl) hl.classList.remove('hl');
   if (st.do) st.do();
   if (st.goto) show(st.goto); else if (st.do && curScreen) show(curScreen);
@@ -217,7 +254,7 @@ async function play(st, i, my) {
 }
 
 async function start(from = 0) {
-  const my = ++run; $('end').classList.remove('on'); $('finger').style.opacity = 0;
+  const my = ++run; $('end').classList.remove('on'); $('finger').style.opacity = 0; kbShow(false);
   Object.assign(STATE, JSON.parse(JSON.stringify(STATE0)));
   for (let k = 0; k < from; k++) applyInstant(STEPS[k]);
   for (let i = from; i < STEPS.length; i++) {
@@ -227,6 +264,26 @@ async function start(from = 0) {
   [...$('dots').children].forEach(d => d.className = 'done'); $('end').classList.add('on');
 }
 
+/* — avatar (main / curseur) et clavier — */
+const HAND_SH = '<rect x="21" y="3" width="12" height="42" rx="6"/><rect x="33" y="25" width="11" height="26" rx="5.5"/><rect x="43" y="29" width="10" height="24" rx="5"/><rect x="51" y="34" width="8" height="19" rx="4"/><rect x="13" y="33" width="46" height="45" rx="16"/><ellipse cx="13" cy="46" rx="6" ry="12" transform="rotate(-28 13 46)"/>';
+document.querySelector('.sv-hand').innerHTML = '<g fill="#1a1d24" stroke="#1a1d24" stroke-width="5" stroke-linejoin="round">' + HAND_SH + '</g><g fill="#fff">' + HAND_SH + '</g><path d="M33 52v10M43 55v9" stroke="#d3d8e0" stroke-width="1.6" fill="none" stroke-linecap="round"/>';
+document.querySelector('.sv-cur').innerHTML = '<path d="M1 1 L1 18 L5.5 14 L8.6 21.5 L11.2 20.4 L8.1 13 L14 13 Z" fill="#fff" stroke="#111" stroke-width="1.4" stroke-linejoin="round"/>';
+function setAvatar(a) {
+  APP.avatar = a === 'cursor' ? 'cursor' : 'hand'; const f = $('finger');
+  f.classList.toggle('is-hand', APP.avatar === 'hand'); f.classList.toggle('is-cur', APP.avatar === 'cursor');
+  $('avt').textContent = APP.avatar === 'cursor' ? '🖱' : '✋';
+}
+$('avt').onclick = () => setAvatar(APP.avatar === 'cursor' ? 'hand' : 'cursor');
+setAvatar(APP.avatar);
+const KROWS = ['azertyuiop', 'qsdfghjklm', 'wxcvbn'];
+$('kb').innerHTML = KROWS.map((r, i) => '<div class="r">' + (i === 2 ? '<div class="k w" data-k="shift">⇧</div>' : '') + [...r].map(c => '<div class="k" data-k="' + c + '">' + c + '</div>').join('') + (i === 2 ? '<div class="k w" data-k="del">⌫</div>' : '') + '</div>').join('')
+  + '<div class="r"><div class="k w" data-k="sym">123</div><div class="k sp" data-k=" ">espace</div><div class="k w" data-k="ok">↵</div></div>';
+const kbShow = on => $('kb').classList.toggle('on', on);
+function keyFlash(ch) {
+  const lc = ch.toLowerCase(), ks = [...$('kb').querySelectorAll('.k')];
+  const k = ks.find(x => x.dataset.k === lc) || ks.find(x => x.dataset.k === (ch === ' ' ? ' ' : 'sym'));
+  if (k) { k.classList.add('p'); setTimeout(() => k.classList.remove('p'), 90); }
+}
 const STATE0 = JSON.parse(JSON.stringify(STATE));
 STEPS.forEach((s, k) => { const d = document.createElement('i'); d.onclick = () => start(k); $('dots').appendChild(d); });
 $('play').onclick = () => { paused = !paused; $('play').textContent = paused ? '▶' : '⏸'; };

@@ -31,6 +31,8 @@ Joins aussi le fichier `Animation/animation.html` du dossier Modele-fonction.
      chaque élément à toucher.
    - STEPS : une étape par fonction, dans l'ordre d'utilisation d'une vraie personne
      (toucher, écrire, glisser), texte court en français qui explique le « pourquoi ».
+   - AVATAR : « avatar: 'hand' » (une main qui touche l'écran) ou « 'cursor' » (curseur de souris).
+   - Pour une saisie, le clavier se déploie tout seul ; « kb:false » dans l'étape le retire.
    Un seul fichier, sans lien externe. Ne touche pas au moteur sous la zone SCÉNARIO.
 
 Vérifie : chaque fonction de Description.md a au moins une étape, chaque sélecteur
