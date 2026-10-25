@@ -1,0 +1,28 @@
+{
+  "name": "Nebula Launcher",
+  "pkg": "com.doubigue.launcher",
+  "versionName": "1.0.2",
+  "versionCode": 3,
+  "orientation": "auto",
+  "color": "#2a2f6b",
+  "fullscreen": false,
+  "icon": true,
+  "type": "native",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true,
+  "omnicode": true,
+  "replaces": "apk-mvni06fx"
+}
