@@ -1,0 +1,27 @@
+{
+  "name": "Co-edit",
+  "pkg": "com.doubigue.codeediteur",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "orientation": "auto",
+  "color": "#2a2f6b",
+  "fullscreen": false,
+  "icon": true,
+  "type": "native",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true,
+  "omnicode": true
+}
