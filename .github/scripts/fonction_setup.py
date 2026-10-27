@@ -130,6 +130,11 @@ def main():
     if not os.path.exists(mp):
         sys.exit('AndroidManifest.xml introuvable dans ' + main_dir)
 
+    # case « Inclure l'onglet Fonction » décochée dans le générateur : rien n'est ajouté à l'application
+    if cfg.get('fonction') is False:
+        print('Onglet Fonction : désactivé (Description.md, Captures et Animation ne sont pas inclus)')
+        return
+
     desc_zip, caps, anim, page = lire_projet(zpath)
     desc = (cfg.get('description') or '').strip() or desc_zip
 

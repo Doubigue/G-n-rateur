@@ -70,6 +70,8 @@ input::placeholder{color:#A0A5AE}
 textarea{width:100%;font:inherit;font-size:14px;line-height:1.5;color:var(--ink);background:var(--field);border:1.5px solid transparent;border-radius:14px;padding:12px 14px;resize:vertical;min-height:120px;transition:border-color .2s,background .2s}
 textarea:focus{outline:none;border-color:var(--org);background:#fff}
 textarea::placeholder{color:#A0A5AE}
+.fnbox-off{opacity:.45}.fnbox-off .seebtn{pointer-events:none}
+#fnBox{transition:opacity .2s}
 .fnchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .fnchips span{font-size:12px;font-weight:500;padding:4px 10px;border-radius:99px;background:var(--chip);color:var(--mut)}
 .fnchips span.ok{background:#E3F6EA;color:#0C7A3A}
@@ -374,10 +376,12 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
       <label for="name">Nom</label>
       <input id="name" required maxlength="40" placeholder="Mon application" autocomplete="off" autocapitalize="words">
       <div class="sug" id="nameSug" role="listbox" aria-label="Applications existantes"></div>
+      <div id="fnBox">
       <div class="lrow"><label for="desc">Description de l'application</label><button type="button" class="seebtn" id="seeApp"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>Voir mon app</button></div>
       <textarea id="desc" rows="6" maxlength="4000" placeholder="À quoi sert l'application, ses principales fonctions…" spellcheck="true"></textarea>
       <div class="fnchips" id="fnInfo" aria-live="polite"></div>
       <small class="h" id="descHint">Dépose un ZIP contenant Description.md : son contenu s'affiche ici. Cette description, les captures (dossier Captures) et l'animation (dossier Animation) alimentent l'onglet « Fonction » de l'application.</small>
+      </div>
       <label for="pkg">Identifiant du paquet</label>
       <input id="pkg" required value="com.doubigue.app" autocapitalize="none" autocorrect="off" pattern="[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+">
       <div class="row">
@@ -416,6 +420,7 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
       <label class="sw"><input id="share" type="checkbox" checked><i></i>Accepter les partages de fichiers</label>
       <label class="sw"><input id="ask" type="checkbox" checked><i></i>Demander les autorisations au premier lancement</label>
       <label class="sw"><input id="omni" type="checkbox" checked><i></i>Modifier le code avec OmniCode Studio (si installé)</label>
+      <label class="sw" id="foncSw"><input id="fonc" type="checkbox" checked><i></i>Inclure l'onglet « Fonction » (description, captures, animation)</label>
       <small class="h">Le bouton Partager d'Android listera l'application. « Tous les fichiers » ouvre un réglage Android à la première ouverture.</small>
     </div>
 
@@ -835,6 +840,13 @@ $('seeApp').addEventListener('click',voirMonApp);
 $('vmX').addEventListener('click',fermerVoir);
 $('vm').addEventListener('click',e=>{if(e.target===$('vm'))fermerVoir()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('vm').classList.contains('on'))fermerVoir()});
+/* Interrupteur « Inclure l'onglet Fonction » : décoché = ni description, ni captures, ni animation dans la compilation */
+function foncSync(){
+  const on=$('fonc').checked;
+  $('fnBox').classList.toggle('fnbox-off',!on);
+  $('desc').disabled=!on;$('seeApp').disabled=!on;
+}
+$('fonc').addEventListener('change',foncSync);foncSync();
 /* Onglet « Fonction » : Description.md + dossier Captures + dossier Animation, à la racine du projet */
 const IMG_RE=/\.(png|jpe?g|webp|gif|avif)$/i;
 async function fonctionDansZip(z){
@@ -1293,9 +1305,9 @@ $('f').addEventListener('submit',async e=>{
     const iconB64=iconFile?await iconPng(iconFile):null;
     initProg();conInit();
     const id=Date.now().toString(36),dir='builds/'+id+'/';
-    const cfg={name:$('name').value.trim(),pkg:$('pkg').value.trim().toLowerCase(),versionName:$('vname').value.trim(),versionCode:+$('vcode').value,orientation:$('orient').value,color:$('color').value,fullscreen:$('full').checked,icon:!!iconB64,type:mode(),permissions:permsChoisies(),share:$('share').checked,askStart:$('ask').checked,omnicode:$('omni').checked};
-    const descr=$('desc').value.trim().slice(0,4000);if(descr)cfg.description=descr;
-    if(animStyle!=='original'){cfg.animStyle=animStyle;cfg.animCss=themeCss(animStyle)}
+    const cfg={name:$('name').value.trim(),pkg:$('pkg').value.trim().toLowerCase(),versionName:$('vname').value.trim(),versionCode:+$('vcode').value,orientation:$('orient').value,color:$('color').value,fullscreen:$('full').checked,icon:!!iconB64,type:mode(),permissions:permsChoisies(),share:$('share').checked,askStart:$('ask').checked,omnicode:$('omni').checked,fonction:$('fonc').checked};
+    const descr=$('desc').value.trim().slice(0,4000);if(cfg.fonction&&descr)cfg.description=descr;
+    if(cfg.fonction&&animStyle!=='original'){cfg.animStyle=animStyle;cfg.animCss=themeCss(animStyle)}
     if(lien){cfg.sourceUrl=url;cfg.sourceKind=sourceKind}else if(!zip)cfg.fromRelease=edition.tag;
     if(edition){cfg.replaces=edition.tag;if(!cfg.icon&&edition.cfg.icon){cfg.icon=true;cfg.iconFrom=edition.tag}}
     conHeader(cfg,zip,lien,url);
@@ -2154,7 +2166,7 @@ function modifier(x){
   $('vname').value=bumpVer(c.versionName||'1.0.0','patch');$('vcode').value=(+c.versionCode||1)+1;majVchips();
   $('orient').value=c.orientation||'auto';$('color').value=c.color||'#2a2f6b';$('full').checked=!!c.fullscreen;
   const set=new Set(c.permissions||[]);pcb().forEach(b=>b.checked=set.has(b.value));$('all').checked=pcb().every(b=>b.checked);
-  $('share').checked=c.share!==false;$('ask').checked=c.askStart!==false;$('omni').checked=c.omnicode!==false;animStyle=THEMES.some(t=>t.id===c.animStyle)?c.animStyle:'original';
+  $('share').checked=c.share!==false;$('ask').checked=c.askStart!==false;$('omni').checked=c.omnicode!==false;$('fonc').checked=c.fonction!==false;foncSync();animStyle=THEMES.some(t=>t.id===c.animStyle)?c.animStyle:'original';
   if(c.sourceUrl){choisir('src','link');$('url').value=c.sourceUrl;majSource()}else choisir('src','zip');
   $('zip').value='';aiSync();$('icon').value='';autoLogo=null;iconeAff();
   $('desc').value=c.description||'';fnInfo(null);
@@ -2233,7 +2245,7 @@ $('edX').onclick=()=>{edition=null;$('edBar').style.display='none';choisir('mode
 function reinitialiser(){
   edition=null;$('edBar').style.display='none';
   $('f').reset();
-  choisir('mode','web');choisir('src','zip');autoLogo=null;iconeAff();fnInfo(null);
+  choisir('mode','web');choisir('src','zip');autoLogo=null;iconeAff();fnInfo(null);$('fonc').checked=true;foncSync();
   $('zn').textContent='Déposer le ZIP du site';$('zs').textContent='index.html + ressources · 40 Mo max';
   prev();majSource();$('err').textContent='';
 }
