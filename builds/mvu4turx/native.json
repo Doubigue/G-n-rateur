@@ -1,0 +1,29 @@
+{
+  "name": "Vidéo Made",
+  "pkg": "com.doubigue.videomade",
+  "versionName": "1.0.19",
+  "versionCode": 20,
+  "orientation": "auto",
+  "color": "#ffffff",
+  "fullscreen": false,
+  "icon": true,
+  "type": "native",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true,
+  "omnicode": true,
+  "fonction": false,
+  "replaces": "apk-mvqte1xk"
+}
