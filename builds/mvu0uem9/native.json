@@ -1,0 +1,29 @@
+{
+  "name": "Local Share",
+  "pkg": "com.doubigue.appshare",
+  "versionName": "1.0.5",
+  "versionCode": 6,
+  "orientation": "auto",
+  "color": "#2a2f6b",
+  "fullscreen": false,
+  "icon": true,
+  "type": "native",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true,
+  "omnicode": true,
+  "fonction": false,
+  "replaces": "apk-mvtyjzho"
+}
