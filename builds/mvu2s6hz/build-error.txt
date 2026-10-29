@@ -1,0 +1,52 @@
+== Journal de compilation (mvu2s6hz) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mvu2s6hz/app.zip | icône : False
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/RappelPro/app/build.gradle.kts | applicationId = com.doubigue.rappel | version = 1.0.0 (1)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/RappelPro/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/RappelPro/app
+Onglet Fonction : désactivé (Description.md, Captures et Animation ne sont pas inclus)
+
+Welcome to Gradle 9.8.2!
+
+Here are the highlights of this release:
+ - Java 27 support
+ - Maven mirror settings reuse
+ - Linked problem locations in build output
+
+For more details see https://docs.gradle.org/9.8.2/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.8.2/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors
+> Task :app:dataBindingMergeDependencyArtifactsDebug FAILED
+
+[Incubating] Problems report is available at: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/RappelPro/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:dataBindingMergeDependencyArtifactsDebug' (registered by plugin 'com.android.internal.application').
+> Could not resolve all files for configuration ':app:debugCompileClasspath'.
+   > Could not find androidx.constraintlayout:constraintlayout:2.1.5.
+     Required by:
+         project ':app'
+   > Could not find androidx.constraintlayout:constraintlayout:2.1.5.
+     Required by:
+         project ':app' > com.google.android.material:material:1.12.0
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.8.2/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 1m 22s
+2 actionable tasks: 2 executed
