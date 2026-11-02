@@ -1,0 +1,4 @@
+== Journal de compilation (mvzcogrj) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mvzcogrj/app.zip | icône : False
+Aucun module « com.android.application » trouvé dans le projet (il faut un module app avec src/main/AndroidManifest.xml).
+AndroidManifest.xml introuvable dans src/main
