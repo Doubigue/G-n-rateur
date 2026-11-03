@@ -1,0 +1,140 @@
+name: Build DotNet APK
+
+on:
+  push:
+    paths:
+      - 'builds/*/dotnet.json'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Détecter la demande
+        run: |
+          CFG=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E '^builds/[^/]+/dotnet\.json$' | head -n1)
+          test -n "$CFG"
+          echo "DIR=$(dirname "$CFG")" >> "$GITHUB_ENV"
+          echo "ID=$(basename "$(dirname "$CFG")")" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Installer ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick python3-pil
+
+      - name: Clé de signature stable (mises à jour sans désinstaller)
+        run: bash "$GITHUB_WORKSPACE/.github/scripts/signing.sh" setup
+
+      - name: Préparer le projet
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          exec > >(tee -a "$GITHUB_WORKSPACE/build.log") 2>&1
+          trap 'sleep 2' EXIT
+          CFG="$GITHUB_WORKSPACE/$DIR/dotnet.json"
+          S="$GITHUB_WORKSPACE/.github/scripts"
+          python3 "$S/android_setup.py" fetch "$CFG" "$GITHUB_WORKSPACE/$DIR" dotnet
+          mkdir -p "$GITHUB_WORKSPACE/work/src"
+          unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d "$GITHUB_WORKSPACE/work/src"
+          python3 "$S/native_setup.py" dotnet "$CFG" "$GITHUB_WORKSPACE/work/src" | tee "$GITHUB_WORKSPACE/work/dotnet.out"
+          while IFS='=' read -r k v; do echo "$k=$v" >> "$GITHUB_ENV"; export "$k=$v"; done < "$GITHUB_WORKSPACE/work/dotnet.out"
+          if [ "$MAUI" = "1" ]; then WL=maui-android; else WL=android; fi
+          dotnet workload install $WL --skip-sign-check
+          if [ -n "$MANIFEST" ]; then
+            ICO=""; [ "$(jq -r .icon "$CFG")" = "true" ] && ICO=icone
+            python3 "$S/native_setup.py" manifest "$CFG" "$MANIFEST" $ICO
+          fi
+          if [ "$(jq -r .icon "$CFG")" = "true" ]; then
+            mkdir -p "$RES"
+            python3 "$S/icon_setup.py" gradle "$RES" "$GITHUB_WORKSPACE/$DIR/icon.png" "$(jq -r .color "$CFG")"
+          fi
+          echo "Onglet Fonction : non disponible pour les projets .NET dans cette version."
+
+      - name: Compiler l'APK
+        run: |
+          set -o pipefail
+          CFG="$GITHUB_WORKSPACE/$DIR/dotnet.json"
+          VN=$(jq -r .versionName "$CFG"); VC=$(jq -r .versionCode "$CFG"); PKG=$(jq -r .pkg "$CFG"); NAME=$(jq -r .name "$CFG")
+          DV=$(echo "$VN" | grep -oE '^[0-9]+(\.[0-9]+){0,3}' || echo 1.0)
+          dotnet publish "$PROJ" -f "$TFM" -c Release -p:TargetFrameworks="$TFM" \
+            -p:AndroidPackageFormats=apk -p:AndroidPackageFormat=apk \
+            -p:ApplicationId="$PKG" -p:ApplicationTitle="$NAME" \
+            -p:ApplicationDisplayVersion="$DV" -p:ApplicationVersion="$VC" \
+            -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME" \
+            -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$APKSTUDIO_KEYSTORE" \
+            -p:AndroidSigningStorePass=android -p:AndroidSigningKeyAlias=androiddebugkey -p:AndroidSigningKeyPass=android \
+            2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
+          APK=$(find "$PROJDIR" -path '*/bin/Release/*' -name '*-Signed.apk' 2>/dev/null | head -n1)
+
+          test -n "$APK" || { echo "Aucun APK produit."; exit 1; }
+          echo "APK=$APK" >> "$GITHUB_ENV"
+          bash "$GITHUB_WORKSPACE/.github/scripts/signing.sh" verify "$APK" 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
+
+      - name: Publier l'APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CF="$DIR/dotnet.json"
+          NAME=$(jq -r .name "$CF"); VN=$(jq -r .versionName "$CF")
+          SLUG=$(echo "$NAME" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cs 'A-Za-z0-9' '-' | sed 's/^-//;s/-$//')
+          [ -n "$SLUG" ] || SLUG=app
+          test -f "$APK" || { echo "APK introuvable : $APK"; exit 1; }
+          cp "$APK" "$SLUG-$VN.apk"
+          CFGJ=$(jq -c 'del(.fromRelease,.replaces,.iconFrom)' "$CF")
+          NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : dotnet\nSignature : %s\nConfig : %s' "$VN" "$(jq -r .versionCode "$CF")" "$(jq -r .pkg "$CF")" "$SIGN_SHA256" "$CFGJ")
+          FILES=("$SLUG-$VN.apk")
+          if [ -f "$DIR/app.zip" ] && [ "$(jq -r '.sourceKind // ""' "$CF")" != "site" ]; then cp "$DIR/app.zip" source.zip; FILES+=(source.zip); fi
+          if [ -f "$DIR/icon.png" ]; then FILES+=("$DIR/icon.png"); fi
+          gh release create "apk-$ID" "${FILES[@]}" --title "$NAME" --notes "$NOTES"
+          OLD=$(jq -r '.replaces // ""' "$CF")
+          if [ -n "$OLD" ]; then gh release delete "$OLD" --cleanup-tag -y || true; fi
+
+      - name: Nettoyer la demande
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git rm -rq "$DIR"
+          git commit -qm "Nettoyage $ID [skip ci]"
+          git pull --rebase -q || true
+          git push -q || true
+
+      - name: Enregistrer le journal d'erreur
+        if: failure()
+        run: |
+          [ -n "$DIR" ] || exit 0
+          LOG="$GITHUB_WORKSPACE/build.log"
+          OUT="$GITHUB_WORKSPACE/$DIR/build-error.txt"
+          mkdir -p "$GITHUB_WORKSPACE/$DIR"
+          {
+            echo "== Journal de compilation ($ID) =="
+            if [ -f "$LOG" ]; then
+              sed -E 's/\x1b\[[0-9;?]*[A-Za-z]//g' "$LOG" | tr -d '\r' | grep -v -E '^ *\[[= >]*\] +[0-9]+%' | tail -n 400 | cut -c1-4000
+            else
+              echo "Aucun journal disponible (échec avant la compilation)."
+            fi
+          } > "$OUT"
+          cd "$GITHUB_WORKSPACE"
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -f "$DIR/build-error.txt"
+          git commit -qm "Journal d'erreur $ID [skip ci]" || exit 0
+          git pull --rebase -q || true
+          git push -q || true

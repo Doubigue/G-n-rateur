@@ -7,6 +7,10 @@ Usage :
   native_setup.py expo   <config.json> <racine_du_projet>            (React Native / Expo : app.json)
   native_setup.py spec   <config.json> <buildozer.spec>             (Python / Kivy)
   native_setup.py find   <dossier> <fichier> [<fichier>…]           (affiche le chemin le moins profond)
+  native_setup.py manifest <config.json> <AndroidManifest.xml>       (nom, autorisations, orientation)
+  native_setup.py cordova  <config.json> <config.xml>                (Cordova / Ionic Cordova)
+  native_setup.py dotnet   <config.json> <dossier>                   (.NET MAUI / .NET Android : affiche PROJ=, TFM=…)
+  native_setup.py webout   <racine_du_projet_js>                     (dossier produit par « npm run build »)
 """
 import glob
 import html
@@ -72,7 +76,7 @@ def module_application(racine):
         for n in ('build.gradle', 'build.gradle.kts'):
             if n in files:
                 t = lire(os.path.join(racine_, n))
-                if re.search(r'com\.android\.application|android\.application', t) and \
+                if re.search(r'com\.android\.application|android\.application|androidApplication', t) and \
                         os.path.exists(os.path.join(racine_, 'src', 'main', 'AndroidManifest.xml')):
                     cands.append((racine_, n))
     if not cands:
@@ -115,14 +119,25 @@ def patch_gradle(cfg, racine):
     ecrire(gp, t)
     print('Module Gradle :', gp, '| applicationId =', pkg, '| version =', vn, '(%d)' % vc)
 
-    # Manifeste
-    mp = os.path.join(mod, 'src', 'main', 'AndroidManifest.xml')
+    patch_manifest(cfg, os.path.join(mod, 'src', 'main', 'AndroidManifest.xml'))
+    print('MODULE=' + mod)
+    return mod
+
+
+def patch_manifest(cfg, mp, icone=False):
+    """Nom affiché, autorisations et orientation dans un AndroidManifest.xml."""
     s = lire(mp)
     label = html.escape(cfg['name'], quote=True)
     if re.search(r'<application[^>]*android:label="[^"]*"', s):
         s = re.sub(r'(<application[^>]*?android:label=)"[^"]*"', lambda m: '%s"%s"' % (m.group(1), label), s, count=1)
     else:
         s = s.replace('<application', '<application android:label="%s"' % label, 1)
+    if icone:
+        for att, val in (('android:icon', '@mipmap/ic_launcher'), ('android:roundIcon', '@mipmap/ic_launcher_round')):
+            if re.search(r'<application[^>]*%s="[^"]*"' % att, s):
+                s = re.sub(r'(<application[^>]*?%s=)"[^"]*"' % att, lambda m: '%s"%s"' % (m.group(1), val), s, count=1)
+            else:
+                s = s.replace('<application', '<application %s="%s"' % (att, val), 1)
     lignes = ''
     for p in permissions(cfg):
         if 'android.permission.%s"' % p not in s:
@@ -131,14 +146,105 @@ def patch_gradle(cfg, racine):
     s = s.replace('<application', lignes + '    <application', 1)
     ori = cfg.get('orientation', 'auto')
     ori = 'unspecified' if ori == 'auto' else ori
-    if ori != 'unspecified' and 'android:screenOrientation' not in s:
+    if ori != 'unspecified' and 'android:screenOrientation' not in s and '<activity' in s:
         s = s.replace('<activity', '<activity android:screenOrientation="%s"' % ori, 1)
-    if 'xmlns:tools' not in s and 'MANAGE_EXTERNAL_STORAGE' in s:
-        pass
     ecrire(mp, s)
     print('Manifeste :', mp)
-    print('MODULE=' + mod)
-    return mod
+
+
+# --------------------------------------------------------------------------- web (React, Vue, Angular, Svelte…)
+def sortie_web(racine):
+    """Dossier contenant l'index.html produit par « npm run build »."""
+    cands = []
+    aj = os.path.join(racine, 'angular.json')
+    if os.path.exists(aj):
+        try:
+            for pr in json.load(open(aj, encoding='utf-8')).get('projects', {}).values():
+                o = pr.get('architect', {}).get('build', {}).get('options', {}).get('outputPath')
+                if isinstance(o, dict):
+                    o = os.path.join(o.get('base', 'dist'), o.get('browser', 'browser'))
+                if o:
+                    cands += [os.path.join(racine, o, 'browser'), os.path.join(racine, o)]
+        except Exception:
+            pass
+    cands += [os.path.join(racine, d) for d in ('dist', 'build', 'www', 'out', 'dist/spa', 'dist/browser', 'public')]
+    cands += sorted(glob.glob(os.path.join(racine, 'dist', '*', 'browser'))) + sorted(glob.glob(os.path.join(racine, 'dist', '*')))
+    for c in cands:
+        if os.path.isfile(os.path.join(c, 'index.html')):
+            return c
+    return None
+
+
+# --------------------------------------------------------------------------- cordova
+def patch_cordova(cfg, xp):
+    """config.xml : identifiant, version, code de version, nom, orientation, plein écran."""
+    t = lire(xp)
+    w = re.search(r'<widget\b[^>]*>', t)
+    if not w:
+        sys.exit('config.xml sans balise <widget> : ce n\'est pas un projet Cordova.')
+    tag = w.group(0)
+
+    def attr(tag, k, v):
+        if re.search(r'\s%s="[^"]*"' % re.escape(k), tag):
+            return re.sub(r'(\s%s=)"[^"]*"' % re.escape(k), lambda m: '%s"%s"' % (m.group(1), v), tag, count=1)
+        return tag[:-1].rstrip('/') + ' %s="%s"' % (k, v) + ('/>' if tag.endswith('/>') else '>')
+    nt = attr(tag, 'id', cfg['pkg'])
+    nt = attr(nt, 'version', html.escape(cfg['versionName'], quote=True))
+    nt = attr(nt, 'android-versionCode', str(int(cfg['versionCode'])))
+    nt = attr(nt, 'android-packageName', cfg['pkg'])
+    t = t.replace(tag, nt, 1)
+    nom = html.escape(cfg['name'])
+    if re.search(r'<name\b[^>]*>.*?</name>', t, re.S):
+        t = re.sub(r'(<name\b[^>]*>).*?(</name>)', lambda m: m.group(1) + nom + m.group(2), t, count=1, flags=re.S)
+    else:
+        t = t.replace(nt, nt + '\n    <name>%s</name>' % nom, 1)
+
+    def pref(t, k, v):
+        rx = re.compile(r'<preference\s+name="%s"[^>]*/>' % re.escape(k), re.I)
+        ligne = '<preference name="%s" value="%s" />' % (k, v)
+        if rx.search(t):
+            return rx.sub(lambda m: ligne, t, count=1)
+        return t.replace('</widget>', '    %s\n</widget>' % ligne, 1)
+    ori = {'auto': 'default'}.get(cfg.get('orientation', 'auto'), cfg.get('orientation', 'default'))
+    t = pref(t, 'Orientation', ori)
+    t = pref(t, 'Fullscreen', 'true' if cfg.get('fullscreen') else 'false')
+    t = pref(t, 'AndroidXEnabled', 'true')
+    ecrire(xp, t)
+    print('config.xml (Cordova) :', xp, '| id =', cfg['pkg'], '| version =', cfg['versionName'], '(%d)' % int(cfg['versionCode']))
+
+
+# --------------------------------------------------------------------------- .NET MAUI / .NET Android
+def info_dotnet(dossier):
+    """Trouve le .csproj Android et affiche PROJ=, TFM=, MAUI=, DIR=, MANIFEST=, RES= (pour le workflow)."""
+    best = None
+    for racine, dirs, files in os.walk(dossier):
+        dirs[:] = [d for d in dirs if d not in ('__MACOSX', 'bin', 'obj', '.git', 'node_modules')]
+        for n in files:
+            if not n.endswith('.csproj'):
+                continue
+            p = os.path.join(racine, n)
+            t = lire(p)
+            m = re.search(r'net(\d+)\.(\d+)-android', t)
+            if not m:
+                continue
+            if re.search(r'<OutputType>\s*Library\s*</OutputType>', t, re.I) and 'UseMaui' not in t:
+                continue
+            score = (0 if '<UseMaui>true</UseMaui>' in t.replace(' ', '') or 'Exe' in t else 1, p.count(os.sep))
+            if best is None or score < best[0]:
+                best = (score, p, 'net%s.%s-android' % m.groups(), 'UseMaui' in t)
+    if not best:
+        sys.exit('Aucun projet .csproj ciblant Android (net8.0-android, net9.0-android…) dans le ZIP.')
+    _, p, tfm, maui = best
+    d = os.path.dirname(p)
+    man = next((os.path.join(d, x) for x in ('Platforms/Android/AndroidManifest.xml', 'Properties/AndroidManifest.xml', 'AndroidManifest.xml')
+                if os.path.exists(os.path.join(d, x))), '')
+    res = os.path.join(d, 'Platforms', 'Android', 'Resources') if maui else os.path.join(d, 'Resources')
+    print('PROJ=' + p)
+    print('TFM=' + tfm)
+    print('MAUI=' + ('1' if maui else '0'))
+    print('PROJDIR=' + d)
+    print('MANIFEST=' + man)
+    print('RES=' + res)
 
 
 # --------------------------------------------------------------------------- expo
@@ -229,6 +335,13 @@ if __name__ == '__main__':
         r = trouver(sys.argv[2], sys.argv[3:])
         print(r or '')
         sys.exit(0 if r else 1)
+    if mode == 'webout':
+        r = sortie_web(sys.argv[2])
+        print(r or '')
+        sys.exit(0 if r else 1)
+    if mode == 'dotnet':
+        info_dotnet(sys.argv[3] if len(sys.argv) > 3 else sys.argv[2])
+        sys.exit(0)
     cfg = json.load(open(sys.argv[2], encoding='utf-8'))
     if mode == 'gradle':
         patch_gradle(cfg, sys.argv[3])
@@ -236,5 +349,9 @@ if __name__ == '__main__':
         patch_expo(cfg, sys.argv[3])
     elif mode == 'spec':
         patch_spec(cfg, sys.argv[3])
+    elif mode == 'manifest':
+        patch_manifest(cfg, sys.argv[3], icone=len(sys.argv) > 4 and sys.argv[4] == 'icone')
+    elif mode == 'cordova':
+        patch_cordova(cfg, sys.argv[3])
     else:
         sys.exit('Mode inconnu : ' + mode)
