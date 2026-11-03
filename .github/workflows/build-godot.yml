@@ -1,0 +1,99 @@
+name: Build Godot Android APK
+
+on:
+  push:
+    paths:
+      - 'builds/*/godot.json'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Détecter la demande
+        shell: bash
+        run: |
+          CFG=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E '^builds/[^/]+/godot\.json$' | head -n1)
+          test -n "$CFG"
+          echo "DIR=$(dirname "$CFG")" >> "$GITHUB_ENV"
+          echo "ID=$(basename "$(dirname "$CFG")")" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v3
+      - name: Installer le SDK Android
+        run: |
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Extraire le projet
+        run: |
+          set -euo pipefail
+          mkdir -p work
+          unzip -q "$DIR/app.zip" -d work
+      - name: Installer Godot 4.4.1 et les modèles d'export
+        run: |
+          set -euo pipefail
+          wget -q https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip -O /tmp/godot.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          sudo install /tmp/godot/Godot_v4.4.1-stable_linux.x86_64 /usr/local/bin/godot
+          wget -q https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz -O /tmp/templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/4.4.1.stable
+          unzip -q /tmp/templates.tpz -d /tmp/godot-templates
+          cp -a /tmp/godot-templates/templates/. ~/.local/share/godot/export_templates/4.4.1.stable/
+      - name: Exporter le projet Android
+        run: |
+          set -euo pipefail
+          PROJECT=$(find work -name project.godot -printf '%h\n' | head -n1)
+          test -n "$PROJECT"
+          mkdir -p "$GITHUB_WORKSPACE/dist"
+          cd "$PROJECT"
+          godot --headless --editor --path . --import
+          godot --headless --path . --export-release "Android" "$GITHUB_WORKSPACE/dist/game.apk"
+          test -s "$GITHUB_WORKSPACE/dist/game.apk"
+
+
+      - name: Publier l'APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          CFG="$DIR/godot.json"
+          NAME=$(jq -r .name "$CFG")
+          VN=$(jq -r .versionName "$CFG")
+          SLUG=$(echo "$NAME" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cs 'A-Za-z0-9' '-' | sed 's/^-//;s/-$//')
+          [ -n "$SLUG" ] || SLUG=application
+          APK=$(find . -type f -name '*.apk' -not -path '*/.gradle/*' | head -n1)
+          test -n "$APK" || { echo "APK introuvable après compilation."; exit 1; }
+          cp "$APK" "$SLUG-$VN.apk"
+          gh release create "godot-$ID" "$SLUG-$VN.apk" --title "$NAME — Build Godot Android APK" --notes "Compilation Android Build Godot Android APK. Version : $VN."
+
+      - name: Nettoyer la demande
+        if: success()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git rm -rq "$DIR"
+          git commit -qm "Nettoyage build godot $ID [skip ci]"
+          git pull --rebase -q || true
+          git push -q || true
+
+      - name: Enregistrer le journal d'erreur
+        if: failure()
+        run: |
+          mkdir -p "$DIR"
+          { echo "== Journal Build Godot Android APK ($ID) =="; tail -n 400 "$GITHUB_WORKSPACE/build.log" 2>/dev/null || true; } > "$DIR/build-error.txt"
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -f "$DIR/build-error.txt"
+          git commit -qm "Journal erreur godot $ID [skip ci]" || true
+          git push -q || true

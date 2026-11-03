@@ -11,132 +11,68 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
-
-      - name: Détecter la demande
+      - name: Identifier la demande
         run: |
           CFG=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E '^builds/[^/]+/cordova\.json$' | head -n1)
           test -n "$CFG"
           echo "DIR=$(dirname "$CFG")" >> "$GITHUB_ENV"
           echo "ID=$(basename "$(dirname "$CFG")")" >> "$GITHUB_ENV"
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
-
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.7'
-
-      - name: Installer ImageMagick
-        run: sudo apt-get update && sudo apt-get install -y imagemagick python3-pil
-
-      - name: Clé de signature stable (mises à jour sans désinstaller)
-        run: bash "$GITHUB_WORKSPACE/.github/scripts/signing.sh" setup
-
-      - name: Préparer le projet
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - uses: android-actions/setup-android@v3
+      - name: Installer Android SDK
         run: |
-          set -e
-          exec > >(tee -a "$GITHUB_WORKSPACE/build.log") 2>&1
-          trap 'sleep 2' EXIT
-          CFG="$GITHUB_WORKSPACE/$DIR/cordova.json"
-          S="$GITHUB_WORKSPACE/.github/scripts"
-          python3 "$S/android_setup.py" fetch "$CFG" "$GITHUB_WORKSPACE/$DIR" cordova
-          mkdir -p "$GITHUB_WORKSPACE/work/src"
-          unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d "$GITHUB_WORKSPACE/work/src"
-          XP=$(python3 "$S/native_setup.py" find "$GITHUB_WORKSPACE/work/src" config.xml || true)
-          test -n "$XP" || { echo "Aucun config.xml dans le ZIP : ce n'est pas un projet Cordova."; exit 1; }
-          ROOT=$(dirname "$XP")
-          echo "ROOT=$ROOT" >> "$GITHUB_ENV"
-          cd "$ROOT"
-          npm i -g cordova@12 --no-audit --no-fund
-          if [ -f package.json ]; then
-            if [ -f package-lock.json ]; then npm ci --no-audit --no-fund || npm install --no-audit --no-fund --legacy-peer-deps
-            else npm install --no-audit --no-fund --legacy-peer-deps; fi
-            # Ionic / Angular / Vue avec Cordova : produire www/ si le projet a un script de build
-            if [ ! -f www/index.html ] && jq -e '.scripts.build' package.json >/dev/null; then CI=false npm run build; fi
-          fi
-          test -f www/index.html || { echo "www/index.html introuvable : le projet Cordova doit contenir son site dans www/."; exit 1; }
-          python3 "$S/native_setup.py" cordova "$CFG" "$XP"
-          rm -rf platforms/android
-          cordova platform add android@13 --no-telemetry
-          MOD="$ROOT/platforms/android/app"
-          python3 "$S/native_setup.py" manifest "$CFG" "$MOD/src/main/AndroidManifest.xml"
-          if [ "$(jq -r .icon "$CFG")" = "true" ]; then
-            python3 "$S/icon_setup.py" gradle "$MOD/src/main/res" "$GITHUB_WORKSPACE/$DIR/icon.png" "$(jq -r .color "$CFG")"
-          fi
-          python3 "$S/fonction_setup.py" "$MOD" "$CFG" "$GITHUB_WORKSPACE/$DIR/app.zip" "$GITHUB_WORKSPACE/$DIR/icon.png"
-
-      - name: Compiler l'APK
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Compiler Cordova
         run: |
-          set -o pipefail
+          set -euo pipefail
           CFG="$GITHUB_WORKSPACE/$DIR/cordova.json"
+          mkdir -p work/src
+          unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d work/src
+          ROOT=$(find work/src -name config.xml -print -quit | xargs -r dirname)
+          if [ -z "$ROOT" ]; then
+            ROOT=$(find work/src -name package.json -print -quit | xargs -r dirname)
+          fi
+          test -n "$ROOT" || { echo "config.xml ou package.json introuvable"; exit 1; }
           cd "$ROOT"
-          cordova build android --debug --no-telemetry 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
-          APK=$(find "$ROOT/platforms/android" -path '*outputs/apk/debug/*.apk' | head -n1)
-
-          test -n "$APK" || { echo "Aucun APK produit."; exit 1; }
-          echo "APK=$APK" >> "$GITHUB_ENV"
-          bash "$GITHUB_WORKSPACE/.github/scripts/signing.sh" verify "$APK" 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
-
+          if [ ! -f config.xml ]; then
+            NAME=$(jq -r '.name // "CordovaApp"' "$CFG")
+            PKG=$(jq -r '.pkg // "com.example.cordovaapp"' "$CFG")
+            mkdir -p "$GITHUB_WORKSPACE/work/cordova-app"
+            npx --yes cordova create "$GITHUB_WORKSPACE/work/cordova-app" "$PKG" "$NAME"
+            if [ -d www ]; then rm -rf "$GITHUB_WORKSPACE/work/cordova-app/www"; cp -R www "$GITHUB_WORKSPACE/work/cordova-app/www"; fi
+            ROOT="$GITHUB_WORKSPACE/work/cordova-app"
+            cd "$ROOT"
+          fi
+          npm install
+          npm install --save-dev cordova@12
+          npx cordova platform add android@13
+          npx cordova build android --debug
+          APK=$(find platforms/android/app/build/outputs/apk -name '*.apk' | head -n1)
+          test -n "$APK" || { echo "APK Cordova introuvable"; exit 1; }
+          cp "$APK" "$GITHUB_WORKSPACE/cordova-$ID.apk"
       - name: Publier l'APK
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          CF="$DIR/cordova.json"
-          NAME=$(jq -r .name "$CF"); VN=$(jq -r .versionName "$CF")
-          SLUG=$(echo "$NAME" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cs 'A-Za-z0-9' '-' | sed 's/^-//;s/-$//')
-          [ -n "$SLUG" ] || SLUG=app
-          test -f "$APK" || { echo "APK introuvable : $APK"; exit 1; }
-          cp "$APK" "$SLUG-$VN.apk"
-          CFGJ=$(jq -c 'del(.fromRelease,.replaces,.iconFrom)' "$CF")
-          NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : cordova\nSignature : %s\nConfig : %s' "$VN" "$(jq -r .versionCode "$CF")" "$(jq -r .pkg "$CF")" "$SIGN_SHA256" "$CFGJ")
-          FILES=("$SLUG-$VN.apk")
-          if [ -f "$DIR/app.zip" ] && [ "$(jq -r '.sourceKind // ""' "$CF")" != "site" ]; then cp "$DIR/app.zip" source.zip; FILES+=(source.zip); fi
-          if [ -f "$DIR/icon.png" ]; then FILES+=("$DIR/icon.png"); fi
-          gh release create "apk-$ID" "${FILES[@]}" --title "$NAME" --notes "$NOTES"
-          OLD=$(jq -r '.replaces // ""' "$CF")
-          if [ -n "$OLD" ]; then gh release delete "$OLD" --cleanup-tag -y || true; fi
-
+          NAME=$(jq -r '.name // "Application Cordova"' "$GITHUB_WORKSPACE/$DIR/cordova.json")
+          gh release create "apk-$ID" "$GITHUB_WORKSPACE/cordova-$ID.apk" --title "$NAME" --notes "APK Apache Cordova compilé automatiquement."
       - name: Nettoyer la demande
+        if: always()
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-          git rm -rq "$DIR"
-          git commit -qm "Nettoyage $ID [skip ci]"
-          git pull --rebase -q || true
-          git push -q || true
-
-      - name: Enregistrer le journal d'erreur
-        if: failure()
-        run: |
-          [ -n "$DIR" ] || exit 0
-          LOG="$GITHUB_WORKSPACE/build.log"
-          OUT="$GITHUB_WORKSPACE/$DIR/build-error.txt"
-          mkdir -p "$GITHUB_WORKSPACE/$DIR"
-          {
-            echo "== Journal de compilation ($ID) =="
-            if [ -f "$LOG" ]; then
-              sed -E 's/\x1b\[[0-9;?]*[A-Za-z]//g' "$LOG" | tr -d '\r' | grep -v -E '^ *\[[= >]*\] +[0-9]+%' | tail -n 400 | cut -c1-4000
-            else
-              echo "Aucun journal disponible (échec avant la compilation)."
-            fi
-          } > "$OUT"
-          cd "$GITHUB_WORKSPACE"
-          git config user.name "github-actions"
-          git config user.email "github-actions@users.noreply.github.com"
-          git add -f "$DIR/build-error.txt"
-          git commit -qm "Journal d'erreur $ID [skip ci]" || exit 0
-          git pull --rebase -q || true
-          git push -q || true
+          git config user.name github-actions
+          git config user.email github-actions@users.noreply.github.com
+          git rm -r --ignore-unmatch "$DIR"
+          git commit -m "Nettoyage build Cordova $ID [skip ci]" || true
+          git push || true

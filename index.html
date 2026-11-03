@@ -362,7 +362,7 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
 <section id="vForm">
   <div id="edBar" class="edbar" style="display:none"><span id="edTxt"></span><button type="button" class="mini2" id="edX">Annuler</button></div>
   <div class="hero" id="hero">
-    <div class="hl"><h2>Crée<br>ton<br><em>appli</em></h2><p>Un site web, Flutter, Kotlin/Java, React Native ou Python (Kivy), transformé en APK Android.</p><button type="button" class="cta" id="cta">Commencer <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6l6 6-6 6"/></svg></button></div>
+    <div class="hl"><h2>Crée<br>ton<br><em>appli</em></h2><p>Un site web, Unity, Godot, Unreal Engine, Kotlin Multiplatform et plusieurs technologies, transformés en application Android.</p><button type="button" class="cta" id="cta">Commencer <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6l6 6-6 6"/></svg></button></div>
     <svg class="art" viewBox="0 0 120 150" aria-hidden="true"><g transform="rotate(12 60 75)"><rect x="22" y="8" width="76" height="134" rx="16" fill="#fff"/><rect x="28" y="20" width="64" height="104" rx="8" fill="#14181F"/><path d="M60 46v34m0 0l-14-14m14 14l14-14M42 102h36" stroke="#FF4A1F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="50" y="129" width="20" height="4" rx="2" fill="#C9CDD3"/></g></svg>
   </div>
   <div class="preview" aria-label="Aperçu de l'application">
@@ -404,7 +404,11 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
 
     <div class="panel">
       <h2><span>2</span>Fichiers</h2>
-      <div class="seg wrap" role="radiogroup" aria-label="Type de projet"><label><input type="radio" name="mode" value="web" checked><span>Site web</span></label><label><input type="radio" name="mode" value="flutter"><span>Flutter</span></label><label><input type="radio" name="mode" value="native"><span>Kotlin / Java</span></label><label><input type="radio" name="mode" value="reactnative"><span>React Native</span></label><label><input type="radio" name="mode" value="python"><span>Python (Kivy)</span></label></div>
+      <div class="seg wrap" role="radiogroup" aria-label="Type de projet"><label><input type="radio" name="mode" value="web" checked><span>Site web</span></label><label><input type="radio" name="mode" value="flutter"><span>Flutter</span></label><label><input type="radio" name="mode" value="native"><span>Kotlin / Java</span></label><label><input type="radio" name="mode" value="ccpp"><span>C / C++ / NDK</span></label>
+<label><input type="radio" name="mode" value="unity"><span>Unity / C#</span></label>
+<label><input type="radio" name="mode" value="godot"><span>Godot / GDScript</span></label>
+<label><input type="radio" name="mode" value="unreal"><span>Unreal Engine</span></label>
+<label><input type="radio" name="mode" value="kmp"><span>Kotlin Multiplatform</span></label><label><input type="radio" name="mode" value="reactnative"><span>React Native</span></label><label><input type="radio" name="mode" value="python"><span>Python (Kivy)</span></label><label><input type="radio" name="mode" value="ionic"><span>Ionic / Capacitor</span></label><label><input type="radio" name="mode" value="cordova"><span>Apache Cordova</span></label></div>
       <div id="zipBox"><div class="seg" role="radiogroup" aria-label="Source du projet" style="margin-bottom:6px"><label><input type="radio" name="src" value="zip" checked><span>ZIP</span></label><label><input type="radio" name="src" value="link"><span>Lien</span></label></div>
       <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FF3F1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,application/zip"></label><button type="button" class="clr" id="zipClr">✕ Vider le fichier</button><button type="button" class="mini2" id="aiBtn" style="display:none;margin-top:10px">✨ Analyser avec l'IA</button></div>
       <div id="lnkBox" style="display:none"><label for="url">Lien source</label><input id="url" type="url" inputmode="url" autocapitalize="none" autocorrect="off" placeholder="https://…"><small class="h" id="lnkHint"></small></div>
@@ -882,10 +886,24 @@ const TYPES={
     ok:n=>n.some(x=>/(^|\/)pubspec\.yaml$/i.test(x)||/\.dart$/i.test(x)),err:'Aucun pubspec.yaml ni fichier .dart dans le ZIP.'},
   native:{label:'Kotlin / Java',long:'Android natif (Gradle)',json:'native.json',wf:'Build Android natif APK',zn:'Déposer le projet Android (ZIP)',zs:'Projet Android Studio : settings.gradle + app/ · 40 Mo max',
     ok:n=>n.some(x=>/(^|\/)settings\.gradle(\.kts)?$/i.test(x)),err:'Aucun settings.gradle(.kts) dans le ZIP : envoie un projet Android Studio complet.'},
+  ccpp:{label:'C / C++ / Android NDK',long:'C / C++ (GCC, Clang, NDK, CMake)',json:'native-code.json',wf:'Build C / C++ / NDK',zn:'Déposer le projet C / C++ (ZIP)',zs:'CMakeLists.txt, .c, .cpp, Android Gradle · 40 Mo max',
+    ok:n=>n.some(x=>/(^|\/)CMakeLists\.txt$/i.test(x)||/\.(c|cc|cpp|cxx|h|hpp)$/i.test(x)||/(^|\/)settings\.gradle(\.kts)?$/i.test(x)),err:'Aucun fichier C/C++ ni CMakeLists.txt détecté dans le ZIP.'},
+  unity:{label:'Unity / C#',long:'Unity (C# → Android)',json:'unity.json',wf:'Build Unity Android APK',zn:'Déposer le projet Unity (ZIP)',zs:'Assets/, Packages/ et ProjectSettings/ · Unity Android · 40 Mo max',
+    ok:n=>n.some(x=>/(^|\/)ProjectSettings\/ProjectVersion\.txt$/i.test(x))&&n.some(x=>/(^|\/)Assets\//i.test(x)),err:'Projet Unity incomplet : ProjectSettings/ProjectVersion.txt et Assets/ sont requis.'},
+  godot:{label:'Godot / GDScript',long:'Godot Engine (Android)',json:'godot.json',wf:'Build Godot Android APK',zn:'Déposer le projet Godot (ZIP)',zs:'project.godot + scènes et scripts · 40 Mo max',
+    ok:n=>n.some(x=>/(^|\/)project\.godot$/i.test(x)),err:'Fichier project.godot introuvable dans le ZIP.'},
+  unreal:{label:'Unreal Engine',long:'Unreal Engine (Android)',json:'unreal.json',wf:'Build Unreal Android APK',zn:'Déposer le projet Unreal (ZIP)',zs:'Fichier .uproject + Content/ et Config/ · runner Unreal requis · 40 Mo max',
+    ok:n=>n.some(x=>/\.uproject$/i.test(x)),err:'Aucun fichier .uproject trouvé dans le ZIP.'},
+  kmp:{label:'Kotlin Multiplatform',long:'Kotlin Multiplatform (Android)',json:'kmp.json',wf:'Build Kotlin Multiplatform APK',zn:'Déposer le projet Kotlin Multiplatform (ZIP)',zs:'settings.gradle(.kts) + module Android · 40 Mo max',
+    ok:n=>n.some(x=>/(^|\/)settings\.gradle(\.kts)?$/i.test(x))&&n.some(x=>/(^|\/)(composeApp|androidApp|shared)\//i.test(x)),err:'Projet Kotlin Multiplatform incomplet : settings.gradle(.kts) et module Android attendus.'},
   reactnative:{label:'React Native',long:'React Native / Expo',json:'reactnative.json',wf:'Build React Native APK',zn:'Déposer le projet React Native (ZIP)',zs:'package.json + App.js (Expo ou RN) · 40 Mo max',
     ok:n=>n.some(x=>/(^|\/)package\.json$/i.test(x)),err:'Aucun package.json dans le ZIP.'},
   python:{label:'Python (Kivy)',long:'Python / Kivy (Buildozer)',json:'python.json',wf:'Build Python APK',zn:'Déposer le projet Python (ZIP)',zs:'main.py (+ buildozer.spec facultatif) · 40 Mo max',
-    ok:n=>n.some(x=>/(^|\/)main\.py$/i.test(x)),err:'Aucun main.py dans le ZIP.'}
+    ok:n=>n.some(x=>/(^|\/)main\.py$/i.test(x)),err:'Aucun main.py dans le ZIP.'},
+  ionic:{label:'Ionic / Capacitor',long:'Ionic / Capacitor',json:'ionic.json',wf:'Build Ionic APK',zn:'Déposer le projet Ionic (ZIP)',zs:'package.json + configuration Ionic/Capacitor · 40 Mo max',
+    ok:n=>n.some(x=>/(^|\/)package\.json$/i.test(x)),err:'Aucun package.json dans le ZIP Ionic.'},
+  cordova:{label:'Apache Cordova',long:'Apache Cordova',json:'cordova.json',wf:'Build Cordova APK',zn:'Déposer le projet Cordova (ZIP)',zs:'config.xml + www/ ou package.json · 40 Mo max',
+    ok:n=>n.some(x=>/(^|\/)config\.xml$/i.test(x)||/(^|\/)package\.json$/i.test(x)),err:'Aucun config.xml ou package.json dans le ZIP Cordova.'}
 };
 const typeDe=t=>TYPES[t]||TYPES.web;
 /* Ne retient que le run du workflow de ce build (ignore « pages build and deployment », etc.) */
@@ -1293,7 +1311,7 @@ $('f').addEventListener('submit',async e=>{
     if(lien){
       if(!/^https?:\/\//i.test(url))throw new Error('Entre un lien valide (https://…).');
       sourceKind=kindUrl(url);
-      if(sourceKind==='site'&&mode()!=='web')throw new Error('Un lien de site web fonctionne seulement en mode Site web.');
+      if(mode()==='ccpp')throw new Error('Le mode C / C++ nécessite un fichier ZIP.');if(sourceKind==='site'&&mode()!=='web')throw new Error('Un lien de site web fonctionne seulement en mode Site web.');
     }else if(zip){
       if(zip.size>40*1048576)throw new Error('ZIP trop volumineux (40 Mo max).');
       z=await JSZip.loadAsync(zip).catch(()=>{throw new Error('ZIP invalide.')});

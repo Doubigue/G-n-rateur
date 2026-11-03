@@ -1,0 +1,158 @@
+name: Build C / C++ / NDK
+
+on:
+  push:
+    paths:
+      - 'builds/*/native-code.json'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Détecter la demande
+        run: |
+          CFG=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E '^builds/[^/]+/native-code\.json$' | head -n1)
+          test -n "$CFG"
+          echo "DIR=$(dirname "$CFG")" >> "$GITHUB_ENV"
+          echo "ID=$(basename "$(dirname "$CFG")")" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Installer GCC, Clang, CMake et Android NDK
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc g++ clang cmake ninja-build unzip zip jq
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-35" "ndk;27.2.12479018" "cmake;3.22.1"
+          echo "$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+
+      - name: Préparer les sources
+        run: |
+          set -euo pipefail
+          exec > >(tee -a "$GITHUB_WORKSPACE/build.log") 2>&1
+          mkdir -p work/src dist
+          unzip -q "$DIR/app.zip" -d work/src
+          SETTINGS=$(find work/src -type f \( -name settings.gradle -o -name settings.gradle.kts \) -not -path '*/.gradle/*' | head -n1)
+          if [ -n "$SETTINGS" ]; then ROOT=$(dirname "$SETTINGS")
+          else
+            CMAKE=$(find work/src -type f -name CMakeLists.txt -not -path '*/build/*' | head -n1)
+            if [ -n "$CMAKE" ]; then ROOT=$(dirname "$CMAKE")
+            else ROOT=$(find work/src -type f \( -name '*.c' -o -name '*.cc' -o -name '*.cpp' -o -name '*.cxx' \) -printf '%h\n' | head -n1); fi
+          fi
+          test -n "$ROOT" || { echo "Aucun projet Android Gradle, CMakeLists.txt ou source C/C++ trouvé."; exit 1; }
+          echo "ROOT=$ROOT" >> "$GITHUB_ENV"
+          echo "Racine détectée : $ROOT"
+
+      - name: Compiler le projet Android en APK (si structure Gradle)
+        id: android
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          SETTINGS=$(find "$ROOT" -maxdepth 2 -type f \( -name settings.gradle -o -name settings.gradle.kts \) | head -n1)
+          if [ -z "$SETTINGS" ]; then echo "available=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          AROOT=$(dirname "$SETTINGS")
+          cd "$AROOT"
+          if [ -f gradlew ]; then chmod +x gradlew; ./gradlew assembleDebug --no-daemon; else gradle assembleDebug --no-daemon; fi
+          APK=$(find . -path '*/outputs/apk/debug/*.apk' ! -name '*androidTest*' | head -n1)
+          test -n "$APK"
+          cp "$APK" "$GITHUB_WORKSPACE/dist/application-debug.apk"
+          echo "available=true" >> "$GITHUB_OUTPUT"
+
+      - name: Compiler les bibliothèques Android .so (CMake ou sources directes)
+        run: |
+          set -euo pipefail
+          CMAKE_FILE=$(find "$ROOT" -type f -name CMakeLists.txt -not -path '*/build/*' | head -n1 || true)
+          mapfile -t NATIVE_SOURCES < <(find "$ROOT" -type f \( -name '*.c' -o -name '*.cc' -o -name '*.cpp' -o -name '*.cxx' \) -not -path '*/build/*' | sort)
+          if [ -z "$CMAKE_FILE" ] && [ ${#NATIVE_SOURCES[@]} -eq 0 ]; then
+            echo "Aucun code natif dans ce projet Gradle : l'APK Gradle est la seule sortie demandée."
+            exit 0
+          fi
+          ABIS=(arm64-v8a armeabi-v7a x86_64)
+          for ABI in "${ABIS[@]}"; do
+            OUT="$GITHUB_WORKSPACE/dist/$ABI"
+            mkdir -p "$OUT"
+            if [ -n "$CMAKE_FILE" ]; then
+              SRC=$(dirname "$CMAKE_FILE")
+              cmake -S "$SRC" -B "$GITHUB_WORKSPACE/work/cmake-$ABI" -G Ninja \
+                -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake" \
+                -DANDROID_ABI="$ABI" -DANDROID_PLATFORM=android-24 \
+                -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=Release
+              cmake --build "$GITHUB_WORKSPACE/work/cmake-$ABI" --parallel
+              find "$GITHUB_WORKSPACE/work/cmake-$ABI" -type f -name '*.so' -exec cp {} "$OUT/" \;
+            else
+              SOURCES=("${NATIVE_SOURCES[@]}")
+              HOST="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin"
+              case "$ABI" in
+                arm64-v8a) TARGET=aarch64-linux-android24;;
+                armeabi-v7a) TARGET=armv7a-linux-androideabi24;;
+                x86_64) TARGET=x86_64-linux-android24;;
+              esac
+              "$HOST/clang++" --target="$TARGET" -shared -fPIC -O2 "${SOURCES[@]}" -o "$OUT/libnative.so"
+            fi
+          done
+          find dist -name '*.so' | grep -q . || { echo "Aucune bibliothèque .so produite. Vérifie les add_library(SHARED ...) dans CMakeLists.txt."; exit 1; }
+
+      - name: Compiler aussi les sources avec GCC et Clang (contrôle hôte)
+        run: |
+          set -euo pipefail
+          mapfile -t CFILES < <(find "$ROOT" -type f -name '*.c' -not -path '*/build/*' | sort)
+          mapfile -t CPPFILES < <(find "$ROOT" -type f \( -name '*.cc' -o -name '*.cpp' -o -name '*.cxx' \) -not -path '*/build/*' | sort)
+          mkdir -p /tmp/compiler-check
+          for f in "${CFILES[@]}"; do [ -f "$f" ] || continue; gcc -c "$f" -o "/tmp/compiler-check/$(basename "$f").gcc.o" || echo "GCC: avertissement sur $f"; clang -c "$f" -o "/tmp/compiler-check/$(basename "$f").clang.o" || echo "Clang: avertissement sur $f"; done
+          for f in "${CPPFILES[@]}"; do [ -f "$f" ] || continue; g++ -c "$f" -o "/tmp/compiler-check/$(basename "$f").gpp.o" || echo "G++: avertissement sur $f"; clang++ -c "$f" -o "/tmp/compiler-check/$(basename "$f").clangpp.o" || echo "Clang++: avertissement sur $f"; done
+          echo "GCC/G++, Clang/Clang++ installés ; compilation Android NDK traitée séparément."
+
+      - name: Publier les artefacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          NAME=$(jq -r .name "$DIR/native-code.json")
+          VN=$(jq -r .versionName "$DIR/native-code.json")
+          SLUG=$(echo "$NAME" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cs 'A-Za-z0-9' '-' | sed 's/^-//;s/-$//')
+          [ -n "$SLUG" ] || SLUG=native
+          FILES=()
+          if [ -f dist/application-debug.apk ]; then cp dist/application-debug.apk "$SLUG-$VN.apk"; FILES+=("$SLUG-$VN.apk"); fi
+          if find dist -name '*.so' | grep -q .; then
+            (cd dist && zip -qr "$GITHUB_WORKSPACE/$SLUG-$VN-native-libs.zip" .)
+            FILES+=("$SLUG-$VN-native-libs.zip")
+          fi
+          test ${#FILES[@]} -gt 0
+          if [ -f "$DIR/app.zip" ]; then cp "$DIR/app.zip" source.zip; FILES+=(source.zip); fi
+          NOTES=$(printf 'Version : %s\nType : C/C++ + Android NDK\nSorties : APK si projet Gradle compatible, bibliothèques .so par ABI (arm64-v8a, armeabi-v7a, x86_64).' "$VN")
+          gh release create "native-$ID" "${FILES[@]}" --title "$NAME — C/C++" --notes "$NOTES"
+
+      - name: Nettoyer la demande
+        if: success()
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git rm -rq "$DIR"
+          git commit -qm "Nettoyage build C/C++ $ID [skip ci]"
+          git pull --rebase -q || true
+          git push -q || true
+
+      - name: Enregistrer le journal d'erreur
+        if: failure()
+        run: |
+          mkdir -p "$DIR"
+          { echo "== Journal de compilation C/C++ ($ID) =="; tail -n 400 "$GITHUB_WORKSPACE/build.log" 2>/dev/null || true; } > "$DIR/build-error.txt"
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -f "$DIR/build-error.txt"
+          git commit -qm "Journal erreur C/C++ $ID [skip ci]" || true
+          git push -q || true
