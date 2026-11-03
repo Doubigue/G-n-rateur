@@ -1227,7 +1227,8 @@ const DIAG=[
   [/npm (?:ERR!|error) (?:code )?E404|npm (?:ERR!|error) 404/i,"Un paquet npm demandé n'existe pas (erreur 404).","Vérifie le nom du paquet cité dans l'erreur."],
   [/Could not (?:resolve|GET|HEAD)|Connection (?:reset|refused|timed out)|Read timed out|Unable to resolve host|ENOTFOUND|ETIMEDOUT|EAI_AGAIN|Temporary failure in name resolution|Failed to connect/i,"Un téléchargement a échoué (réseau, ou serveur de dépendances indisponible).","C'est souvent passager : relance la compilation."],
   [/npm (?:ERR!|error)/i,"L'installation d'un paquet npm a échoué.","Relance ; si ça recommence, lis la ligne « npm » dans l'erreur."],
-  [/SDK location not found|ANDROID_HOME|ANDROID_SDK_ROOT/i,"Le SDK Android n'a pas été trouvé sur le serveur.","Problème côté serveur : relance la compilation."],
+  [/n'est pas signé avec la clé stable/i,"L'APK n'est pas signé avec la clé stable du dépôt (le projet impose sa propre clé, et la re-signature automatique a échoué).","Retire le bloc signingConfigs du build.gradle du projet, puis relance."],
+  [/SDK location not found|(?:ANDROID_HOME|ANDROID_SDK_ROOT)\b[^\n]{0,40}(?:not set|is not|invalid|does not exist|n'existe)|Failed to find (?:Build Tools|target)/i,"Le SDK Android n'a pas été trouvé sur le serveur.","Problème côté serveur : relance la compilation."],
   [/Execution failed for task '([^']+)'/,m=>"Gradle a échoué sur la tâche « "+m[1]+" ».","Regarde « Erreur » : elle donne la raison exacte."]
 ];
 function pickMain(L){

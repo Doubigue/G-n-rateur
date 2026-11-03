@@ -3,7 +3,7 @@
 # Installe work/app.apk, la lance, exécute les actions demandées, prend des captures,
 # repère les plantages dans logcat et écrit $DIR/emu-report.json.
 set -u
-cd "$GITHUB_WORKSPACE"
+cd "$GITHUB_WORKSPACE" || exit 1
 CFG="$DIR/emulate.json"
 PKG=$(jq -r '.pkg' "$CFG")
 SECS=$(jq -r '.seconds // 20' "$CFG")

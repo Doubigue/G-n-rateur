@@ -97,7 +97,7 @@ jobs:
           fi
           npx cap add android
 
-          sed -i "s/versionCode 1/versionCode $VC/; s/versionName \"1.0\"/versionName "$VN"/" android/app/build.gradle
+          sed -i "s/versionCode 1/versionCode $VC/; s/versionName \"1.0\"/versionName \"$VN\"/" android/app/build.gradle
           sed -i "s/<activity/<activity android:screenOrientation=\"$ORI\"/" android/app/src/main/AndroidManifest.xml
           if [ "$FULL" = "true" ]; then
             sed -i 's|<style name="AppTheme.NoActionBar"[^>]*>|&<item name="android:windowFullscreen">true</item>|' android/app/src/main/res/values/styles.xml

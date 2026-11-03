@@ -90,6 +90,17 @@ verify)
   echo "Signature de l'APK : ${GOT:-inconnue}"
   echo "Clé stable attendue : $ATT"
   if [ "$GOT" != "$ATT" ]; then
+    # Le projet a imposé sa propre clé (signingConfigs dans son build.gradle) : on re-signe l'APK
+    # avec la clé stable du dépôt, au lieu de faire échouer la compilation.
+    echo "Signature différente de la clé stable : re-signature de l'APK avec signing/debug.keystore…"
+    "$BT/apksigner" sign --ks "$K" --ks-pass "pass:$PASS" --key-pass "pass:$PASS" --ks-key-alias "$ALIAS" \
+      --out "$APK.resigne" "$APK" && mv -f "$APK.resigne" "$APK"
+    rm -f "$APK.resigne.idsig" "$APK.idsig"
+    OUT=$("$BT/apksigner" verify --print-certs "$APK" 2>&1 || true)
+    GOT=$(printf '%s\n' "$OUT" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n1 | tr -d ':[:space:]' | tr 'A-F' 'a-f')
+    echo "Signature après re-signature : ${GOT:-inconnue}"
+  fi
+  if [ "$GOT" != "$ATT" ]; then
     echo "ERREUR : l'APK n'est pas signé avec la clé stable du dépôt."
     echo "Android refuserait de l'installer par-dessus la version déjà installée."
     printf '%s\n' "$OUT" | head -n 20
