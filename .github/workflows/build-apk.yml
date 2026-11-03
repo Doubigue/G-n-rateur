@@ -51,34 +51,13 @@ jobs:
           [ "$ORI" = "auto" ] && ORI=unspecified
 
           python3 "$GITHUB_WORKSPACE/.github/scripts/android_setup.py" fetch "$CFG" "$GITHUB_WORKSPACE/$DIR"
-          if [ "$(jq -r '.type // "web"' "$CFG")" = "jsweb" ]; then
-            # Projet JavaScript/TypeScript (React, Vue, Angular, Svelte, Ionic, Vite…) : compilation web d'abord
-            mkdir -p work/src
-            unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d work/src
-            PJ=$(python3 "$GITHUB_WORKSPACE/.github/scripts/native_setup.py" find work/src package.json || true)
-            test -n "$PJ" || { echo "Aucun package.json dans le ZIP."; exit 1; }
-            R=$(dirname "$PJ")
-            jq -e '.scripts.build' "$PJ" >/dev/null || { echo "package.json sans script « build » : impossible de produire le site."; exit 1; }
-            ( cd "$R"
-              if [ -f package-lock.json ]; then npm ci --no-audit --no-fund || npm install --no-audit --no-fund --legacy-peer-deps
-              elif [ -f pnpm-lock.yaml ]; then corepack enable && pnpm install
-              elif [ -f yarn.lock ]; then corepack enable && yarn install
-              else npm install --no-audit --no-fund --legacy-peer-deps; fi
-              CI=false npm run build )
-            OUT=$(python3 "$GITHUB_WORKSPACE/.github/scripts/native_setup.py" webout "$R" || true)
-            test -n "$OUT" || { echo "Après « npm run build », aucun dossier contenant index.html (dist/, build/, www/, out/). Pour Next.js, ajoute output: 'export'."; exit 1; }
-            echo "Site compilé : $OUT"
-            mkdir -p work/www && cp -r "$OUT"/. work/www/
-            rm -rf work/src
-          else
-            mkdir -p work/www
-            unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d work/www
-            if [ ! -f work/www/index.html ]; then
-              SUB=$(find work/www -path '*__MACOSX*' -prune -o -name index.html -print | head -n1)
-              test -n "$SUB" || { echo "index.html introuvable"; exit 1; }
-              mv "$(dirname "$SUB")" work/www2
-              rm -rf work/www && mv work/www2 work/www
-            fi
+          mkdir -p work/www
+          unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d work/www
+          if [ ! -f work/www/index.html ]; then
+            SUB=$(find work/www -path '*__MACOSX*' -prune -o -name index.html -print | head -n1)
+            test -n "$SUB" || { echo "index.html introuvable"; exit 1; }
+            mv "$(dirname "$SUB")" work/www2
+            rm -rf work/www && mv work/www2 work/www
           fi
 
           cd work
@@ -111,7 +90,27 @@ jobs:
           npx cap sync android
 
       - name: Clé de signature stable (mises à jour sans désinstaller)
-        run: bash "$GITHUB_WORKSPACE/.github/scripts/signing.sh" setup
+        run: |
+          mkdir -p ~/.android
+          K="$GITHUB_WORKSPACE/signing/debug.keystore"
+          if [ -f "$K" ]; then
+            cp "$K" ~/.android/debug.keystore
+            echo "Clé de signature existante réutilisée"
+          else
+            rm -f ~/.android/debug.keystore
+            keytool -genkeypair -keystore ~/.android/debug.keystore -storepass android -keypass android \
+              -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 36500 \
+              -dname "CN=Android Debug,O=Android,C=US"
+            mkdir -p "$GITHUB_WORKSPACE/signing"; cp ~/.android/debug.keystore "$K"
+            cd "$GITHUB_WORKSPACE"
+            git config user.name "github-actions"
+            git config user.email "github-actions@users.noreply.github.com"
+            git add -f signing/debug.keystore
+            git commit -qm "Clé de signature stable [skip ci]" || true
+            git pull --rebase -q || true
+            git push -q || true
+            echo "Nouvelle clé de signature créée et enregistrée dans signing/"
+          fi
 
       - name: Compiler l'APK
         working-directory: work/android
@@ -119,7 +118,6 @@ jobs:
           set -o pipefail
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
-          bash "$GITHUB_WORKSPACE/.github/scripts/signing.sh" verify "$GITHUB_WORKSPACE/work/android/app/build/outputs/apk/debug/app-debug.apk" 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
 
       - name: Publier l'APK
         env:
@@ -131,7 +129,7 @@ jobs:
           cp work/android/app/build/outputs/apk/debug/app-debug.apk "$SLUG-$VN.apk"
           CF="$DIR/config.json"
           CFGJ=$(jq -c 'del(.fromRelease,.replaces,.iconFrom)' "$CF")
-          NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : %s\nSignature : %s\nConfig : %s' "$VN" "$(jq -r .versionCode "$CF")" "$(jq -r .pkg "$CF")" "$(jq -r '.type // "web"' "$CF")" "$SIGN_SHA256" "$CFGJ")
+          NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : web\nConfig : %s' "$VN" "$(jq -r .versionCode "$CF")" "$(jq -r .pkg "$CF")" "$CFGJ")
           FILES=("$SLUG-$VN.apk")
           if [ -f "$DIR/app.zip" ] && [ "$(jq -r '.sourceKind // ""' "$CF")" != "site" ]; then cp "$DIR/app.zip" source.zip; FILES+=(source.zip); fi
           if [ -f "$DIR/icon.png" ]; then FILES+=("$DIR/icon.png"); fi
