@@ -1,0 +1,90 @@
+== Journal de compilation (mw0oawlj) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mw0oawlj/app.zip | icône : True
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/proj/app/build.gradle.kts | applicationId = com.doubigue.mydm | version = 1.0.0 (1)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/proj/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/proj/app
+Icône pleine taille générée (fond adaptatif #6355E4)
+Onglet Fonction : désactivé (Description.md, Captures et Animation ne sont pas inclus)
+Downloading https://services.gradle.org/distributions/gradle-8.9-bin.zip
+............10%.............20%.............30%.............40%.............50%.............60%.............70%.............80%.............90%.............100%
+
+Welcome to Gradle 8.9!
+
+Here are the highlights of this release:
+ - Enhanced Error and Warning Messages
+ - IDE Integration Improvements
+ - Daemon JVM Information
+
+For more details see https://docs.gradle.org/8.9/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :app
+APK Studio : signature forcée avec la clé stable (:app)
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:mergeDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+
+> Task :app:processDebugMainManifest
+/home/runner/work/G-n-rateur/G-n-rateur/work/src/proj/app/src/main/AndroidManifest.xml:46:9-41 Warning:
+	android:extractNativeLibs should not be specified in this source AndroidManifest.xml file. See https://d.android.com/guide/topics/manifest/application-element#extractNativeLibs for more information.
+The AGP Upgrade Assistant can remove the attribute from the AndroidManifest.xml file and update the build file accordingly. See https://d.android.com/studio/build/agp-upgrade-assistant for more information.
+
+> Task :app:processDebugManifest
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:mergeDebugJniLibFolders
+> Task :app:checkDebugDuplicateClasses
+> Task :app:processDebugManifestForPackage
+> Task :app:mergeDebugNativeLibs
+> Task :app:processDebugResources
+> Task :app:mergeExtDexDebug
+> Task :app:mergeLibDexDebug
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libffmpeg.so, libffmpeg.zip.so, libffprobe.so, libpython.so, libpython.zip.so, libqjs.so.
+
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugKotlin
+> Task :app:compileDebugJavaWithJavac
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics
+> Task :app:processDebugJavaRes
+> Task :app:mergeProjectDexDebug
+> Task :app:mergeDebugJavaResource
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect
+> Task :app:assembleDebug
+
+BUILD SUCCESSFUL in 3m 30s
+37 actionable tasks: 37 executed
+Signature de l'APK : inconnue
+Clé stable attendue : 84c0b5e30642ddbb8d5adb78645b10fd9696850e2037f5fe8585a8e37371c5a9
+Signature différente de la clé stable : re-signature de l'APK avec signing/debug.keystore…
+Signature après re-signature : inconnue
+ERREUR : l'APK n'est pas signé avec la clé stable du dépôt.
+Android refuserait de l'installer par-dessus la version déjà installée.
+V3.0 Signer: certificate DN: CN=Android Debug, O=Android, C=US
+V3.0 Signer: certificate SHA-256 digest: 84c0b5e30642ddbb8d5adb78645b10fd9696850e2037f5fe8585a8e37371c5a9
+V3.0 Signer: certificate SHA-1 digest: 968c94c52e21ff9e586a31dd910cd1710f30adab
+V3.0 Signer: certificate MD5 digest: 8075b5472f82d48297807b06a074a335
