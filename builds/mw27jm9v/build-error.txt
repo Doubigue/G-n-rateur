@@ -1,0 +1,16 @@
+== Journal de compilation (mw27jm9v) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mw27jm9v/app.zip | icône : True
+MM=4.3
+MONO=0
+Godot 4.3-stable (GDScript)
+Onglet Fonction : non disponible pour les jeux Godot.
+Installation de Godot 4.3-stable…
+Traceback (most recent call last):
+  File "/home/runner/work/G-n-rateur/G-n-rateur/.github/scripts/game_setup.py", line 337, in <module>
+    godot(charger_cfg(sys.argv[2]), sys.argv[3], sys.argv[4] if sys.argv[4] != '-' else '', sys.argv[5])
+  File "/home/runner/work/G-n-rateur/G-n-rateur/.github/scripts/game_setup.py", line 152, in godot
+    ecrire(pg, t)
+  File "/home/runner/work/G-n-rateur/G-n-rateur/.github/scripts/game_setup.py", line 29, in ecrire
+    open(p, 'w', encoding='utf-8').write(t)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [Errno 13] Permission denied: '/home/runner/work/G-n-rateur/G-n-rateur/work/src/vibe-strike/project.godot'
