@@ -6,6 +6,7 @@ Usage :
   native_setup.py gradle <config.json> <racine_du_projet_android>   (Kotlin/Java et React Native)
   native_setup.py expo   <config.json> <racine_du_projet>            (React Native / Expo : app.json)
   native_setup.py spec   <config.json> <buildozer.spec>             (Python / Kivy)
+  native_setup.py spec-pygame <config.json> <buildozer.spec>        (Python / Pygame)
   native_setup.py find   <dossier> <fichier> [<fichier>…]           (affiche le chemin le moins profond)
 """
 import glob
@@ -177,7 +178,7 @@ def valeur(txt, cle, defaut=''):
     return m.group(1).strip() if m else defaut
 
 
-def patch_spec(cfg, specp):
+def patch_spec(cfg, specp, base_req=('python3', 'kivy')):
     t = lire(specp)
     pkg = cfg['pkg']
     domaine, _, court = pkg.rpartition('.')
@@ -207,7 +208,12 @@ def patch_spec(cfg, specp):
             n = re.split(r'[<>=!~\[;# ]', l.strip(), maxsplit=1)[0].strip().lower()
             if n and n not in [r.split('==')[0].lower() for r in req]:
                 req.append(n)
-    for base in ('python3', 'kivy'):
+    if 'pygame' in base_req:
+        # Jeu Pygame : SDL2 seul, sans Kivy (sauf si le projet le demande explicitement dans requirements.txt)
+        if not os.path.exists(rt) or 'kivy' not in lire(rt).lower():
+            req = [r for r in req if r.split('==')[0].lower() != 'kivy']
+        t = regler(t, 'p4a.bootstrap', 'sdl2')
+    for base in reversed(base_req):
         if base not in [r.split('==')[0].lower() for r in req]:
             req.insert(0, base)
     t = regler(t, 'requirements', ','.join(req))
@@ -236,5 +242,7 @@ if __name__ == '__main__':
         patch_expo(cfg, sys.argv[3])
     elif mode == 'spec':
         patch_spec(cfg, sys.argv[3])
+    elif mode == 'spec-pygame':
+        patch_spec(cfg, sys.argv[3], ('python3', 'pygame'))
     else:
         sys.exit('Mode inconnu : ' + mode)

@@ -1,0 +1,152 @@
+name: Build LOVE APK
+
+on:
+  push:
+    paths:
+      - 'builds/*/love.json'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Détecter la demande
+        run: |
+          CFG=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E '^builds/[^/]+/love\.json$' | head -n1)
+          test -n "$CFG"
+          echo "DIR=$(dirname "$CFG")" >> "$GITHUB_ENV"
+          echo "ID=$(basename "$(dirname "$CFG")")" >> "$GITHUB_ENV"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Installer ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick python3-pil zip
+
+      - name: Préparer le jeu LÖVE
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          exec > >(tee -a "$GITHUB_WORKSPACE/build.log") 2>&1
+          trap 'sleep 2' EXIT
+          CFG="$GITHUB_WORKSPACE/$DIR/love.json"
+          S="$GITHUB_WORKSPACE/.github/scripts"
+          W="$GITHUB_WORKSPACE/work"
+          python3 "$S/android_setup.py" fetch "$CFG" "$GITHUB_WORKSPACE/$DIR" love
+          mkdir -p "$W/src"
+          unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d "$W/src"
+          ML=$(python3 "$S/native_setup.py" find "$W/src" main.lua || true)
+          test -n "$ML" || { echo "Aucun main.lua dans le ZIP : envoie le dossier du jeu LÖVE (main.lua à la racine du jeu)."; exit 1; }
+          GAME=$(dirname "$ML")
+          (cd "$GAME" && zip -9 -q -r "$W/game.love" . -x '__MACOSX/*' '*.git*' '*.DS_Store')
+          echo "game.love : $(du -h "$W/game.love" | cut -f1)"
+          OK=""
+          for REF in 11.5a 11.5 11.4; do
+            if git clone -q --depth 1 --branch "$REF" --recurse-submodules --shallow-submodules https://github.com/love2d/love-android "$W/la"; then OK=$REF; break; fi
+            rm -rf "$W/la"
+          done
+          test -n "$OK" || { echo "Téléchargement de love-android impossible."; exit 1; }
+          echo "love-android $OK"
+          echo "LA=$W/la" >> "$GITHUB_ENV"
+          mkdir -p "$W/la/app/src/embed/assets"
+          cp "$W/game.love" "$W/la/app/src/embed/assets/game.love"
+          if [ "$(jq -r .icon "$CFG")" = "true" ] && [ -f "$GITHUB_WORKSPACE/$DIR/icon.png" ]; then
+            python3 "$S/icon_setup.py" gradle "$W/la/app/src/main/res" "$GITHUB_WORKSPACE/$DIR/icon.png" "$(jq -r .color "$CFG")"
+          fi
+          python3 "$S/game_setup.py" love "$CFG" "$W/la" "$GAME"
+          echo "Onglet Fonction : non disponible pour les jeux LÖVE."
+
+      - name: Clé de signature stable (mises à jour sans désinstaller)
+        run: |
+          mkdir -p ~/.android
+          K="$GITHUB_WORKSPACE/signing/debug.keystore"
+          if [ -f "$K" ]; then
+            cp "$K" ~/.android/debug.keystore
+            echo "Clé de signature existante réutilisée"
+          else
+            rm -f ~/.android/debug.keystore
+            keytool -genkeypair -keystore ~/.android/debug.keystore -storepass android -keypass android \
+              -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 36500 \
+              -dname "CN=Android Debug,O=Android,C=US"
+            mkdir -p "$GITHUB_WORKSPACE/signing"; cp ~/.android/debug.keystore "$K"
+            cd "$GITHUB_WORKSPACE"
+            git config user.name "github-actions"
+            git config user.email "github-actions@users.noreply.github.com"
+            git add -f signing/debug.keystore
+            git commit -qm "Clé de signature stable [skip ci]" || true
+            git pull --rebase -q || true
+            git push -q || true
+            echo "Nouvelle clé de signature créée et enregistrée dans signing/"
+          fi
+
+      - name: Compiler l'APK
+        run: |
+          set -o pipefail
+          cd "$LA"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null 2>&1 || true
+          chmod +x gradlew
+          ( ./gradlew assembleEmbedNoRecordDebug --no-daemon || ./gradlew assembleEmbedDebug --no-daemon ) 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
+          APK=$(find "$LA/app/build/outputs/apk" -name '*.apk' | grep -i embed | grep -v -i androidTest | head -n1)
+          test -n "$APK" || { echo "Aucun APK produit."; exit 1; }
+          echo "APK=$APK" >> "$GITHUB_ENV"
+
+      - name: Publier l'APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          CF="$DIR/love.json"
+          NAME=$(jq -r .name "$CF"); VN=$(jq -r .versionName "$CF")
+          SLUG=$(echo "$NAME" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cs 'A-Za-z0-9' '-' | sed 's/^-//;s/-$//')
+          [ -n "$SLUG" ] || SLUG=app
+          test -f "$APK" || { echo "APK introuvable : $APK"; exit 1; }
+          cp "$APK" "$SLUG-$VN.apk"
+          CFGJ=$(jq -c 'del(.fromRelease,.replaces,.iconFrom)' "$CF")
+          NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : love\nConfig : %s' "$VN" "$(jq -r .versionCode "$CF")" "$(jq -r .pkg "$CF")" "$CFGJ")
+          FILES=("$SLUG-$VN.apk")
+          if [ -f "$DIR/app.zip" ] && [ "$(jq -r '.sourceKind // ""' "$CF")" != "site" ]; then cp "$DIR/app.zip" source.zip; FILES+=(source.zip); fi
+          if [ -f "$DIR/icon.png" ]; then FILES+=("$DIR/icon.png"); fi
+          gh release create "apk-$ID" "${FILES[@]}" --title "$NAME" --notes "$NOTES"
+          OLD=$(jq -r '.replaces // ""' "$CF")
+          if [ -n "$OLD" ]; then gh release delete "$OLD" --cleanup-tag -y || true; fi
+
+      - name: Nettoyer la demande
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git rm -rq "$DIR"
+          git commit -qm "Nettoyage $ID [skip ci]"
+          git pull --rebase -q || true
+          git push -q || true
+
+      - name: Enregistrer le journal d'erreur
+        if: failure()
+        run: |
+          [ -n "$DIR" ] || exit 0
+          LOG="$GITHUB_WORKSPACE/build.log"
+          OUT="$GITHUB_WORKSPACE/$DIR/build-error.txt"
+          mkdir -p "$GITHUB_WORKSPACE/$DIR"
+          {
+            echo "== Journal de compilation ($ID) =="
+            if [ -f "$LOG" ]; then
+              sed -E 's/\x1b\[[0-9;?]*[A-Za-z]//g' "$LOG" | tr -d '\r' | grep -v -E '^ *\[[= >]*\] +[0-9]+%' | tail -n 400 | cut -c1-4000
+            else
+              echo "Aucun journal disponible (échec avant la compilation)."
+            fi
+          } > "$OUT"
+          cd "$GITHUB_WORKSPACE"
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -f "$DIR/build-error.txt"
+          git commit -qm "Journal d'erreur $ID [skip ci]" || exit 0
+          git pull --rebase -q || true
+          git push -q || true

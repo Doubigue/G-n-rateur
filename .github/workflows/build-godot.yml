@@ -1,4 +1,4 @@
-name: Build Godot Android APK
+name: Build Godot APK
 
 on:
   push:
@@ -11,14 +11,13 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
       - name: Détecter la demande
-        shell: bash
         run: |
           CFG=$(git diff-tree --no-commit-id --name-only -r HEAD | grep -E '^builds/[^/]+/godot\.json$' | head -n1)
           test -n "$CFG"
@@ -29,71 +28,164 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - uses: android-actions/setup-android@v3
-      - name: Installer le SDK Android
-        run: |
-          yes | sdkmanager --licenses >/dev/null
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-      - name: Extraire le projet
-        run: |
-          set -euo pipefail
-          mkdir -p work
-          unzip -q "$DIR/app.zip" -d work
-      - name: Installer Godot 4.4.1 et les modèles d'export
-        run: |
-          set -euo pipefail
-          wget -q https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip -O /tmp/godot.zip
-          unzip -q /tmp/godot.zip -d /tmp/godot
-          sudo install /tmp/godot/Godot_v4.4.1-stable_linux.x86_64 /usr/local/bin/godot
-          wget -q https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz -O /tmp/templates.tpz
-          mkdir -p ~/.local/share/godot/export_templates/4.4.1.stable
-          unzip -q /tmp/templates.tpz -d /tmp/godot-templates
-          cp -a /tmp/godot-templates/templates/. ~/.local/share/godot/export_templates/4.4.1.stable/
-      - name: Exporter le projet Android
-        run: |
-          set -euo pipefail
-          PROJECT=$(find work -name project.godot -printf '%h\n' | head -n1)
-          test -n "$PROJECT"
-          mkdir -p "$GITHUB_WORKSPACE/dist"
-          cd "$PROJECT"
-          godot --headless --editor --path . --import
-          godot --headless --path . --export-release "Android" "$GITHUB_WORKSPACE/dist/game.apk"
-          test -s "$GITHUB_WORKSPACE/dist/game.apk"
 
+      - name: Installer ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick python3-pil
+
+      - name: Préparer le projet Godot
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          exec > >(tee -a "$GITHUB_WORKSPACE/build.log") 2>&1
+          trap 'sleep 2' EXIT
+          CFG="$GITHUB_WORKSPACE/$DIR/godot.json"
+          S="$GITHUB_WORKSPACE/.github/scripts"
+          python3 "$S/android_setup.py" fetch "$CFG" "$GITHUB_WORKSPACE/$DIR" godot
+          mkdir -p "$GITHUB_WORKSPACE/work/src"
+          unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d "$GITHUB_WORKSPACE/work/src"
+          PG=$(python3 "$S/native_setup.py" find "$GITHUB_WORKSPACE/work/src" project.godot || true)
+          test -n "$PG" || { echo "Aucun project.godot dans le ZIP : envoie le dossier complet du projet Godot 4."; exit 1; }
+          ROOT=$(dirname "$PG")
+          echo "ROOT=$ROOT" >> "$GITHUB_ENV"
+          python3 "$S/game_setup.py" godot-info "$ROOT" | tee "$GITHUB_WORKSPACE/work/godot.info"
+          MM=$(sed -n 's/^MM=//p' "$GITHUB_WORKSPACE/work/godot.info"); MONO=$(sed -n 's/^MONO=//p' "$GITHUB_WORKSPACE/work/godot.info")
+          # Dernière version stable de cette branche (ex. 4.3 -> 4.3-stable, 4.4 -> 4.4.1-stable)
+          TAG=$(gh api 'repos/godotengine/godot-builds/releases?per_page=100' --paginate --jq '.[].tag_name' 2>/dev/null \
+                | grep -E "^${MM//./\\.}(\.[0-9]+)?-stable$" | sort -V | tail -n1 || true)
+          [ -n "$TAG" ] || TAG="${MM}-stable"
+          echo "Godot $TAG $( [ "$MONO" = 1 ] && echo '(.NET / C#)' || echo '(GDScript)')"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "MONO=$MONO" >> "$GITHUB_ENV"
+          echo "Onglet Fonction : non disponible pour les jeux Godot."
+
+      - name: Cache Godot
+        uses: actions/cache@v4
+        with:
+          path: ~/godot-dl
+          key: godot-${{ env.TAG }}-mono${{ env.MONO }}
+
+      - name: Préparer .NET (projets C#)
+        if: env.MONO == '1'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Clé de signature stable (mises à jour sans désinstaller)
+        run: |
+          mkdir -p ~/.android
+          K="$GITHUB_WORKSPACE/signing/debug.keystore"
+          if [ -f "$K" ]; then
+            cp "$K" ~/.android/debug.keystore
+            echo "Clé de signature existante réutilisée"
+          else
+            rm -f ~/.android/debug.keystore
+            keytool -genkeypair -keystore ~/.android/debug.keystore -storepass android -keypass android \
+              -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 36500 \
+              -dname "CN=Android Debug,O=Android,C=US"
+            mkdir -p "$GITHUB_WORKSPACE/signing"; cp ~/.android/debug.keystore "$K"
+            cd "$GITHUB_WORKSPACE"
+            git config user.name "github-actions"
+            git config user.email "github-actions@users.noreply.github.com"
+            git add -f signing/debug.keystore
+            git commit -qm "Clé de signature stable [skip ci]" || true
+            git pull --rebase -q || true
+            git push -q || true
+            echo "Nouvelle clé de signature créée et enregistrée dans signing/"
+          fi
+
+      - name: Compiler l'APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -o pipefail
+          {
+          set -e
+          CFG="$GITHUB_WORKSPACE/$DIR/godot.json"
+          S="$GITHUB_WORKSPACE/.github/scripts"
+          GD="$HOME/godot-dl"; mkdir -p "$GD"
+          if [ "$MONO" = 1 ]; then
+            BZ="Godot_v${TAG}_mono_linux_x86_64.zip"; TPZ="Godot_v${TAG}_mono_export_templates.tpz"; TDIR="${TAG/-/.}.mono"
+          else
+            BZ="Godot_v${TAG}_linux.x86_64.zip"; TPZ="Godot_v${TAG}_export_templates.tpz"; TDIR="${TAG/-/.}"
+          fi
+          BASE="https://github.com/godotengine/godot-builds/releases/download/$TAG"
+          echo "Installation de Godot $TAG…"
+          [ -s "$GD/$BZ" ] || curl -fsSL --retry 3 -o "$GD/$BZ" "$BASE/$BZ"
+          [ -s "$GD/$TPZ" ] || curl -fsSL --retry 3 -o "$GD/$TPZ" "$BASE/$TPZ"
+          rm -rf "$GITHUB_WORKSPACE/work/godot" "$GITHUB_WORKSPACE/work/tpl"
+          unzip -q -o "$GD/$BZ" -d "$GITHUB_WORKSPACE/work/godot"
+          G=$(find "$GITHUB_WORKSPACE/work/godot" -type f -name 'Godot_v*' ! -name '*.zip' | head -n1)
+          test -n "$G" || { echo "Binaire Godot introuvable"; exit 1; }
+          chmod +x "$G"
+          mkdir -p "$HOME/.local/share/godot/export_templates/$TDIR"
+          unzip -q -o "$GD/$TPZ" -d "$GITHUB_WORKSPACE/work/tpl"
+          cp -r "$GITHUB_WORKSPACE/work/tpl/templates/." "$HOME/.local/share/godot/export_templates/$TDIR/"
+          MM=$(echo "$TAG" | grep -oE '^[0-9]+\.[0-9]+')
+          mkdir -p "$HOME/.config/godot"
+          for F in editor_settings-4.tres "editor_settings-$MM.tres"; do
+            printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\nexport/android/android_sdk_path = "%s"\nexport/android/java_sdk_path = "%s"\nexport/android/debug_keystore = "%s"\nexport/android/debug_keystore_user = "androiddebugkey"\nexport/android/debug_keystore_pass = "android"\n' \
+              "$ANDROID_HOME" "$JAVA_HOME" "$HOME/.android/debug.keystore" > "$HOME/.config/godot/$F"
+          done
+          ICON="$GITHUB_WORKSPACE/$DIR/icon.png"; [ "$(jq -r .icon "$CFG")" = "true" ] && [ -f "$ICON" ] || ICON=-
+          python3 "$S/game_setup.py" godot "$CFG" "$ROOT" "$ICON" "$HOME/.android/debug.keystore" | tee "$GITHUB_WORKSPACE/work/preset.out"
+          PRESET=$(sed -n 's/^PRESET=//p' "$GITHUB_WORKSPACE/work/preset.out" | head -n1)
+          echo "Import des ressources du projet…"
+          "$G" --headless --path "$ROOT" --import || "$G" --headless --path "$ROOT" --editor --quit || true
+          if [ "$MONO" = 1 ]; then "$G" --headless --path "$ROOT" --build-solutions --quit || true; fi
+          mkdir -p "$GITHUB_WORKSPACE/work/out"
+          "$G" --headless --path "$ROOT" --export-release "$PRESET" "$GITHUB_WORKSPACE/work/out/game.apk"
+          test -s "$GITHUB_WORKSPACE/work/out/game.apk" || { echo "Godot n'a produit aucun APK (voir les erreurs ci-dessus)."; exit 1; }
+          } 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
+          echo "APK=$GITHUB_WORKSPACE/work/out/game.apk" >> "$GITHUB_ENV"
 
       - name: Publier l'APK
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: bash
         run: |
-          set -euo pipefail
-          CFG="$DIR/godot.json"
-          NAME=$(jq -r .name "$CFG")
-          VN=$(jq -r .versionName "$CFG")
+          CF="$DIR/godot.json"
+          NAME=$(jq -r .name "$CF"); VN=$(jq -r .versionName "$CF")
           SLUG=$(echo "$NAME" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cs 'A-Za-z0-9' '-' | sed 's/^-//;s/-$//')
-          [ -n "$SLUG" ] || SLUG=application
-          APK=$(find . -type f -name '*.apk' -not -path '*/.gradle/*' | head -n1)
-          test -n "$APK" || { echo "APK introuvable après compilation."; exit 1; }
+          [ -n "$SLUG" ] || SLUG=app
+          test -f "$APK" || { echo "APK introuvable : $APK"; exit 1; }
           cp "$APK" "$SLUG-$VN.apk"
-          gh release create "godot-$ID" "$SLUG-$VN.apk" --title "$NAME — Build Godot Android APK" --notes "Compilation Android Build Godot Android APK. Version : $VN."
+          CFGJ=$(jq -c 'del(.fromRelease,.replaces,.iconFrom)' "$CF")
+          NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : godot\nConfig : %s' "$VN" "$(jq -r .versionCode "$CF")" "$(jq -r .pkg "$CF")" "$CFGJ")
+          FILES=("$SLUG-$VN.apk")
+          if [ -f "$DIR/app.zip" ] && [ "$(jq -r '.sourceKind // ""' "$CF")" != "site" ]; then cp "$DIR/app.zip" source.zip; FILES+=(source.zip); fi
+          if [ -f "$DIR/icon.png" ]; then FILES+=("$DIR/icon.png"); fi
+          gh release create "apk-$ID" "${FILES[@]}" --title "$NAME" --notes "$NOTES"
+          OLD=$(jq -r '.replaces // ""' "$CF")
+          if [ -n "$OLD" ]; then gh release delete "$OLD" --cleanup-tag -y || true; fi
 
       - name: Nettoyer la demande
-        if: success()
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git rm -rq "$DIR"
-          git commit -qm "Nettoyage build godot $ID [skip ci]"
+          git commit -qm "Nettoyage $ID [skip ci]"
           git pull --rebase -q || true
           git push -q || true
 
       - name: Enregistrer le journal d'erreur
         if: failure()
         run: |
-          mkdir -p "$DIR"
-          { echo "== Journal Build Godot Android APK ($ID) =="; tail -n 400 "$GITHUB_WORKSPACE/build.log" 2>/dev/null || true; } > "$DIR/build-error.txt"
+          [ -n "$DIR" ] || exit 0
+          LOG="$GITHUB_WORKSPACE/build.log"
+          OUT="$GITHUB_WORKSPACE/$DIR/build-error.txt"
+          mkdir -p "$GITHUB_WORKSPACE/$DIR"
+          {
+            echo "== Journal de compilation ($ID) =="
+            if [ -f "$LOG" ]; then
+              sed -E 's/\x1b\[[0-9;?]*[A-Za-z]//g' "$LOG" | tr -d '\r' | grep -v -E '^ *\[[= >]*\] +[0-9]+%' | tail -n 400 | cut -c1-4000
+            else
+              echo "Aucun journal disponible (échec avant la compilation)."
+            fi
+          } > "$OUT"
+          cd "$GITHUB_WORKSPACE"
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
           git add -f "$DIR/build-error.txt"
-          git commit -qm "Journal erreur godot $ID [skip ci]" || true
+          git commit -qm "Journal d'erreur $ID [skip ci]" || exit 0
+          git pull --rebase -q || true
           git push -q || true

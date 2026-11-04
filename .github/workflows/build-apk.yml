@@ -59,6 +59,10 @@ jobs:
             mv "$(dirname "$SUB")" work/www2
             rm -rf work/www && mv work/www2 work/www
           fi
+          if [ "$(jq -r '.type // ""' "$CFG")" = "html5" ]; then
+            echo "Jeu HTML5 : intégration des bibliothèques (Phaser, Three.js, Pixi…) pour jouer hors ligne"
+            python3 "$GITHUB_WORKSPACE/.github/scripts/game_setup.py" html5 work/www
+          fi
 
           cd work
           npm init -y >/dev/null
@@ -129,7 +133,7 @@ jobs:
           cp work/android/app/build/outputs/apk/debug/app-debug.apk "$SLUG-$VN.apk"
           CF="$DIR/config.json"
           CFGJ=$(jq -c 'del(.fromRelease,.replaces,.iconFrom)' "$CF")
-          NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : web\nConfig : %s' "$VN" "$(jq -r .versionCode "$CF")" "$(jq -r .pkg "$CF")" "$CFGJ")
+          NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : %s\nConfig : %s' "$VN" "$(jq -r .versionCode "$CF")" "$(jq -r .pkg "$CF")" "$(jq -r '.type // "web"' "$CF")" "$CFGJ")
           FILES=("$SLUG-$VN.apk")
           if [ -f "$DIR/app.zip" ] && [ "$(jq -r '.sourceKind // ""' "$CF")" != "site" ]; then cp "$DIR/app.zip" source.zip; FILES+=(source.zip); fi
           if [ -f "$DIR/icon.png" ]; then FILES+=("$DIR/icon.png"); fi
