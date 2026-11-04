@@ -1,0 +1,5 @@
+{
+  "lieu": "Plateau, Abidjan, Côte d'Ivoire",
+  "rayon": 700,
+  "elements": ["routes", "batiments", "eau", "parcs", "monuments"]
+}

@@ -362,7 +362,7 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
 <section id="vForm">
   <div id="edBar" class="edbar" style="display:none"><span id="edTxt"></span><button type="button" class="mini2" id="edX">Annuler</button></div>
   <div class="hero" id="hero">
-    <div class="hl"><h2>Crée<br>ton<br><em>appli</em></h2><p>Un site web, Flutter, Kotlin/Java, React Native, Python (Kivy) ou un jeu Godot, LÖVE, Defold, Pygame ou HTML5, transformé en APK Android.</p><button type="button" class="cta" id="cta">Commencer <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6l6 6-6 6"/></svg></button></div>
+    <div class="hl"><h2>Crée<br>ton<br><em>appli</em></h2><p>Un site web, Flutter, Kotlin/Java, React Native, Python (Kivy) ou un jeu Godot, LÖVE, Defold, Pygame, Three.js/WebGL ou HTML5, transformé en APK Android.</p><button type="button" class="cta" id="cta">Commencer <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6l6 6-6 6"/></svg></button></div>
     <svg class="art" viewBox="0 0 120 150" aria-hidden="true"><g transform="rotate(12 60 75)"><rect x="22" y="8" width="76" height="134" rx="16" fill="#fff"/><rect x="28" y="20" width="64" height="104" rx="8" fill="#14181F"/><path d="M60 46v34m0 0l-14-14m14 14l14-14M42 102h36" stroke="#FF4A1F" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><rect x="50" y="129" width="20" height="4" rx="2" fill="#C9CDD3"/></g></svg>
   </div>
   <div class="preview" aria-label="Aperçu de l'application">
@@ -404,7 +404,7 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
 
     <div class="panel">
       <h2><span>2</span>Fichiers</h2>
-      <div class="seg wrap" role="radiogroup" aria-label="Type de projet"><label><input type="radio" name="mode" value="web" checked><span>Site web</span></label><label><input type="radio" name="mode" value="flutter"><span>Flutter</span></label><label><input type="radio" name="mode" value="native"><span>Kotlin / Java</span></label><label><input type="radio" name="mode" value="reactnative"><span>React Native</span></label><label><input type="radio" name="mode" value="python"><span>Python (Kivy)</span></label><label><input type="radio" name="mode" value="godot"><span>🎮 Godot</span></label><label><input type="radio" name="mode" value="love"><span>🎮 LÖVE</span></label><label><input type="radio" name="mode" value="defold"><span>🎮 Defold</span></label><label><input type="radio" name="mode" value="pygame"><span>🎮 Pygame</span></label><label><input type="radio" name="mode" value="html5"><span>🎮 Jeu HTML5</span></label></div>
+      <div class="seg wrap" role="radiogroup" aria-label="Type de projet"><label><input type="radio" name="mode" value="web" checked><span>Site web</span></label><label><input type="radio" name="mode" value="flutter"><span>Flutter</span></label><label><input type="radio" name="mode" value="native"><span>Kotlin / Java</span></label><label><input type="radio" name="mode" value="reactnative"><span>React Native</span></label><label><input type="radio" name="mode" value="python"><span>Python (Kivy)</span></label><label><input type="radio" name="mode" value="godot"><span>🎮 Godot</span></label><label><input type="radio" name="mode" value="love"><span>🎮 LÖVE</span></label><label><input type="radio" name="mode" value="defold"><span>🎮 Defold</span></label><label><input type="radio" name="mode" value="pygame"><span>🎮 Pygame</span></label><label><input type="radio" name="mode" value="threejs"><span>🎮 Three.js / WebGL</span></label><label><input type="radio" name="mode" value="html5"><span>🎮 Jeu HTML5</span></label></div>
       <div id="zipBox"><div class="seg" role="radiogroup" aria-label="Source du projet" style="margin-bottom:6px"><label><input type="radio" name="src" value="zip" checked><span>ZIP</span></label><label><input type="radio" name="src" value="link"><span>Lien</span></label></div>
       <label class="drop" id="dz" for="zip"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FF3F1A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 16v3a1 1 0 001 1h14a1 1 0 001-1v-3"/></svg><b id="zn">Déposer le ZIP du site</b><span id="zs">index.html + ressources · 40 Mo max</span><input id="zip" type="file" accept=".zip,.love,application/zip"></label><button type="button" class="clr" id="zipClr">✕ Vider le fichier</button><button type="button" class="mini2" id="aiBtn" style="display:none;margin-top:10px">✨ Analyser avec l'IA</button></div>
       <div id="lnkBox" style="display:none"><label for="url">Lien source</label><input id="url" type="url" inputmode="url" autocapitalize="none" autocorrect="off" placeholder="https://…"><small class="h" id="lnkHint"></small></div>
@@ -897,7 +897,9 @@ const TYPES={
     ok:n=>n.some(x=>/(^|\/)game\.project$/i.test(x)),err:'Aucun game.project dans le ZIP : envoie le dossier complet du projet Defold.'},
   pygame:{label:'Jeu Pygame',long:'Python / Pygame (Buildozer, SDL2)',json:'pygame.json',wf:'Build Pygame APK',game:1,zn:'Déposer le jeu Pygame (ZIP)',zs:'main.py qui utilise pygame (+ images, sons) · 40 Mo max',
     ok:n=>n.some(x=>/(^|\/)main\.py$/i.test(x)),err:'Aucun main.py dans le ZIP (point d\'entrée du jeu Pygame).'},
-  html5:{label:'Jeu HTML5',long:'Jeu HTML5 (Phaser, Three.js, Pixi, Babylon…)',json:'config.json',wf:'Build APK',game:1,zn:'Déposer le jeu HTML5 (ZIP)',zs:'index.html + scripts · les bibliothèques CDN sont intégrées pour jouer hors ligne · 40 Mo max',
+  threejs:{label:'Jeu Three.js',long:'Three.js + WebGL (modules ES, Vite, OpenStreetMap)',json:'config.json',wf:'Build APK',game:1,zn:'Déposer le jeu Three.js (ZIP)',zs:'index.html (importmap/CDN) ou projet Vite avec package.json · osm.json facultatif pour les vraies rues · 40 Mo max',
+    ok:n=>n.some(x=>/(^|\/)(index\.html|package\.json)$/i.test(x)),err:'Il faut un index.html (ou un projet Vite avec package.json) dans le ZIP.'},
+  html5:{label:'Jeu HTML5',long:'Jeu HTML5 (Phaser, Pixi, Babylon, Kaboom…)',json:'config.json',wf:'Build APK',game:1,zn:'Déposer le jeu HTML5 (ZIP)',zs:'index.html + scripts · les bibliothèques CDN sont intégrées pour jouer hors ligne · 40 Mo max',
     ok:n=>n.some(x=>/(^|\/)index\.html$/i.test(x)),err:'index.html est introuvable dans le ZIP.'}
 };
 /* Reconnaît le type de projet d'après le contenu du ZIP */
@@ -914,6 +916,11 @@ async function typeDuZip(z){
   if(mp){const t=await lire(mp);return /^\s*(import\s+pygame|from\s+pygame)/m.test(t)&&!/\bkivy\b/.test(t)?'pygame':'python'}
   const ix=a(/(^|\/)index\.html$/i);
   if(a(/(^|\/)package\.json$/i)&&a(/(^|\/)(App\.(js|jsx|ts|tsx)|app\.json)$/i)&&!ix)return 'reactnative';
+  const pk=a(/(^|\/)package\.json$/i);
+  if(ix||pk){
+    const pt=pk?await lire(pk):'',it=ix?await lire(ix):'';
+    if(/"three"\s*:/.test(pt)||a(/(^|\/)osm\.json$/i)||/three@|\/three(\.module|\.core)?(\.min)?\.js|["']three["']|\bTHREE\.|three\/addons\//.test(it)||n.some(x=>/three(\.module|\.core)?(\.min)?\.js$/i.test(x)))return 'threejs';
+  }
   if(ix){
     const jeu=/phaser|three(\.module)?(\.min)?\.js|pixi|babylon|kaboom|kaplay|playcanvas|c3runtime|construct|gdjs|excalibur|melonjs|impact/i;
     if(n.some(x=>jeu.test(x.split('/').pop())))return 'html5';
@@ -3110,7 +3117,7 @@ const aiModel=()=>{try{return(localStorage.getItem('apk-ai-model')||'').trim()||
 try{$('aiKey').value=aiKey();$('aiModel').value=aiModel()}catch(_){}
 $('saveCx').addEventListener('click',()=>{try{if($('rem').checked){localStorage.setItem('apk-ai-key',$('aiKey').value.trim());localStorage.setItem('apk-ai-model',$('aiModel').value.trim())}else{localStorage.removeItem('apk-ai-key');localStorage.removeItem('apk-ai-model')}}catch(_){}});
 function aiSync(){const b=$('aiBtn');if(b)b.style.display=($('zip').files[0]&&src()==='zip')?'':'none'}
-const AI_SYS=`Tu es un expert de la compilation d'APK Android (Capacitor/site web, Flutter, Gradle Kotlin/Java, React Native/Expo, Buildozer/Kivy) et des moteurs de jeu (Godot 4 GDScript/C# exporté en ligne de commande, LÖVE/Lua via love-android, Defold/Lua via bob.jar, Pygame via Buildozer SDL2, jeux HTML5 Phaser/Three.js/Pixi via Capacitor).
+const AI_SYS=`Tu es un expert de la compilation d'APK Android (Capacitor/site web, Flutter, Gradle Kotlin/Java, React Native/Expo, Buildozer/Kivy) et des moteurs de jeu (Godot 4 GDScript/C# exporté en ligne de commande, LÖVE/Lua via love-android, Defold/Lua via bob.jar, Pygame via Buildozer SDL2, jeux HTML5 Phaser/Pixi via Capacitor, jeux Three.js/WebGL via Capacitor avec modules ES embarqués hors ligne, build Vite et données OpenStreetMap osm.json).
 On te donne l'arborescence et le contenu de fichiers d'un projet, parfois le journal d'une compilation qui a échoué.
 Détecte les erreurs qui font échouer la compilation ou empêchent l'application de démarrer, et propose des corrections sûres et minimales.
 Règles :

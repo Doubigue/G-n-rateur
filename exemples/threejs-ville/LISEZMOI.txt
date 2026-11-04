@@ -1,0 +1,5 @@
+Exemple Three.js + WebGL + OpenStreetMap pour APK Studio
+- Zippe ce dossier et dépose-le dans APK Studio : le type « Three.js / WebGL » est reconnu tout seul.
+- Change le lieu dans osm.json (ex. "Gombe, Kinshasa", "Cocody, Abidjan") et le rayon en mètres.
+- Sans osm.json, une ville d'essai est générée.
+- Commandes : boutons à l'écran, ou flèches / ZQSD au clavier.

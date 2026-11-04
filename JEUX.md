@@ -9,6 +9,7 @@ le jeu en **paysage plein écran** (modifiable avant de lancer la compilation).
 | 🎮 LÖVE | Lua | `main.lua` (+ `conf.lua`), ZIP ou fichier `.love` | `build-love.yml` | love-android 11.5 (le jeu est embarqué) |
 | 🎮 Defold | Lua | dossier du projet avec `game.project` | `build-defold.yml` | `bob.jar` officiel (dernière version stable) |
 | 🎮 Pygame | Python | `main.py` qui fait `import pygame` (+ `requirements.txt` facultatif) | `build-pygame.yml` | Buildozer, amorce SDL2, sans Kivy |
+| 🎮 Three.js / WebGL | JavaScript / TypeScript | `index.html` avec importmap ou CDN, **ou** projet Vite/npm (`package.json` + script `build`) ; `osm.json` facultatif | `build-apk.yml` | Capacitor ; build npm si besoin, modules ES et ressources embarqués **hors ligne**, données OpenStreetMap téléchargées à la compilation |
 | 🎮 Jeu HTML5 | JavaScript | `index.html` (Phaser, Three.js, PixiJS, Babylon, Kaboom, exports Construct 3 / GDevelop…) | `build-apk.yml` | Capacitor ; les bibliothèques chargées depuis un CDN sont téléchargées et intégrées pour jouer **hors ligne** |
 | Flutter (Flame) | Dart | `pubspec.yaml` + `lib/` | `build-flutter.yml` | inchangé |
 | Kotlin / Java (libGDX) | Java / Kotlin | `settings.gradle` + module Android | `build-native.yml` | inchangé |
@@ -37,6 +38,25 @@ listés dans `requirements.txt` sont ajoutés automatiquement.
 
 **Jeu HTML5** : CDN reconnus pour le mode hors ligne : cdnjs, jsDelivr, unpkg, code.jquery.com,
 cdn.babylonjs.com, pixijs.download, esm.sh, Skypack. Un fichier introuvable reste chargé en ligne.
+
+**Three.js / WebGL**
+- *Sans outil de build* : `index.html` + `<script type="importmap">` (ex. `"three"` et `"three/addons/"` vers jsDelivr).
+  Tout ce qui est importé est téléchargé **avec ses dépendances** (`three.core.js`, addons, `+esm`, esm.sh),
+  ainsi que les ressources appelées depuis un CDN : modèles `.glb/.gltf`, textures, HDR, polices,
+  décodeurs Draco/Basis (`setDecoderPath(...)`). L'arborescence est conservée dans `apk_lib/`.
+- *Avec Vite (ou autre)* : `npm ci`/`npm install` puis `npm run build` ; pour Vite, `--base ./` est ajouté
+  automatiquement. Le dossier `dist/` (ou `build/`, `out/`) devient l'application.
+- *Vraies rues avec OpenStreetMap* : ajoute un `osm.json` à côté de `index.html` :
+  ```json
+  { "lieu": "Gombe, Kinshasa", "rayon": 800, "elements": ["routes", "batiments", "eau", "parcs", "monuments"] }
+  ```
+  (ou `"centre": [lat, lon]`, ou `"bbox": [sud, ouest, nord, est]` ; rayon max 3 km ; `"rails"` possible).
+  À la compilation, les données sont téléchargées une fois (Nominatim + Overpass) dans `osm/data.json`,
+  et `osm/osm.js` fournit `chargerOSM()` : routes (largeur réelle), bâtiments (hauteur réelle ou estimée),
+  eaux, parcs et monuments, en mètres (x = est, z = sud). Le jeu marche ensuite **sans connexion**.
+  Mention obligatoire dans le jeu : « © contributeurs OpenStreetMap ».
+- Réglages mobiles ajoutés : viewport sans zoom, pas de défilement ni de sélection, écran gardé allumé.
+- Exemple prêt à compiler : `exemples/threejs-ville/` (voiture dans une vraie ville ; zippe le dossier).
 
 ## Non pris en charge
 - **Unity** et **Unreal** : licence et éditeur obligatoires, impossible sur GitHub Actions gratuit.
