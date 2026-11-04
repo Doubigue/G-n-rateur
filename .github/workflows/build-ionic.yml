@@ -69,7 +69,7 @@ jobs:
         run: |
           CFG="$GITHUB_WORKSPACE/$DIR/ionic.json"
           NAME=$(jq -r '.name // "Application Ionic"' "$CFG")
-          gh release create "apk-$ID" "$GITHUB_WORKSPACE/ionic-$ID.apk" --title "$NAME" --notes "APK Ionic / Capacitor compilé automatiquement."
+          bash "$GITHUB_WORKSPACE/.github/scripts/release_create.sh" "apk-$ID" "$GITHUB_WORKSPACE/ionic-$ID.apk" --title "$NAME" --notes "APK Ionic / Capacitor compilé automatiquement."
       - name: Nettoyer la demande
         if: always()
         run: |

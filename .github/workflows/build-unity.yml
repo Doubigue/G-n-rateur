@@ -78,7 +78,7 @@ jobs:
           APK=$(find . -type f -name '*.apk' -not -path '*/.gradle/*' | head -n1)
           test -n "$APK" || { echo "APK introuvable après compilation."; exit 1; }
           cp "$APK" "$SLUG-$VN.apk"
-          gh release create "unity-$ID" "$SLUG-$VN.apk" --title "$NAME — Build Unity Android APK" --notes "Compilation Android Build Unity Android APK. Version : $VN."
+          bash "$GITHUB_WORKSPACE/.github/scripts/release_create.sh" "unity-$ID" "$SLUG-$VN.apk" --title "$NAME — Build Unity Android APK" --notes "Compilation Android Build Unity Android APK. Version : $VN."
 
       - name: Nettoyer la demande
         if: success()

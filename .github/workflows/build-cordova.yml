@@ -67,7 +67,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           NAME=$(jq -r '.name // "Application Cordova"' "$GITHUB_WORKSPACE/$DIR/cordova.json")
-          gh release create "apk-$ID" "$GITHUB_WORKSPACE/cordova-$ID.apk" --title "$NAME" --notes "APK Apache Cordova compilé automatiquement."
+          bash "$GITHUB_WORKSPACE/.github/scripts/release_create.sh" "apk-$ID" "$GITHUB_WORKSPACE/cordova-$ID.apk" --title "$NAME" --notes "APK Apache Cordova compilé automatiquement."
       - name: Nettoyer la demande
         if: always()
         run: |

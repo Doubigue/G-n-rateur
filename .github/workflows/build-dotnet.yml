@@ -103,7 +103,7 @@ jobs:
           FILES=("$SLUG-$VN.apk")
           if [ -f "$DIR/app.zip" ] && [ "$(jq -r '.sourceKind // ""' "$CF")" != "site" ]; then cp "$DIR/app.zip" source.zip; FILES+=(source.zip); fi
           if [ -f "$DIR/icon.png" ]; then FILES+=("$DIR/icon.png"); fi
-          gh release create "apk-$ID" "${FILES[@]}" --title "$NAME" --notes "$NOTES"
+          bash "$GITHUB_WORKSPACE/.github/scripts/release_create.sh" "apk-$ID" "${FILES[@]}" --title "$NAME" --notes "$NOTES"
           OLD=$(jq -r '.replaces // ""' "$CF")
           if [ -n "$OLD" ]; then gh release delete "$OLD" --cleanup-tag -y || true; fi
 

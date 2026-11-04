@@ -63,7 +63,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="zip-$(date -u +%Y%m%d-%H%M%S)"
-          gh release create "$TAG" "$ZIP" \
+          bash "$GITHUB_WORKSPACE/.github/scripts/release_create.sh" "$TAG" "$ZIP" \
             --title "Dépôt ZIP $(date -u +%d/%m/%Y\ %H:%M)" \
             --notes "Archive du dépôt (${{ github.repository }}). Sans builds : ${{ inputs.sans_builds }}."
           # Ne garde que les 3 dernières archives ZIP
