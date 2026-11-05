@@ -1,0 +1,29 @@
+{
+  "name": "Vidéo Made",
+  "pkg": "com.doubigue.videomade",
+  "versionName": "1.0.28",
+  "versionCode": 29,
+  "orientation": "auto",
+  "color": "#ffffff",
+  "fullscreen": false,
+  "icon": true,
+  "type": "native",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true,
+  "omnicode": false,
+  "fonction": false,
+  "replaces": "apk-mw26bpo2"
+}
