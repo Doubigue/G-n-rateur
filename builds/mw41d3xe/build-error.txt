@@ -1,0 +1,213 @@
+== Journal de compilation (mw41d3xe) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mw41d3xe/app.zip | icône : False
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/build.gradle.kts | applicationId = com.doubigue.converter | version = 1.0.2 (3)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app
+Onglet Fonction : désactivé (Description.md, Captures et Animation ne sont pas inclus)
+
+Welcome to Gradle 9.8.2!
+
+Here are the highlights of this release:
+ - Java 27 support
+ - Maven mirror settings reuse
+ - Linked problem locations in build output
+
+For more details see https://docs.gradle.org/9.8.2/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.8.2/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :app
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/build.gradle.kts:21:5: 'fun BaseAppModuleExtension.kotlinOptions(configure: Action<KotlinJvmOptions>): Unit' is deprecated. The kotlinOptions types are deprecated, please migrate to the compilerOptions types. More details are here: https://kotl.in/u1r8ln.
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:mergeDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+
+> Task :app:processDebugMainManifest
+/home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/AndroidManifest.xml:31:5-47:19 Warning:
+	application@android:icon was tagged at AndroidManifest.xml:31 to replace other declarations but no other declaration present
+/home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/AndroidManifest.xml:31:5-47:19 Warning:
+	application@android:roundIcon was tagged at AndroidManifest.xml:31 to replace other declarations but no other declaration present
+/home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/AndroidManifest.xml:31:5-47:19 Warning:
+	application@android:theme was tagged at AndroidManifest.xml:31 to replace other declarations but no other declaration present
+
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:compressDebugAssets
+> Task :app:processDebugResources
+> Task :app:checkDebugDuplicateClasses FAILED
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/java/com/mediastudio/app/ClipEffects.kt:61:27 Java type mismatch: expected 'kotlin.collections.(Mutable)List<androidx.media3.effect.TextureOverlay>' but found 'com.google.common.collect.ImmutableList<androidx.media3.effect.TextOverlay!>!'. Use explicit cast.
+
+[Incubating] Problems report is available at: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/build/reports/problems/problems-report.html
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':app:checkDebugDuplicateClasses' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing com.android.build.gradle.internal.tasks.CheckDuplicatesRunnable
+   > Duplicate class android.support.v4.app.INotificationSideChannel found in modules core-1.15.0.aar -> core-1.15.0-runtime (androidx.core:core:1.15.0) and support-compat-26.1.0.aar -> support-compat-26.1.0-runtime (com.android.support:support-compat:26.1.0)
+     Duplicate class android.support.v4.app.INotificationSideChannel$Stub found in modules core-1.15.0.aar -> core-1.15.0-runtime (androidx.core:core:1.15.0) and support-compat-26.1.0.aar -> support-compat-26.1.0-runtime (com.android.support:support-compat:26.1.0)
+     Duplicate class android.support.v4.app.INotificationSideChannel$Stub$Proxy found in modules core-1.15.0.aar -> core-1.15.0-runtime (androidx.core:core:1.15.0) and support-compat-26.1.0.aar -> support-compat-26.1.0-runtime (com.android.support:support-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$CallbackHandler found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$ConnectionCallback found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$ConnectionCallback$ConnectionCallbackInternal found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$CustomActionCallback found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$CustomActionResultReceiver found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$ItemCallback found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$ItemReceiver found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImpl found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplApi21 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplApi21$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplApi21$2 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplApi21$3 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplApi21$4 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplApi21$5 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplApi21$6 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplApi21$7 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplApi23 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplBase found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplBase$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplBase$2 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplBase$3 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplBase$4 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplBase$5 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplBase$6 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplBase$MediaServiceConnection found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplBase$MediaServiceConnection$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserImplBase$MediaServiceConnection$2 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaBrowserServiceCallbackImpl found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaItem found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$MediaItem$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$SearchCallback found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$SearchResultReceiver found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$ServiceBinderWrapper found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$Subscription found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaBrowserCompat$SubscriptionCallback found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaDescriptionCompat found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaDescriptionCompat$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaDescriptionCompat$Builder found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaMetadataCompat found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaMetadataCompat$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.MediaMetadataCompat$Builder found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.RatingCompat found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.RatingCompat$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.RatingCompat$StarStyle found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.RatingCompat$Style found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.IMediaControllerCallback found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.IMediaControllerCallback$Stub found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.IMediaControllerCallback$Stub$Proxy found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.IMediaSession found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.IMediaSession$Stub found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.IMediaSession$Stub$Proxy found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$Callback found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$Callback$MessageHandler found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$Callback$StubCompat found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$MediaControllerImpl found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$MediaControllerImplApi21 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$MediaControllerImplApi21$ExtraBinderRequestResultReceiver found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$MediaControllerImplApi21$ExtraCallback found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$MediaControllerImplBase found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$PlaybackInfo found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$TransportControls found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$TransportControlsApi21 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$TransportControlsApi23 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$TransportControlsApi24 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaControllerCompat$TransportControlsBase found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$Callback found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$Callback$CallbackHandler found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$MediaSessionImpl found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$MediaSessionImplApi18 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$MediaSessionImplApi18$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$MediaSessionImplApi19 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$MediaSessionImplApi19$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$MediaSessionImplApi21 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$MediaSessionImplApi21$ExtraSession found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$MediaSessionImplBase found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$MediaSessionImplBase$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$MediaSessionImplBase$Command found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$MediaSessionImplBase$MediaSessionStub found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$MediaSessionImplBase$MessageHandler found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$OnActiveChangeListener found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$QueueItem found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$QueueItem$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$ResultReceiverWrapper found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$ResultReceiverWrapper$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$Token found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.MediaSessionCompat$Token$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.ParcelableVolumeInfo found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.ParcelableVolumeInfo$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.PlaybackStateCompat found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.PlaybackStateCompat$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.PlaybackStateCompat$Actions found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.PlaybackStateCompat$Builder found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.PlaybackStateCompat$CustomAction found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.PlaybackStateCompat$CustomAction$1 found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.PlaybackStateCompat$CustomAction$Builder found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.PlaybackStateCompat$MediaKeyAction found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.PlaybackStateCompat$RepeatMode found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.PlaybackStateCompat$ShuffleMode found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.media.session.PlaybackStateCompat$State found in modules media-1.7.0.aar -> media-1.7.0-runtime (androidx.media:media:1.7.0) and support-media-compat-26.1.0.aar -> support-media-compat-26.1.0-runtime (com.android.support:support-media-compat:26.1.0)
+     Duplicate class android.support.v4.os.IResultReceiver found in modules core-1.15.0.aar -> core-1.15.0-runtime (androidx.core:core:1.15.0) and support-compat-26.1.0.aar -> support-compat-26.1.0-runtime (com.android.support:support-compat:26.1.0)
+     Duplicate class android.support.v4.os.IResultReceiver$Stub found in modules core-1.15.0.aar -> core-1.15.0-runtime (androidx.core:core:1.15.0) and support-compat-26.1.0.aar -> support-compat-26.1.0-runtime (com.android.support:support-compat:26.1.0)
+     Duplicate class android.support.v4.os.IResultReceiver$Stub$Proxy found in modules core-1.15.0.aar -> core-1.15.0-runtime (androidx.core:core:1.15.0) and support-compat-26.1.0.aar -> support-compat-26.1.0-runtime (com.android.support:support-compat:26.1.0)
+     Duplicate class android.support.v4.os.ResultReceiver found in modules core-1.15.0.aar -> core-1.15.0-runtime (androidx.core:core:1.15.0) and support-compat-26.1.0.aar -> support-compat-26.1.0-runtime (com.android.support:support-compat:26.1.0)
+     Duplicate class android.support.v4.os.ResultReceiver$1 found in modules core-1.15.0.aar -> core-1.15.0-runtime (androidx.core:core:1.15.0) and support-compat-26.1.0.aar -> support-compat-26.1.0-runtime (com.android.support:support-compat:26.1.0)
+     Duplicate class android.support.v4.os.ResultReceiver$MyResultReceiver found in modules core-1.15.0.aar -> core-1.15.0-runtime (androidx.core:core:1.15.0) and support-compat-26.1.0.aar -> support-compat-26.1.0-runtime (com.android.support:support-compat:26.1.0)
+     Duplicate class android.support.v4.os.ResultReceiver$MyRunnable found in modules core-1.15.0.aar -> core-1.15.0-runtime (androidx.core:core:1.15.0) and support-compat-26.1.0.aar -> support-compat-26.1.0-runtime (com.android.support:support-compat:26.1.0)
+     
+     Go to the documentation to learn how to <a href="d.android.com/r/tools/classpath-sync-errors">Fix dependency resolution errors</a>.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin' (registered by plugin 'org.jetbrains.kotlin.android').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.8.2/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 1m 56s
+20 actionable tasks: 20 executed
