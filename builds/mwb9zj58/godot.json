@@ -1,0 +1,28 @@
+{
+  "name": "Ludo",
+  "pkg": "com.dlvibestudio.ludo3d",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "orientation": "landscape",
+  "color": "#2a2f6b",
+  "fullscreen": true,
+  "icon": true,
+  "type": "godot",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true,
+  "omnicode": false,
+  "fonction": false
+}
