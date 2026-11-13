@@ -1,0 +1,84 @@
+== Journal de compilation (mwf45vhc) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mwf45vhc/app.zip | icône : True
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/app/build.gradle.kts | applicationId = com.doubigue.assistante | version = 1.0.2 (3)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/app
+Icône pleine taille générée (fond adaptatif #FEFEFE)
+Onglet Fonction : désactivé (Description.md, Captures et Animation ne sont pas inclus)
+
+Welcome to Gradle 9.9.1!
+
+Here are the highlights of this release:
+ - Performance improvements for Kotlin DSL compilation
+ - Test filtering for non-method JUnit Platform tests
+ - Wrapper settings preserved on upgrade
+ - Predefined groups in the Problems API
+
+For more details see https://docs.gradle.org/9.9.1/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.9.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/app/build.gradle.kts:21:5: 'fun BaseAppModuleExtension.kotlinOptions(configure: Action<KotlinJvmOptions>): Unit' is deprecated. The kotlinOptions types are deprecated, please migrate to the compilerOptions types. More details are here: https://kotl.in/u1r8ln.
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:mergeDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:processDebugResources
+> Task :app:checkDebugDuplicateClasses
+
+> Task :app:kspDebugKotlin
+e: [ksp] /home/runner/work/G-n-rateur/G-n-rateur/work/src/app/src/main/java/com/doubigue/ai/data/AssistantDatabase.kt:25: Entity class must be annotated with @Entity
+e: [ksp] /home/runner/work/G-n-rateur/G-n-rateur/work/src/app/src/main/java/com/doubigue/ai/data/AssistantDatabase.kt:34: There is a problem with the query: [SQLITE_ERROR] SQL error or missing database (no such table: conversation_message)
+e: [ksp] /home/runner/work/G-n-rateur/G-n-rateur/work/src/app/src/main/java/com/doubigue/ai/data/AssistantDatabase.kt:34: Not sure how to convert a Cursor to this method's return type (kotlinx.coroutines.flow.Flow<java.util.List<com.doubigue.ai.data.ConversationMessage>>).
+e: [ksp] /home/runner/work/G-n-rateur/G-n-rateur/work/src/app/src/main/java/com/doubigue/ai/data/AssistantDatabase.kt:36: There is a problem with the query: [SQLITE_ERROR] SQL error or missing database (no such table: conversation_message)
+e: [ksp] /home/runner/work/G-n-rateur/G-n-rateur/work/src/app/src/main/java/com/doubigue/ai/data/AssistantDatabase.kt:35: Type of the parameter must be a class annotated with @Entity or a collection/array of it.
+w: [ksp] /home/runner/work/G-n-rateur/G-n-rateur/work/src/app/src/main/java/com/doubigue/ai/data/AssistantDatabase.kt:56: Schema export directory was not provided to the annotation processor so Room cannot export the schema. You can either provide `room.schemaLocation` annotation processor argument by applying the Room Gradle plugin (id 'androidx.room') OR set exportSchema to false.
+e: Error occurred in KSP, check log for detail
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/app/src/main/java/com/doubigue/ai/data/AssistantDatabase.kt:24:82 Expecting ']'
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/app/src/main/java/com/doubigue/ai/data/AssistantDatabase.kt:24:85 Expecting a top level declaration
+
+> Task :app:kspDebugKotlin FAILED
+> Task :app:mergeExtDexDebug
+
+[Incubating] Problems report is available at: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:kspDebugKotlin' (registered by plugin 'org.jetbrains.kotlin.android').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.9.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 2m 43s
+21 actionable tasks: 21 executed
