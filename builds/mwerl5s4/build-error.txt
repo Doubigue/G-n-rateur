@@ -1,0 +1,67 @@
+== Journal de compilation (mwerl5s4) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mwerl5s4/app.zip | icône : False
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/MonCoffre/app/build.gradle.kts | applicationId = com.doubigue.monitor | version = 1.0.2 (3)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/MonCoffre/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/MonCoffre/app
+Onglet Fonction : désactivé (Description.md, Captures et Animation ne sont pas inclus)
+Downloading https://services.gradle.org/distributions/gradle-8.9-bin.zip
+............10%.............20%.............30%.............40%.............50%.............60%.............70%.............80%.............90%.............100%
+
+Welcome to Gradle 8.9!
+
+Here are the highlights of this release:
+ - Enhanced Error and Warning Messages
+ - IDE Integration Improvements
+ - Daemon JVM Information
+
+For more details see https://docs.gradle.org/8.9/release-notes.html
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :app
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MonCoffre/app/build.gradle.kts:15:32: Unexpected tokens (use ';' to separate expressions on the same line)
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* Where:
+Build file '/home/runner/work/G-n-rateur/G-n-rateur/work/src/MonCoffre/app/build.gradle.kts' line: 15
+
+* What went wrong:
+Script compilation error:
+
+  Line 15:         versionCode = 3 / 60000).toInt()
+                                          ^ Unexpected tokens (use ';' to separate expressions on the same line)
+
+1 error
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* Where:
+Build file '/home/runner/work/G-n-rateur/G-n-rateur/work/src/MonCoffre/app/build.gradle.kts' line: 15
+
+* What went wrong:
+Script compilation error:
+
+  Line 15:         versionCode = 3 / 60000).toInt()
+                                          ^ Unexpected tokens (use ';' to separate expressions on the same line)
+
+1 error
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 47s
