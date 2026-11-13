@@ -1,0 +1,30 @@
+{
+  "name": "Turbo Download",
+  "pkg": "com.doubigue.download",
+  "versionName": "1.0.15",
+  "versionCode": 16,
+  "orientation": "auto",
+  "color": "#2a2f6b",
+  "fullscreen": false,
+  "icon": true,
+  "type": "native",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true,
+  "omnicode": false,
+  "fonction": false,
+  "replaces": "apk-mwes5a5e",
+  "iconFrom": "apk-mwes5a5e"
+}
