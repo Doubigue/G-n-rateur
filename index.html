@@ -107,6 +107,18 @@ button:focus-visible,a:focus-visible,summary:focus-visible,label.btn:focus-withi
 .mini2{background:var(--chip);border:0;color:var(--ink);border-radius:12px;padding:8px 14px;font:500 13px Poppins,sans-serif;cursor:pointer}
 .mini2:active{background:#E6E1DD}
 
+/* ---------- Keystore (clé de signature) ---------- */
+.ksbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:16px;padding:14px;background:var(--tint);color:var(--org);font:600 15px Poppins,sans-serif;cursor:pointer;transition:transform .15s}
+.ksbtn:active:not(:disabled){transform:scale(.98)}
+.ksbtn.lock,.ksbtn:disabled{background:#E4E1DE;color:#9AA0A8;cursor:not-allowed}
+#ksForm{display:none;margin-top:4px}
+#ksForm.on{display:block}
+#ksForm input[readonly]{background:#EFEBE7;color:var(--mut)}
+.ksrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.ksrow .mini2{flex:1 1 auto;min-width:0;padding:11px 14px}
+.ksrow .mini2.sun{background:var(--tint);color:var(--org);font-weight:600}
+.ksrow .mini2[hidden]{display:none}
+
 /* ---------- Progression ---------- */
 #vProg{display:none;text-align:center}
 .ringbox{position:relative;width:230px;height:230px;margin:10px auto 6px}
@@ -422,6 +434,32 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
       <label class="sw"><input id="omni" type="checkbox" checked><i></i>Modifier le code avec OmniCode Studio (si installé)</label>
       <label class="sw" id="foncSw"><input id="fonc" type="checkbox" checked><i></i>Inclure l'onglet « Fonction » (description, captures, animation)</label>
       <small class="h">Le bouton Partager d'Android listera l'application. « Tous les fichiers » ouvre un réglage Android à la première ouverture.</small>
+    </div>
+
+    <div class="panel" id="ksPanel">
+      <button type="button" class="ksbtn" id="ksBtn" aria-expanded="false" aria-controls="ksForm"><span id="ksIco" aria-hidden="true">🔑</span><span id="ksLbl">Keystore</span></button>
+      <div id="ksForm">
+        <small class="h" id="ksInfo">Clé de signature de l'application. Génère-la une fois et garde-la : sans elle, impossible de publier des mises à jour.</small>
+        <label for="ksAlias">Alias de la clé</label>
+        <input id="ksAlias" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="cle-a1b2c3">
+        <label for="ksPass">Mot de passe du keystore</label>
+        <input id="ksPass" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="20 caractères aléatoires">
+        <label for="ksKeyPass">Mot de passe de la clé</label>
+        <input id="ksKeyPass" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="20 caractères aléatoires">
+        <label for="ksCn">Nom (CN)</label>
+        <input id="ksCn" maxlength="60" autocomplete="off" placeholder="Mon application">
+        <div class="row">
+          <div><label for="ksOrg">Organisation (O)</label><input id="ksOrg" maxlength="60" autocomplete="off" placeholder="Mon organisation"></div>
+          <div><label for="ksPays">Pays (C)</label><input id="ksPays" maxlength="2" autocomplete="off" autocapitalize="characters" placeholder="FR"></div>
+        </div>
+        <label for="ksVal">Validité (années)</label>
+        <input id="ksVal" type="number" min="25" max="100" inputmode="numeric" value="30">
+        <small class="h" id="ksFile"></small>
+        <div class="ksrow">
+          <button type="button" class="mini2 sun" id="ksGen">🎲 Générer aléatoirement</button>
+          <button type="button" class="mini2" id="ksDl">⬇ Télécharger la clé (.txt)</button>
+        </div>
+      </div>
     </div>
 
     <button class="btn" id="go" type="submit">Générer l'APK</button>
@@ -869,14 +907,112 @@ function fnInfo(fn){
   if(fn.md&&fn.desc.length>4000)toast('Description tronquée à 4000 caractères');
 }
 async function detecterLogo(){
-  autoLogo=null;const f=$('zip').files[0];let fn=null;
-  if(f&&src()==='zip'&&f.size<=40*1048576){try{const z=await JSZip.loadAsync(f);autoLogo=await logoDansZip(z);fn=await fonctionDansZip(z);
+  autoLogo=null;const f=$('zip').files[0];let fn=null,cle=null;
+  if(f&&src()==='zip'&&f.size<=40*1048576){try{const z=await JSZip.loadAsync(f);autoLogo=await logoDansZip(z);fn=await fonctionDansZip(z);try{cle=await cleDuZip(z)}catch(_){}
     const t=await typeDuZip(z);
     if(t&&!edition&&t!==mode()){choisir('mode',t);zipTextes();$('zn').textContent=f.name;$('zs').textContent=(f.size/1048576).toFixed(1)+' Mo';if(typeDe(t).game)reglagesJeu();toast('Type détecté : '+typeDe(t).label)}
   }catch(_){}}
   iconeAff();fnInfo(fn);
+  if(cle){ksAuto=cle;ksSync();toast('Keystore détecté dans le ZIP')}else if(ksAuto){ksReset()}
 }
 $('icon').addEventListener('change',iconeAff);iconeAff();
+
+/* ===== Keystore : clé de signature aléatoire, détection dans le ZIP, export .txt ===== */
+const KS_IDS={alias:'ksAlias',pass:'ksPass',keyPass:'ksKeyPass',cn:'ksCn',org:'ksOrg',pays:'ksPays',val:'ksVal'};
+let ksAuto=null;/* clé trouvée dans le ZIP : {fichier, alias, pass, …} */
+function ksRand(n,set){const a=new Uint32Array(n);crypto.getRandomValues(a);return Array.from(a,x=>set[x%set.length]).join('')}
+const KS_PW='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789',KS_AL='abcdefghijkmnpqrstuvwxyz23456789';
+function ksGenerer(){
+  if(ksAuto)return;
+  const pw=ksRand(20,KS_PW);
+  $('ksAlias').value='cle-'+ksRand(6,KS_AL);
+  $('ksPass').value=pw;$('ksKeyPass').value=pw;/* PKCS12 exige le même mot de passe */
+  $('ksCn').value=($('name').value.trim()||'Mon application').slice(0,60);
+  if(!$('ksOrg').value.trim())$('ksOrg').value=$('ksCn').value;
+  if(!$('ksPays').value.trim())$('ksPays').value='FR';
+  $('ksVal').value=30;
+  toast('Clé générée — pense à la télécharger');
+}
+/* Lit les identifiants de signature dans un texte (key.properties, build.gradle, ancien .txt de l'appli) */
+function ksLire(t){
+  const o={};
+  const g=(re)=>{const m=t.match(re);return m?m[1].trim().replace(/^["']|["']$/g,''):''};
+  const bon=v=>v&&!/[$]|getenv|System\.|project\.|\bnull\b|^\s*$/.test(v)?v:'';
+  const v={
+    pass:bon(g(/^[ \t]*(?:store[_-]?password|keystore[_-]?password)[ \t]*[=:][ \t]*(.+)$/im)||g(/\bstorePassword[ \t(]+["']([^"'\n]+)["']/)||g(/^[ \t]*Mot de passe du keystore[ \t]*:[ \t]*(.+)$/im)),
+    keyPass:bon(g(/^[ \t]*key[_-]?password[ \t]*[=:][ \t]*(.+)$/im)||g(/\bkeyPassword[ \t(]+["']([^"'\n]+)["']/)||g(/^[ \t]*Mot de passe de la clé[ \t]*:[ \t]*(.+)$/im)),
+    alias:bon(g(/^[ \t]*key[_-]?alias[ \t]*[=:][ \t]*(.+)$/im)||g(/\bkeyAlias[ \t(]+["']([^"'\n]+)["']/)||g(/^[ \t]*Alias(?: de la clé)?[ \t]*:[ \t]*(.+)$/im)),
+    fichier:bon(g(/^[ \t]*store[_-]?file[ \t]*[=:][ \t]*(.+)$/im)||g(/\bstoreFile[ \t(]+(?:file\()?["']([^"'\n]+)["']/)),
+    cn:g(/^[ \t]*Nom \(CN\)[ \t]*:[ \t]*(.+)$/im),org:g(/^[ \t]*Organisation \(O\)[ \t]*:[ \t]*(.+)$/im),
+    pays:g(/^[ \t]*Pays \(C\)[ \t]*:[ \t]*(.+)$/im),val:g(/^[ \t]*Validité \(ans\)[ \t]*:[ \t]*(\d+)/im)
+  };
+  for(const k in v)if(v[k])o[k]=v[k];
+  return o;
+}
+async function cleDuZip(z){
+  const noms=Object.keys(z.files).filter(n=>!z.files[n].dir&&!n.startsWith('__MACOSX')&&!/(^|\/)\._/.test(n)&&!/(^|\/)(node_modules|builds?|\.git)\//.test(n));
+  const r={};
+  const ks=noms.find(n=>/\.(jks|keystore|p12|pfx|bks)$/i.test(n));
+  if(ks)r.fichier=ks.split('/').pop();
+  const txt=noms.filter(n=>/(^|\/)(key|keystore|signing|release|cle|clé|cles|clés)[^/]*\.(properties|txt)$/i.test(n)||/(^|\/)(build\.gradle(\.kts)?|gradle\.properties)$/i.test(n)).slice(0,15);
+  for(const n of txt){
+    let t='';try{t=(await z.files[n].async('string')).slice(0,300000)}catch(_){}
+    const o=ksLire(t);
+    for(const k in o)if(!r[k])r[k]=o[k];/* le premier fichier qui renseigne une valeur l'emporte */
+  }
+  return (r.fichier||r.alias||r.pass||r.keyPass)?r:null;
+}
+function ksSync(){
+  const lock=!!ksAuto,b=$('ksBtn'),f=$('ksForm');
+  b.disabled=lock;b.classList.toggle('lock',lock);
+  $('ksIco').textContent=lock?'🔒':'🔑';
+  $('ksLbl').textContent=lock?'Keystore détecté dans le ZIP':'Keystore';
+  Object.keys(KS_IDS).forEach(k=>{const i=$(KS_IDS[k]);if(!i.dataset.ph)i.dataset.ph=i.placeholder;i.readOnly=lock;if(lock){i.value=ksAuto[k]||'';i.placeholder='—'}});
+  $('ksGen').hidden=lock;
+  $('ksFile').textContent=lock?('Clé trouvée dans le ZIP'+(ksAuto.fichier?' : '+ksAuto.fichier:'')+'. Les champs vides n\'y figuraient pas. Tu peux quand même télécharger les valeurs en .txt.'):'';
+  $('ksInfo').style.display=lock?'none':'';
+  if(lock){f.classList.add('on');b.setAttribute('aria-expanded','true')}
+}
+$('ksBtn').addEventListener('click',()=>{
+  if(ksAuto)return;
+  const f=$('ksForm'),on=!f.classList.contains('on');
+  f.classList.toggle('on',on);$('ksBtn').setAttribute('aria-expanded',on?'true':'false');
+  if(on&&!$('ksAlias').value&&!$('ksPass').value)ksGenerer();
+});
+$('ksGen').addEventListener('click',ksGenerer);
+const ksNet=s=>String(s||'').replace(/[,"\\=+<>#;\r\n]/g,' ').replace(/\s+/g,' ').trim();
+const ksSh=s=>'"'+String(s).replace(/[\\"$`]/g,'\\$&')+'"';
+function ksTexte(){
+  const v={};Object.keys(KS_IDS).forEach(k=>v[k]=$(KS_IDS[k]).value.trim());
+  if(!v.alias&&!v.pass&&!v.keyPass)return '';
+  const fic=(ksAuto&&ksAuto.fichier)||'cle-signature.jks';
+  const L=['APK Studio — Clé de signature Android','Générée le '+new Date().toLocaleString('fr-FR'),'',
+    'Application : '+($('name').value.trim()||'—'),'Paquet : '+($('pkg').value.trim()||'—'),'',
+    'Alias : '+v.alias,'Mot de passe du keystore : '+v.pass,'Mot de passe de la clé : '+(v.keyPass||v.pass),
+    'Nom (CN) : '+v.cn,'Organisation (O) : '+v.org,'Pays (C) : '+v.pays,'Validité (ans) : '+v.val,'Fichier keystore : '+fic,''];
+  if(!ksAuto&&v.alias&&v.pass){
+    const dn='CN='+ksNet(v.cn||'Application')+', O='+ksNet(v.org||v.cn||'Application')+', C='+(ksNet(v.pays).slice(0,2).toUpperCase()||'FR');
+    L.push('Commande pour créer le keystore avec ces valeurs :',
+      'keytool -genkeypair -v -keystore '+fic+' -storetype PKCS12 -alias '+ksSh(v.alias)+' -keyalg RSA -keysize 2048 -validity '+Math.round((+v.val||30)*365)+
+      ' -storepass '+ksSh(v.pass)+' -keypass '+ksSh(v.keyPass||v.pass)+' -dname '+ksSh(dn),'');
+  }
+  L.push('⚠ Garde ce fichier en lieu sûr et ne le partage pas.','Sans cette clé, impossible de publier des mises à jour de l\'application.');
+  return L.join('\n')+'\n';
+}
+$('ksDl').addEventListener('click',()=>{
+  const t=ksTexte();
+  if(!t){toast('Génère d\'abord une clé');return}
+  const slug=($('pkg').value.trim()||'app').replace(/[^A-Za-z0-9._-]+/g,'_');
+  const u=URL.createObjectURL(new Blob([t],{type:'text/plain;charset=utf-8'})),a=document.createElement('a');
+  a.href=u;a.download='cle-signature-'+slug+'.txt';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),4000);toast('Clé téléchargée (.txt)');
+});
+function ksReset(){
+  const etait=!!ksAuto;ksAuto=null;
+  Object.keys(KS_IDS).forEach(k=>{const i=$(KS_IDS[k]);i.readOnly=false;if(i.dataset.ph)i.placeholder=i.dataset.ph;if(etait)i.value=k==='val'?30:''});
+  $('ksForm').classList.remove('on');$('ksBtn').setAttribute('aria-expanded','false');ksSync();
+}
+ksSync();
 function zipInfo(){aiSync();const f=$('zip').files[0];if(!f)return;$('zn').textContent=f.name;$('zs').textContent=(f.size/1048576).toFixed(1)+' Mo';$('zipClr').style.display='block';detecterLogo()}
 const TYPES={
   web:{label:'Site web',long:'Web (Capacitor)',json:'config.json',wf:'Build APK',zn:'Déposer le ZIP du site',zs:'index.html + ressources · 40 Mo max',
@@ -2287,7 +2423,7 @@ $('edX').onclick=()=>{edition=null;$('edBar').style.display='none';choisir('mode
 function reinitialiser(){
   edition=null;$('edBar').style.display='none';
   $('f').reset();
-  choisir('mode','web');choisir('src','zip');autoLogo=null;iconeAff();fnInfo(null);$('fonc').checked=true;foncSync();
+  choisir('mode','web');choisir('src','zip');autoLogo=null;iconeAff();fnInfo(null);$('fonc').checked=true;foncSync();ksReset();
   $('zn').textContent='Déposer le ZIP du site';$('zs').textContent='index.html + ressources · 40 Mo max';
   prev();majSource();$('err').textContent='';
 }
