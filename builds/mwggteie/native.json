@@ -1,0 +1,30 @@
+{
+  "name": "Mon Assistante",
+  "pkg": "com.doubigue.assistante",
+  "versionName": "1.0.5",
+  "versionCode": 6,
+  "orientation": "auto",
+  "color": "#2a2f6b",
+  "fullscreen": false,
+  "icon": true,
+  "type": "native",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true,
+  "omnicode": false,
+  "fonction": false,
+  "replaces": "apk-mwfku7rw",
+  "iconFrom": "apk-mwfku7rw"
+}
