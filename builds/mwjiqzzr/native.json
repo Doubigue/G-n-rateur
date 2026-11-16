@@ -1,0 +1,35 @@
+{
+  "name": "Files By Link",
+  "pkg": "com.doubigue.linkshareexplorer",
+  "versionName": "1.0.27",
+  "versionCode": 25,
+  "orientation": "auto",
+  "color": "#2a2f6b",
+  "fullscreen": false,
+  "icon": false,
+  "type": "native",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true,
+  "omnicode": false,
+  "fonction": false,
+  "plugin": {
+    "mode": "embedded",
+    "id": "",
+    "description": "",
+    "linkshareSourceZip": false
+  },
+  "replaces": "apk-mwi7r0dy"
+}
