@@ -440,7 +440,14 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
         <input id="plugId" maxlength="80" placeholder="mon-plugin" maxlength="40" autocapitalize="none" autocorrect="off" spellcheck="false">
         <label for="plugDesc">Description du plugin (optionnel)</label>
         <input id="plugDesc" maxlength="200" placeholder="Ce que fait le plugin">
-        <small class="h">« Intégré » : le plugin est autonome (classes.dex), sans installer l'appli. Le projet doit contenir un module Gradle « plugin » avec plugin/plugin.json et une classe qui implémente l'API LinkShare contrat 2. ID : 2 à 40 caractères, minuscules, chiffres, tirets ou _ (sans point).</small>
+        <small class="h">« Intégré » : le plugin est autonome (classes.dex), sans installer l'appli. Le projet doit contenir un module Gradle « plugin » avec plugin/plugin.json et une classe qui implémente l'API LinkShare contrat 2. Le générateur utilise automatiquement la référence LinkShare 1.7 intégrée ; si vous avez une autre archive source, importez-la ci-dessous. ID : 2 à 40 caractères, minuscules, chiffres, tirets ou _.</small>
+        <label for="linkshareRef">Projet source LinkShare (ZIP facultatif)</label>
+        <input id="linkshareRef" type="file" accept=".zip,application/zip">
+        <small class="h">Laissez vide pour utiliser LinkShare Explorer v1.7 fourni avec le générateur. Aucun JAR manuel requis. Le ZIP importé est conservé pour cette compilation.</small>
+        <div id="plugBuildSteps" class="h" style="border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:8px">
+          <b>Pipeline automatique du mode Intégré</b>
+          <ol style="margin:7px 0 0 18px;padding:0;line-height:1.8"><li>Détection du projet LinkShare</li><li>Préparation et export de l'API réelle</li><li>Compilation du plugin avec compileOnly</li><li>Génération de classes.dex avec D8</li><li>Création de l'archive .lsplugin</li><li>Vérification du contrat 2 et des SHA-256</li></ol>
+        </div>
       </div>
       <label class="sw" id="foncSw"><input id="fonc" type="checkbox" checked><i></i>Inclure l'onglet « Fonction » (description, captures, animation)</label>
       <small class="h">Le bouton Partager d'Android listera l'application. « Tous les fichiers » ouvre un réglage Android à la première ouverture.</small>
@@ -912,7 +919,7 @@ function plugCfg(){
   const k=plugKind();
   if(k==='installed')return true;
   if(k!=='embedded')return false;
-  return{mode:'embedded',id:$('plugId').value.trim(),description:$('plugDesc').value.trim()};
+  return{mode:'embedded',id:$('plugId').value.trim(),description:$('plugDesc').value.trim(),linkshareSourceZip:!!($('linkshareRef').files&&$('linkshareRef').files[0])};
 }
 const plugLabel=p=>p&&typeof p==='object'&&p.mode==='embedded'?'intégré':'installée';
 document.querySelectorAll('input[name=plugk]').forEach(r=>r.addEventListener('change',plugSync));
@@ -1188,7 +1195,7 @@ function steps2phase(steps){
 }
 function succeed(asset,plug,plugCfgV){edition=null;$('edBar').style.display='none';
   final=100;for(let k=0;k<PH.length;k++)st[k]=2;
-  $('rb').className='ringbox state-ok';$('stat').textContent='Ton application est prête.';
+  $('rb').className='ringbox state-ok';$('stat').textContent=(plugCfgV&&typeof plugCfgV==='object'&&plugCfgV.mode==='embedded'&&!plug)?'APK prête ; plugin intégré non généré. Consulte le journal GitHub Actions.':(plugCfgV&&typeof plugCfgV==='object'&&plugCfgV.mode==='embedded'&&plug?'Application et plugin intégré prêts.':'Ton application est prête.');
   $('act').innerHTML='<a class="btn" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a>'+(plug?'<a class="btn ghost" id="dlPlug" href="'+plug.browser_download_url+'">Télécharger le plugin ('+plugLabel(plugCfgV)+')</a>':'')+'<button class="btn ghost" id="toApps">Mes applications</button><button class="btn ghost" id="again">Nouvelle application</button>';
   $('again').onclick=reset;$('toApps').onclick=()=>goTab('apps');cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
   const dl=$('act').querySelector('a');dl.onclick=e=>{e.preventDefault();telecharger(asset,dl)};
@@ -1513,6 +1520,8 @@ $('f').addEventListener('submit',async e=>{
       if(!typeDe(mode()).ok(ok))throw new Error(typeDe(mode()).err);
     }else if(!(edition&&edition.source))throw new Error('Choisis un fichier ZIP ou entre un lien.');
 
+    const linkshareZip=plugKind()==='embedded'?($('linkshareRef').files&&$('linkshareRef').files[0]):null;
+    if(linkshareZip){if(linkshareZip.size>40*1048576)throw new Error('ZIP LinkShare trop volumineux (40 Mo max).');await JSZip.loadAsync(linkshareZip).catch(()=>{throw new Error('Le ZIP source LinkShare est invalide.');});}
     const iconFile=$('icon').files[0]||(zip&&autoLogo?autoLogo.file:null);
     const iconB64=iconFile?await iconPng(iconFile):null;
     initProg();conInit();
@@ -1524,6 +1533,7 @@ $('f').addEventListener('submit',async e=>{
     if(edition){cfg.replaces=edition.tag;if(!cfg.icon&&edition.cfg.icon){cfg.icon=true;cfg.iconFrom=edition.tag}}
     conHeader(cfg,zip,lien,url);
     if(zip){$('stat').textContent='Envoi de l\'archive…';await put(dir+'app.zip',await fileB64(zip),'Build '+id+' : archive')}
+    if(linkshareZip){$('stat').textContent='Envoi du projet source LinkShare…';await put(dir+'linkshare-source.zip',await fileB64(linkshareZip),'Build '+id+' : source LinkShare');conLog('  ↑ source LinkShare envoyée ('+fmt(linkshareZip.size)+')','ok');}
     if(zip)conLog('  ↑ archive envoyée ('+fmt(zip.size)+')','ok');
     upProg(.5);
     if(iconB64){$('stat').textContent="Envoi de l'icône…";await put(dir+'icon.png',iconB64,'Build '+id+' : icône')}

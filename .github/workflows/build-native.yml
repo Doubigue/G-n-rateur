@@ -40,7 +40,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -e
+          set -euo pipefail
           exec > >(tee -a "$GITHUB_WORKSPACE/build.log") 2>&1
           trap 'sleep 2' EXIT
           CFG="$GITHUB_WORKSPACE/$DIR/native.json"
@@ -53,18 +53,27 @@ jobs:
           test -n "$ROOT" || { echo "Aucune racine Android valide dans le ZIP."; exit 1; }
           echo "ROOT=$ROOT" >> "$GITHUB_ENV"
 
-          # Si le projet embarque le module plugin-api de LinkShare, compiler son vrai JAR ici.
-          # Le JAR reste dans le workspace CI et est réutilisé pour compiler les plugins intégrés.
-          if [ -f "$ROOT/plugin-api/build.gradle.kts" ] && grep -q 'exportApiJar' "$ROOT/plugin-api/build.gradle.kts"; then
+          # Préparer l'API réelle uniquement pour le mode Intégré. Le projet importé peut
+          # être LinkShare lui-même ; sinon le ZIP source de référence version 1.7 est utilisé.
+          if [ "$(jq -r '((.plugin|type)=="object") and (.plugin.mode=="embedded")' "$CFG")" = "true" ]; then
             yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null 2>&1 || true
             "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0" >/dev/null
-            (cd "$ROOT" && gradle :plugin-api:exportApiJar --no-daemon)
-            API="$ROOT/build/plugin-api/linkshare-plugin-api-2.0.jar"
-            test -s "$API" || { echo "Le module plugin-api n'a pas produit son JAR."; exit 1; }
-            echo "LINKSHARE_API_JAR=$API" >> "$GITHUB_ENV"
-            echo "API LinkShare réelle compilée : $API"
+            REF="$GITHUB_WORKSPACE/$DIR/linkshare-source.zip"
+            [ -s "$REF" ] || REF="$GITHUB_WORKSPACE/.github/linkshare-reference/LinkShare-Explorer-v1.7.zip"
+            if [ -s "$REF" ]; then
+              if API=$(python3 "$S/linkshare_api.py" --project "$ROOT" --reference-zip "$REF" --work "$GITHUB_WORKSPACE/work/linkshare-api" --gradle gradle 2>&1 | tee "$GITHUB_WORKSPACE/work/linkshare-api-build.log" | tail -n1) && [ -s "$API" ]; then
+                echo "LINKSHARE_API_JAR=$API" >> "$GITHUB_ENV"
+                echo "API LinkShare réelle prête : $API"
+              else
+                echo "::error::API LinkShare réelle non construite. Le plugin intégré sera refusé ; la compilation APK continue."
+                echo "LINKSHARE_API_ERROR=1" >> "$GITHUB_ENV"
+              fi
+            else
+              echo "::error::Projet source LinkShare absent : importez LinkShare-Explorer-v1.7.zip. Le plugin intégré sera refusé ; la compilation APK continue."
+              echo "LINKSHARE_API_ERROR=1" >> "$GITHUB_ENV"
+            fi
           else
-            echo "Aucun module plugin-api LinkShare détecté dans ce projet."
+            echo "Mode plugin différent de Intégré : aucune construction API LinkShare nécessaire."
           fi
 
           python3 "$S/native_setup.py" gradle "$CFG" "$ROOT" | tee "$GITHUB_WORKSPACE/work/gradle.out"
@@ -74,6 +83,15 @@ jobs:
             python3 "$S/icon_setup.py" gradle "$MOD/src/main/res" "$GITHUB_WORKSPACE/$DIR/icon.png" "$(jq -r .color "$CFG")"
           fi
           python3 "$S/fonction_setup.py" "$MOD" "$CFG" "$GITHUB_WORKSPACE/$DIR/app.zip" "$GITHUB_WORKSPACE/$DIR/icon.png"
+
+      - name: Archiver le JAR API LinkShare utilisé
+        if: ${{ always() && env.LINKSHARE_API_JAR != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: linkshare-plugin-api-2.0
+          path: ${{ env.LINKSHARE_API_JAR }}
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Clé de signature stable (mises à jour sans désinstaller)
         run: |
@@ -116,7 +134,7 @@ jobs:
       - name: Plugin intégré (assemblage)
         run: |
           # Seulement si la demande est « plugin intégré » (plugin = {"mode":"embedded",…}).
-          # Un échec ici n'est jamais bloquant : l'APK est publiée quand même (avertissement seulement).
+          # Un échec interdit la publication du .lsplugin, mais ne casse pas la compilation APK.
           CF="$GITHUB_WORKSPACE/$DIR/native.json"
           [ "$(jq -r '((.plugin|type)=="object") and (.plugin.mode=="embedded")' "$CF")" = "true" ] || { echo "Pas de plugin intégré demandé."; exit 0; }
           set +e
@@ -128,6 +146,7 @@ jobs:
             [ -n "$SLUG" ] || SLUG=app
             OUT="$GITHUB_WORKSPACE/$SLUG-$VN.lsplugin"
             API="${LINKSHARE_API_JAR:-}"
+            test -n "$API" && test -s "$API" || { echo "API LinkShare réelle absente : aucun stub/JAR de test ne sera utilisé."; exit 1; }
             # Cas spécial du projet LinkShare lui-même : l'exemple officiel est à côté de LinkShare/.
             SAMPLE="$GITHUB_WORKSPACE/work/src/sample-plugin"
             if [ -n "$API" ] && [ -f "$SAMPLE/build.gradle.kts" ] && [ -f "$SAMPLE/plugin.template.json" ]; then
@@ -138,26 +157,26 @@ jobs:
               (cd "$SAMPLE" && gradle buildLsplugin --no-daemon)
               SAMPLE_OUT="$SAMPLE/build/sample-uppercase.lsplugin"
               test -s "$SAMPLE_OUT" || { echo "Le plugin d'exemple LinkShare n'a pas été généré."; exit 1; }
+              python3 "$S/validate_lsplugin.py" "$SAMPLE_OUT"
               cp "$SAMPLE_OUT" "$OUT"
               echo "Plugin LinkShare d'exemple généré avec le vrai JAR API."
             else
               test -f "$ROOT/plugin/plugin.json" || { echo "plugin/plugin.json absent : le projet doit contenir le module Gradle « plugin » (prompt « prépare ce projet pour LinkShare »)."; exit 1; }
-              if [ -z "$API" ]; then
-                echo "Erreur : API LinkShare réelle absente. Pour un .lsplugin contrat 2, ajoute le module plugin-api au projet hôte ou fournis son JAR vérifié. Le stub de test n'est pas accepté."
-                exit 1
-              fi
               mkdir -p "$ROOT/plugin/libs"
               cp "$API" "$ROOT/plugin/libs/linkshare-plugin-api.jar"
               cd "$ROOT"
               ARGS=(assemblePlugin --no-daemon "-PlinkshareApiJar=$API")
               if [ -f gradlew ]; then chmod +x gradlew; ./gradlew "${ARGS[@]}"; else gradle "${ARGS[@]}"; fi
-              python3 "$S/plugin_embed.py" "$CF" "$ROOT" "$OUT" --api-jar "$API"
+              KSTD=$(find "$HOME/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib" -name '*.jar' -type f 2>/dev/null | sort -V | tail -n1 || true)
+              EMBED_ARGS=(--api-jar "$API")
+              [ -z "$KSTD" ] || EMBED_ARGS+=(--classpath "$KSTD")
+              python3 "$S/plugin_embed.py" "$CF" "$ROOT" "$OUT" "${EMBED_ARGS[@]}"
             fi
             echo "PLUGIN_FILE=$SLUG-$VN.lsplugin" >> "$GITHUB_ENV"
           ) 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
           RC=${PIPESTATUS[0]}
           if [ "$RC" != 0 ]; then
-            echo "::warning::Plugin intégré non créé (voir le journal ci-dessus). L'APK est publiée normalement."
+            echo "::error::Plugin intégré non créé : LinkShare API réelle, compilation ou validation en échec. Aucun .lsplugin ne sera publié. L'APK reste publiable."
           fi
           exit 0
 

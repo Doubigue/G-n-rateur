@@ -225,6 +225,7 @@ def main():
     ap.add_argument("--plugin-json")
     ap.add_argument("--jar")
     ap.add_argument("--api-jar")
+    ap.add_argument("--classpath", action="append", default=[], help="JAR compileOnly supplémentaire nécessaire à la résolution D8 (répétable)")
     ap.add_argument("--sdk")
     ap.add_argument("--d8")
     a = ap.parse_args()
@@ -273,9 +274,9 @@ def main():
         echec("jar introuvable : " + jar)
     print("Jar du module : " + jar)
     api = trouver_api_jar(a.api_jar)
-    print("Jar API LinkShare : " + (api or "absent (vérification limitée)"))
     if not api:
-        avertir("linkshare-plugin-api*.jar absent de .github/plugin-api/ : la vérification de l'interface se limite au jar du module.")
+        echec("API LinkShare réelle absente : le contrat 2 ne peut pas être compilé/validé sans le JAR exporté du projet source LinkShare. Aucun stub n'est accepté en production.")
+    print("Jar API LinkShare réel : " + api)
 
     # 1) entryClass : existe + implémente LinkSharePlugin
     table = hierarchie([jar, api])
@@ -286,12 +287,26 @@ def main():
         echec("entryClass « %s » est une interface ou une classe abstraite : il faut une classe concrète." % entry)
     inconnus = set()
     if not implemente(table, entry_path, API_INTERFACE, inconnus=inconnus):
-        if inconnus:
-            avertir("entryClass %s : impossible de confirmer qu'elle implémente %s (parents introuvables : %s). "
-                    "Ajoute linkshare-plugin-api.jar dans .github/plugin-api/." % (entry, API_INTERFACE.replace("/", "."), ", ".join(sorted(inconnus)[:5])))
-        else:
-            echec("entryClass « %s » n'implémente pas %s." % (entry, API_INTERFACE.replace("/", ".")))
-    print("entryClass OK : " + entry)
+        detail = (" Parents introuvables : " + ", ".join(sorted(inconnus)[:5])) if inconnus else ""
+        echec("entryClass « %s » n'implémente pas l'interface réelle %s.%s" % (entry, API_INTERFACE.replace("/", "."), detail))
+    # Vérifie les constantes réellement référencées dans le bytecode de la méthode actions().
+    javap = shutil.which("javap")
+    if not javap:
+        echec("javap introuvable : JDK 17 requis pour vérifier les IDs de actions().")
+    cp = os.pathsep.join([jar, api] + list(a.classpath))
+    jr = subprocess.run([javap, "-classpath", cp, "-c", "-p", entry], capture_output=True, text=True)
+    if jr.returncode:
+        echec("Impossible d'inspecter entryClass avec javap : " + (jr.stderr.strip() or str(jr.returncode)))
+    lines = jr.stdout.splitlines()
+    start = next((i for i, line in enumerate(lines) if re.search(r"\bactions\(\);?$", line.strip())), None)
+    if start is None:
+        echec("entryClass ne déclare pas de méthode actions() visible.")
+    end = next((i for i in range(start + 1, len(lines)) if re.match(r"\s*(public|protected|private)\s+.+\);$", lines[i])), len(lines))
+    actions_code = "\n".join(lines[start:end])
+    for action_id in action_ids:
+        if action_id not in actions_code:
+            echec("Action « %s » déclarée dans plugin.json mais absente des constantes bytecode de entryClass.actions()." % action_id)
+    print("entryClass OK : " + entry + " ; actions() confirme : " + ", ".join(action_ids))
 
     # 2) exclusions + signalement des bibliothèques restantes
     tmp = tempfile.mkdtemp(prefix="lsembed-")
@@ -344,6 +359,10 @@ def main():
             cmd += ["--lib", aj]
         if api:
             cmd += ["--classpath", api]
+        for cpjar in a.classpath:
+            if not os.path.isfile(cpjar):
+                echec("JAR de classpath D8 introuvable : " + cpjar)
+            cmd += ["--classpath", cpjar]
         cmd.append(filtre)
         print("d8 : " + " ".join(cmd))
         r = subprocess.run(cmd, capture_output=True, text=True)
@@ -385,6 +404,7 @@ def main():
         meta["description"] = str(opt.get("description") or pj.get("description") or "Plugin créé avec le Générateur : " + meta["name"])
         meta["contract"] = 2
         meta["entryClass"] = entry
+        meta.setdefault("settings", [])
         meta["minApi"] = int(MIN_API)
         if abis:
             meta["abis"] = abis
@@ -400,10 +420,26 @@ def main():
         os.makedirs(os.path.dirname(out) or ".", exist_ok=True)
         if os.path.exists(out):
             os.remove(out)
+        noms = [nom for nom, _ in contenu]
+        if len(noms) != len(set(noms)) or any(n.startswith("/") or ".." in n.split("/") or "\\" in n for n in noms):
+            echec("Chemin d'archive dangereux ou doublonné dans assets/lib.")
+        if "classes.dex" not in noms:
+            echec("classes.dex obligatoire absent du contenu final.")
         with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
             z.write(pjs, "plugin.json")
             for nom, p in contenu:
                 z.write(p, nom)
+        with zipfile.ZipFile(out) as check:
+            if check.testzip() is not None:
+                echec("Archive .lsplugin corrompue après assemblage.")
+            final_names = set(check.namelist())
+            if final_names != set(["plugin.json"] + noms):
+                echec("Contenu de l'archive différent du manifeste calculé.")
+        validator = os.path.join(os.path.dirname(os.path.abspath(__file__)), "validate_lsplugin.py")
+        vr = subprocess.run([sys.executable, validator, out], capture_output=True, text=True)
+        if vr.stdout.strip(): print(vr.stdout.strip())
+        if vr.stderr.strip(): print(vr.stderr.strip(), file=sys.stderr)
+        if vr.returncode: echec("validation finale contrat 2 échouée.")
         print("Plugin intégré créé : %s (%d fichier(s), contrat 2)" % (out, len(contenu) + 1))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)

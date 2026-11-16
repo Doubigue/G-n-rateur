@@ -18,31 +18,7 @@ Boutons « Télécharger le plugin » : sur l'écran « Ton application est prê
 (visibles seulement si la release contient un fichier `.lsplugin`).
 
 ## Plugin LinkShare « intégré » (contrat 2, classes.dex) — Android natif uniquement
-Dans le formulaire, le choix **Aucun / Appli installée / Intégré** remplace la case précédente. « Intégré » n'apparaît que pour le type
-Kotlin / Java (Android natif). Champ `plugin` du fichier de config :
-- `true` → plugin « appli installée » (inchangé : `plugin_pack.sh`, contrat 1, APK dans le .lsplugin) ;
-- `{"mode":"embedded","id":"…","description":"…"}` → plugin intégré, sans installer l'appli. `id` / `description` vides = valeurs de `plugin.json`. L'identifiant doit contenir 2 à 40 caractères parmi `a-z`, `0-9`, `-` et `_` (pas de points).
-Le choix est restauré en mode modification et remis à zéro à la réinitialisation.
 
-**Convention du projet** (issue du prompt « prépare ce projet pour LinkShare ») :
-- module Gradle `plugin` avec la tâche `assemblePlugin` qui produit un jar (`plugin/build/libs/*.jar`) ;
-- `plugin/plugin.json` : `id`, `name`, `version`, `description`, **`entryClass`**, `contract: 2`, `permissions` et au moins une `actions[]` (avec `id`, `label`, `accepts`, `minFiles`, `maxFiles`, `params`) ; `entryClass` doit être une classe concrète implémentant `com.linkshare.plugin.api.LinkSharePlugin` et `actions()` doit retourner les mêmes identifiants d'action ;
-  clés de build facultatives (retirées du fichier final) : `jar`, `assetsDir` (défaut `src/main/assets`), `libDir` (défaut `src/main/jniLibs/<abi>`), `ownPackages` ;
-- l'API se déclare en `compileOnly files(project.findProperty('linkshareApiJar') ?: 'libs/linkshare-plugin-api.jar')`.
-  Le jar est stocké dans `.github/plugin-api/` (voir son README pour l'export `:plugin-api:exportApiJar` depuis LinkShare 1.7).
+Le mode « Intégré » construit l’API réelle LinkShare 1.7 automatiquement depuis le ZIP source de référence fourni dans `.github/linkshare-reference/`, ou depuis le projet LinkShare importé. Un ZIP de remplacement peut être fourni dans le formulaire. Le JAR est exporté par `:plugin-api:exportApiJar`, transmis dynamiquement à `assemblePlugin` en `compileOnly`, puis converti par D8 en `classes.dex`. Le fichier `.lsplugin` est validé avant publication par `validate_lsplugin.py`.
 
-**Chaîne dans `build-native.yml`** : après « Compiler l'APK », l'étape « Plugin intégré (assemblage) » lance `assemblePlugin`, puis
-`.github/scripts/plugin_embed.py` qui : lit `plugin.json` et le jar ; vérifie que `entryClass` existe et implémente `LinkSharePlugin` ;
-exclut Kotlin, coroutines, `androidx.core`, Compose (et l'API) et signale (avertissement) les autres bibliothèques restées ;
-convertit en `classes.dex` avec le `d8` du SDK (`--release --min-api 30`) ; ajoute `assets/` et `lib/<abi>/` ; écrit le sha256 de chaque fichier
-dans `plugin.json` sous la clé `sha256` (objet associant chaque chemin à son empreinte, comme l'exige LinkShare 1.7) ; produit `NomApp-version.lsplugin` (`"contract": 2`).
-Les ressources non-`.class` du jar ne sont pas conservées : les placer dans `src/main/assets`.
-
-**Publication** : le `.lsplugin` est ajouté à la release avec l'APK. Si le plugin échoue (assemblage ou envoi), seul un avertissement est émis
-et l'APK est publiée normalement (`release_create.sh` réessaie sans le plugin en dernier recours).
-Les boutons « Télécharger le plugin » affichent « (intégré) » ou « (installée) » selon la config.
-
-**Test** : le workflow `test-plugin.yml` (déclenchement manuel ou modification des fichiers concernés) compile `.github/sample-plugin`
-contre un stub d'API de test, produit le `.lsplugin` et vérifie : contrat 2, sha256, `classes.dex`, assets, exclusion de Kotlin/androidx.core,
-signalement d'une bibliothèque tierce, refus d'un mauvais `entryClass`.
-
+Le détail de l’architecture, le format du manifeste, l’exemple Kotlin et les tests se trouvent dans [README-LINKSHARE-INTEGRATION.md](README-LINKSHARE-INTEGRATION.md). Le mode « Appli installée » conserve son ancien flux contrat 1. Le mode « Aucun » reste inchangé. Une erreur LinkShare empêche uniquement la publication du plugin intégré ; elle ne bloque pas la publication de l’APK.

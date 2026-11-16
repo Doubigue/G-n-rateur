@@ -1,23 +1,19 @@
-# API LinkShare — intégration automatique (contrat 2)
+# API LinkShare réelle — génération automatique
 
-Le générateur détecte automatiquement le module `plugin-api` dans le ZIP Android fourni.
+Les builds de production ne lisent aucun JAR déposé manuellement ici et n'utilisent aucun stub.
 
-## Projet LinkShare lui-même
+La référence source LinkShare Explorer v1.7 est conservée dans :
 
-Lorsque le ZIP contient `LinkShare/settings.gradle.kts`, `LinkShare/plugin-api/` et `sample-plugin/` :
+`.github/linkshare-reference/LinkShare-Explorer-v1.7.zip`
 
-1. Le workflow choisit `LinkShare/` comme racine Android (et non le projet Kotlin JVM `sample-plugin/`).
-2. Il compile `:plugin-api:exportApiJar` dans le même job GitHub Actions que l'APK.
-3. Il place temporairement le JAR réel dans `sample-plugin/libs/`.
-4. Il compile `sample-plugin` avec `gradle buildLsplugin` et génère le `.lsplugin` de démonstration.
-5. Il publie l'APK LinkShare et le plugin de démonstration dans la même release de compilation.
+Le workflow Android natif extrait ce projet et exécute :
 
-Aucune GitHub Release externe, aucun dépôt supplémentaire et aucun transfert manuel ne sont nécessaires.
+```bash
+gradle :plugin-api:exportApiJar --no-daemon
+```
 
-## Autres projets hôtes
+Le JAR résultant est attendu à `LinkShare/build/plugin-api/linkshare-plugin-api-2.0.jar`. Le chemin réel est contrôlé et transmis au module plugin en `compileOnly`. Si le projet Android importé est lui-même LinkShare et contient le module `plugin-api` conforme, il est utilisé en priorité.
 
-Si un projet Android contient `plugin-api/build.gradle(.kts)` avec la tâche `exportApiJar`, le workflow construit automatiquement le JAR et l'utilise pour compiler `ROOT/plugin/`. Si l'API réelle est absente, la génération du `.lsplugin` contrat 2 échoue explicitement : le stub CI n'est jamais utilisé en production.
+Un ZIP de référence différent peut être importé dans le formulaire « Intégré ». Il est stocké temporairement sous `builds/<id>/linkshare-source.zip` pour le build en cours.
 
-## Format et sécurité
-
-Le fichier `.lsplugin` suit le contrat 2 de LinkShare 1.7 : `plugin.json`, `classes.dex`, éventuellement `assets/` et `lib/<abi>/*.so`, avec un objet `sha256` couvrant chaque fichier hors manifeste. Le code d'un plugin s'exécute avec les droits de LinkShare : n'installer que des plugins de confiance.
+Voir `README-LINKSHARE-INTEGRATION.md` pour l'architecture, les exigences de plugin et les tests.

@@ -1,0 +1,21 @@
+{
+  "id": "texte-majuscule",
+  "name": "Texte en majuscules",
+  "version": "1.0.0",
+  "description": "Convertit un fichier texte en majuscules en conservant le fichier original.",
+  "entryClass": "com.linkshare.example.UppercasePlugin",
+  "contract": 2,
+  "permissions": ["storage"],
+  "actions": [
+    {
+      "id": "upper",
+      "label": "Texte en majuscules",
+      "icon": "🔠",
+      "accepts": ["txt", "md", "text/plain"],
+      "minFiles": 1,
+      "maxFiles": 1,
+      "params": []
+    }
+  ],
+  "settings": []
+}
