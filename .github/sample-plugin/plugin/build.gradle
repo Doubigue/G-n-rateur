@@ -1,0 +1,22 @@
+// Module « plugin » : convention LinkShare.
+// - l'API est compileOnly (fournie par LinkShare à l'exécution, jamais embarquée) ;
+// - la tâche assemblePlugin produit le jar que plugin_embed.py convertit en classes.dex.
+plugins {
+    id 'java-library'
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+dependencies {
+    // Le workflow passe -PlinkshareApiJar=… ; sinon copie locale dans plugin/libs/
+    compileOnly files(project.findProperty('linkshareApiJar') ?: 'libs/linkshare-plugin-api.jar')
+}
+
+tasks.register('assemblePlugin') {
+    group = 'build'
+    description = 'Produit le jar du plugin LinkShare (build/libs/*.jar)'
+    dependsOn tasks.named('jar')
+}

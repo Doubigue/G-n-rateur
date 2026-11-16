@@ -432,6 +432,16 @@ body.lb #toast{bottom:calc(env(safe-area-inset-bottom,0px) + 172px)}
       <label class="sw"><input id="share" type="checkbox" checked><i></i>Accepter les partages de fichiers</label>
       <label class="sw"><input id="ask" type="checkbox" checked><i></i>Demander les autorisations au premier lancement</label>
       <label class="sw"><input id="omni" type="checkbox" checked><i></i>Modifier le code avec OmniCode Studio (si installé)</label>
+      <label id="plugLbl">Plugin LinkShare (.lsplugin) à installer dans LinkShare › Install plugins</label>
+      <div class="seg" id="plugSeg" role="radiogroup" aria-labelledby="plugLbl" style="margin-top:0"><label><input type="radio" name="plugk" value="none" checked><span>Aucun</span></label><label><input type="radio" name="plugk" value="installed"><span>Appli installée</span></label><label id="plugEmbL" style="display:none"><input type="radio" name="plugk" value="embedded"><span>Intégré</span></label></div>
+      <small class="h" id="plugHint">« Appli installée » : le plugin pilote l'APK déjà installée sur le téléphone.</small>
+      <div id="plugEmb" style="display:none">
+        <label for="plugId">Identifiant du plugin (optionnel)</label>
+        <input id="plugId" maxlength="80" placeholder="mon-plugin" maxlength="40" autocapitalize="none" autocorrect="off" spellcheck="false">
+        <label for="plugDesc">Description du plugin (optionnel)</label>
+        <input id="plugDesc" maxlength="200" placeholder="Ce que fait le plugin">
+        <small class="h">« Intégré » : le plugin est autonome (classes.dex), sans installer l'appli. Le projet doit contenir un module Gradle « plugin » avec plugin/plugin.json et une classe qui implémente l'API LinkShare contrat 2. ID : 2 à 40 caractères, minuscules, chiffres, tirets ou _ (sans point).</small>
+      </div>
       <label class="sw" id="foncSw"><input id="fonc" type="checkbox" checked><i></i>Inclure l'onglet « Fonction » (description, captures, animation)</label>
       <small class="h">Le bouton Partager d'Android listera l'application. « Tous les fichiers » ouvre un réglage Android à la première ouverture.</small>
     </div>
@@ -885,6 +895,29 @@ function foncSync(){
   $('desc').disabled=!on;$('seeApp').disabled=!on;
 }
 $('fonc').addEventListener('change',foncSync);foncSync();
+/* Plugin LinkShare : Aucun / Appli installée / Intégré (Intégré seulement en Android natif) */
+const plugKind=()=>(document.querySelector('input[name=plugk]:checked')||{}).value||'none';
+function plugSync(){
+  const nat=document.querySelector('input[name=mode]:checked')&&document.querySelector('input[name=mode]:checked').value==='native';
+  $('plugEmbL').style.display=nat?'':'none';
+  if(!nat&&plugKind()==='embedded')document.querySelector('input[name=plugk][value=installed]').checked=true;
+  $('plugEmb').style.display=plugKind()==='embedded'?'':'none';
+}
+function plugSet(p){
+  const k=p&&typeof p==='object'&&p.mode==='embedded'?'embedded':p?'installed':'none';
+  document.querySelector('input[name=plugk][value='+k+']').checked=true;
+  $('plugId').value=k==='embedded'&&p.id||'';$('plugDesc').value=k==='embedded'&&p.description||'';plugSync();
+}
+function plugCfg(){
+  const k=plugKind();
+  if(k==='installed')return true;
+  if(k!=='embedded')return false;
+  return{mode:'embedded',id:$('plugId').value.trim(),description:$('plugDesc').value.trim()};
+}
+const plugLabel=p=>p&&typeof p==='object'&&p.mode==='embedded'?'intégré':'installée';
+document.querySelectorAll('input[name=plugk]').forEach(r=>r.addEventListener('change',plugSync));
+document.querySelectorAll('input[name=mode]').forEach(r=>r.addEventListener('change',plugSync));
+plugSync();
 /* Onglet « Fonction » : Description.md + dossier Captures + dossier Animation, à la racine du projet */
 const IMG_RE=/\.(png|jpe?g|webp|gif|avif)$/i;
 async function fonctionDansZip(z){
@@ -1153,12 +1186,13 @@ function steps2phase(steps){
   setPhase(Math.min(a,PH.length-1));
   if(a>=PH.length)setPhase(PH.length-1);
 }
-function succeed(asset){edition=null;$('edBar').style.display='none';
+function succeed(asset,plug,plugCfgV){edition=null;$('edBar').style.display='none';
   final=100;for(let k=0;k<PH.length;k++)st[k]=2;
   $('rb').className='ringbox state-ok';$('stat').textContent='Ton application est prête.';
-  $('act').innerHTML='<a class="btn" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a><button class="btn ghost" id="toApps">Mes applications</button><button class="btn ghost" id="again">Nouvelle application</button>';
+  $('act').innerHTML='<a class="btn" href="'+asset.browser_download_url+'">Télécharger '+asset.name.replace(/</g,'')+'</a>'+(plug?'<a class="btn ghost" id="dlPlug" href="'+plug.browser_download_url+'">Télécharger le plugin ('+plugLabel(plugCfgV)+')</a>':'')+'<button class="btn ghost" id="toApps">Mes applications</button><button class="btn ghost" id="again">Nouvelle application</button>';
   $('again').onclick=reset;$('toApps').onclick=()=>goTab('apps');cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
   const dl=$('act').querySelector('a');dl.onclick=e=>{e.preventDefault();telecharger(asset,dl)};
+  {const dp=$('dlPlug');if(dp&&plug)dp.onclick=e=>{e.preventDefault();telecharger(plug,dp)}}
   if(navigator.vibrate)navigator.vibrate([60,40,60]);
 }
 function fail(msg,url){
@@ -1483,7 +1517,7 @@ $('f').addEventListener('submit',async e=>{
     const iconB64=iconFile?await iconPng(iconFile):null;
     initProg();conInit();
     const id=Date.now().toString(36),dir='builds/'+id+'/';
-    const cfg={name:$('name').value.trim(),pkg:$('pkg').value.trim().toLowerCase(),versionName:$('vname').value.trim(),versionCode:+$('vcode').value,orientation:$('orient').value,color:$('color').value,fullscreen:$('full').checked,icon:!!iconB64,type:mode(),permissions:permsChoisies(),share:$('share').checked,askStart:$('ask').checked,omnicode:$('omni').checked,fonction:$('fonc').checked};
+    const cfg={name:$('name').value.trim(),pkg:$('pkg').value.trim().toLowerCase(),versionName:$('vname').value.trim(),versionCode:+$('vcode').value,orientation:$('orient').value,color:$('color').value,fullscreen:$('full').checked,icon:!!iconB64,type:mode(),permissions:permsChoisies(),share:$('share').checked,askStart:$('ask').checked,omnicode:$('omni').checked,fonction:$('fonc').checked,plugin:plugCfg()};
     const descr=$('desc').value.trim().slice(0,4000);if(cfg.fonction&&descr)cfg.description=descr;
     if(cfg.fonction&&animStyle!=='original'){cfg.animStyle=animStyle;cfg.animCss=themeCss(animStyle)}
     if(lien){cfg.sourceUrl=url;cfg.sourceKind=sourceKind}else if(!zip)cfg.fromRelease=edition.tag;
@@ -2205,7 +2239,7 @@ function telecharger(a,btn){
   if(navigator.vibrate)navigator.vibrate(40);
   if(!prive){ouvrirChromeDl(a);return}   /* lien public : choix de l'application */
   /* Dépôt public : le lien marche dans n'importe quelle application → liste « Télécharger avec… » (pas Chrome d'office) */
-  depotPublic().then(pub=>{if(pub&&a.browser_download_url)ouvrirChromeDl(a);else telechargerInterne(a,btn,url,prive,mime0)});
+  depotPublic().then(pub=>{if(pub&&a.browser_download_url)ouvrirChromeDl(a);else telechargerInterne(a,btn,url,prive,/\.lsplugin$/i.test(a.name||'')?'application/octet-stream':mime0)});
   return;
 }
 let _depotPub=null;
@@ -2275,13 +2309,14 @@ async function chargerApps(){
     l.forEach(x=>{
       const a=x.assets.find(a=>/\.apk$/i.test(a.name)),m=meta(x);
       const c=document.createElement('article');c.className='app';
-      c.innerHTML='<div class="ico"></div><div class="inf"><b></b><small class="d1"></small><small class="d2"></small></div><div class="acts"><button type="button" class="dl">Télécharger</button><button type="button" class="ed">Modifier</button><button type="button" class="lg">Changer le logo</button><button type="button" class="rm">Supprimer</button></div>';
+      c.innerHTML='<div class="ico"></div><div class="inf"><b></b><small class="d1"></small><small class="d2"></small></div><div class="acts"><button type="button" class="dl">Télécharger</button><button type="button" class="dl pl" style="display:none">Télécharger le plugin</button><button type="button" class="ed">Modifier</button><button type="button" class="lg">Changer le logo</button><button type="button" class="rm">Supprimer</button></div>';
       c.querySelector('.ico').textContent=(x.name||'?')[0].toUpperCase();
       afficherLogo(c.querySelector('.ico'),x);
       c.querySelector('b').textContent=x.name||a.name;
       c.querySelector('.d1').textContent=[m.ver&&'Version '+m.ver,m.type?typeDe(m.type).label:''].filter(Boolean).join(' · ');
       c.querySelector('.d2').textContent=new Date(x.published_at||x.created_at).toLocaleDateString('fr-FR')+' · '+(a.size/1048576).toFixed(1)+' Mo';
       {const bd=c.querySelector('.dl');bd.onclick=()=>telecharger(a,bd)}
+      {const pa=x.assets.find(p=>/\.lsplugin$/i.test(p.name)),bp=c.querySelector('.pl');if(pa&&bp){bp.style.display='';bp.textContent='Télécharger le plugin ('+plugLabel(cfgDe(x).plugin)+')';bp.onclick=()=>telecharger(pa,bp)}}
       c.querySelector('.ed').onclick=()=>modifier(x);
       {const lg=c.querySelector('.lg');lg.onclick=()=>choisirLogo(x,c,lg)}
       const rm=c.querySelector('.rm');let t2;
@@ -2344,7 +2379,7 @@ function modifier(x){
   $('vname').value=bumpVer(c.versionName||'1.0.0','patch');$('vcode').value=(+c.versionCode||1)+1;majVchips();
   $('orient').value=c.orientation||'auto';$('color').value=c.color||'#2a2f6b';$('full').checked=!!c.fullscreen;
   const set=new Set(c.permissions||[]);pcb().forEach(b=>b.checked=set.has(b.value));$('all').checked=pcb().every(b=>b.checked);
-  $('share').checked=c.share!==false;$('ask').checked=c.askStart!==false;$('omni').checked=c.omnicode!==false;$('fonc').checked=c.fonction!==false;foncSync();animStyle=THEMES.some(t=>t.id===c.animStyle)?c.animStyle:'original';
+  $('share').checked=c.share!==false;$('ask').checked=c.askStart!==false;$('omni').checked=c.omnicode!==false;plugSet(c.plugin);$('fonc').checked=c.fonction!==false;foncSync();animStyle=THEMES.some(t=>t.id===c.animStyle)?c.animStyle:'original';
   if(c.sourceUrl){choisir('src','link');$('url').value=c.sourceUrl;majSource()}else choisir('src','zip');
   $('zip').value='';aiSync();$('icon').value='';autoLogo=null;iconeAff();
   $('desc').value=c.description||'';fnInfo(null);
@@ -2423,7 +2458,7 @@ $('edX').onclick=()=>{edition=null;$('edBar').style.display='none';choisir('mode
 function reinitialiser(){
   edition=null;$('edBar').style.display='none';
   $('f').reset();
-  choisir('mode','web');choisir('src','zip');autoLogo=null;iconeAff();fnInfo(null);$('fonc').checked=true;foncSync();ksReset();
+  choisir('mode','web');choisir('src','zip');autoLogo=null;iconeAff();fnInfo(null);$('fonc').checked=true;plugSet(false);foncSync();ksReset();
   $('zn').textContent='Déposer le ZIP du site';$('zs').textContent='index.html + ressources · 40 Mo max';
   prev();majSource();$('err').textContent='';
 }
@@ -3414,7 +3449,7 @@ async function suivre(id,sha,cfg,start){
       await sleep(netFail?Math.min(30000,3000*netFail):4000);
       try{
         const rel=await api('/releases/tags/apk-'+id);
-        if(rel.ok){const a=((await rel.json()).assets||[]).find(a=>/\.apk$/i.test(a.name));if(a){CON.done=true;await conFinish(sha,lastJob);conOk();notif('APK prête',cfg.name+' est compilée. Ouvre APK Studio pour la télécharger.');return succeed(a)}}
+        if(rel.ok){const as=(await rel.json()).assets||[],a=as.find(a=>/\.apk$/i.test(a.name));if(a){CON.done=true;await conFinish(sha,lastJob);conOk();notif('APK prête',cfg.name+' est compilée. Ouvre APK Studio pour la télécharger.');return succeed(a,as.find(p=>/\.lsplugin$/i.test(p.name)),cfg.plugin)}}
         const rr=await api('/actions/runs?head_sha='+sha);
         if(!rr.ok&&[401,403,404].includes(rr.status))throw new Error('GitHub ('+rr.status+') : lecture des exécutions du workflow refusée. Le jeton doit avoir le droit « Actions : lecture » et le dépôt « '+repo+' » doit exister.');
         if(rr.ok){

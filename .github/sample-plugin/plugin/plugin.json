@@ -1,0 +1,22 @@
+{
+  "id": "sample-plugin",
+  "name": "Sample plugin",
+  "version": "1.0.0",
+  "description": "Plugin d'exemple utilisé par test-plugin.yml",
+  "entryClass": "com.linkshare.sample.SamplePlugin",
+  "permissions": [],
+  "actions": [
+    {
+      "id": "hello",
+      "label": "Exemple LinkShare",
+      "icon": "🧩",
+      "accepts": [
+        "txt"
+      ],
+      "minFiles": 1,
+      "maxFiles": 1,
+      "params": []
+    }
+  ],
+  "contract": 2
+}

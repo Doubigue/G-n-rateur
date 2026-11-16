@@ -1,0 +1,116 @@
+name: Test plugin intégré LinkShare
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/scripts/plugin_embed.py'
+      - '.github/sample-plugin/**'
+      - '.github/workflows/test-plugin.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+
+      - name: Compiler l'API de test (stub)
+        run: |
+          set -e
+          mkdir -p "$RUNNER_TEMP/api-classes"
+          javac -d "$RUNNER_TEMP/api-classes" $(find .github/sample-plugin/api-stub -name '*.java' -print)
+          jar cf "$RUNNER_TEMP/linkshare-plugin-api.jar" -C "$RUNNER_TEMP/api-classes" .
+          echo "API_JAR=$RUNNER_TEMP/linkshare-plugin-api.jar" >> "$GITHUB_ENV"
+
+      - name: Compiler le sample-plugin (assemblePlugin)
+        working-directory: .github/sample-plugin
+        run: |
+          gradle assemblePlugin --no-daemon "-PlinkshareApiJar=$API_JAR"
+          ls -l plugin/build/libs
+
+      - name: Produire le .lsplugin
+        run: |
+          set -eo pipefail
+          cat > "$RUNNER_TEMP/native.json" <<'JSON'
+          {"name":"Sample","pkg":"com.linkshare.sample","versionName":"1.0.0","plugin":{"mode":"embedded","id":"","description":""}}
+          JSON
+          python3 .github/scripts/plugin_embed.py "$RUNNER_TEMP/native.json" .github/sample-plugin "$RUNNER_TEMP/Sample-1.0.0.lsplugin" \
+            --api-jar "$API_JAR" | tee "$RUNNER_TEMP/embed.log"
+          # la bibliothèque tierce du sample doit être signalée
+          grep -q 'org.example.ext' "$RUNNER_TEMP/embed.log"
+
+      - name: Vérifier le .lsplugin
+        run: |
+          python3 - "$RUNNER_TEMP/Sample-1.0.0.lsplugin" <<'PY'
+          import hashlib, json, sys, zipfile
+          z = zipfile.ZipFile(sys.argv[1])
+          assert z.testzip() is None, "archive corrompue"
+          names = set(z.namelist())
+          for need in ("plugin.json", "classes.dex", "assets/hello.txt"):
+              assert need in names, "manquant : " + need
+          m = json.loads(z.read("plugin.json"))
+          assert m["contract"] == 2, m
+          assert m["entryClass"] == "com.linkshare.sample.SamplePlugin", m
+          assert m["id"] == "sample-plugin" and m["version"] == "1.0.0", m
+          assert isinstance(m["sha256"], dict), "LinkShare 1.7 attend sha256 comme objet"
+          assert "files" not in m, "ancienne clé files interdite"
+          assert set(m["sha256"]) == names - {"plugin.json"}, (sorted(m["sha256"]), sorted(names))
+          assert "classes.dex" in m["sha256"], "empreinte classes.dex obligatoire"
+          for n, h in m["sha256"].items():
+              assert hashlib.sha256(z.read(n)).hexdigest() == h, "sha256 différent : " + n
+          dex = z.read("classes.dex")
+          assert dex[:4] == b"dex\n", "classes.dex invalide"
+          assert b"Lcom/linkshare/sample/SamplePlugin;" in dex, "SamplePlugin absente de classes.dex"
+          print("OK :", sorted(names))
+          PY
+
+      - name: Les bibliothèques fournies par LinkShare sont exclues
+        run: |
+          set -eo pipefail
+          python3 - <<'PY'
+          import glob, os, zipfile
+          src = glob.glob(".github/sample-plugin/plugin/build/libs/*.jar")[0]
+          out = os.environ["RUNNER_TEMP"] + "/with-kotlin.jar"
+          with zipfile.ZipFile(src) as zi, zipfile.ZipFile(out, "w") as zo:
+              for e in zi.namelist():
+                  zo.writestr(e, zi.read(e))
+              # fausses classes Kotlin / androidx.core : doivent être retirées avant d8
+              b = zi.read("com/linkshare/sample/Helper.class")
+              zo.writestr("kotlin/Fake.class", b)
+              zo.writestr("androidx/core/Fake.class", b)
+          PY
+          python3 .github/scripts/plugin_embed.py "$RUNNER_TEMP/native.json" .github/sample-plugin "$RUNNER_TEMP/kt.lsplugin" \
+            --api-jar "$API_JAR" --jar "$RUNNER_TEMP/with-kotlin.jar" | tee "$RUNNER_TEMP/kt.log"
+          grep -q 'Exclu (fourni par LinkShare) : Kotlin' "$RUNNER_TEMP/kt.log"
+          grep -q 'Exclu (fourni par LinkShare) : androidx.core' "$RUNNER_TEMP/kt.log"
+
+      - name: Cas d'échec attendus (mauvais entryClass)
+        run: |
+          set -e
+          for BAD in com.linkshare.sample.Helper com.linkshare.sample.Inexistante; do
+            sed "s/com.linkshare.sample.SamplePlugin/$BAD/" .github/sample-plugin/plugin/plugin.json > "$RUNNER_TEMP/bad.json"
+            if python3 .github/scripts/plugin_embed.py "$RUNNER_TEMP/native.json" .github/sample-plugin "$RUNNER_TEMP/bad.lsplugin" \
+                 --api-jar "$API_JAR" --plugin-json "$RUNNER_TEMP/bad.json"; then
+              echo "::error::entryClass $BAD aurait dû être refusée"; exit 1
+            fi
+            echo "Refus attendu pour $BAD : OK"
+          done
+
+      - name: Conserver le plugin produit
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sample-1.0.0.lsplugin
+          path: ${{ runner.temp }}/Sample-1.0.0.lsplugin

@@ -29,6 +29,10 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+
       - name: Installer ImageMagick
         run: sudo apt-get update && sudo apt-get install -y imagemagick python3-pil
 
@@ -45,10 +49,23 @@ jobs:
           python3 "$S/android_setup.py" fetch "$CFG" "$GITHUB_WORKSPACE/$DIR" native
           mkdir -p "$GITHUB_WORKSPACE/work/src"
           unzip -q "$GITHUB_WORKSPACE/$DIR/app.zip" -d "$GITHUB_WORKSPACE/work/src"
-          SET=$(python3 "$S/native_setup.py" find "$GITHUB_WORKSPACE/work/src" settings.gradle settings.gradle.kts || true)
-          test -n "$SET" || { echo "Aucun settings.gradle(.kts) dans le ZIP : envoie un projet Android Studio complet."; exit 1; }
-          ROOT=$(dirname "$SET")
+          ROOT=$(python3 "$S/detect_android_project.py" "$GITHUB_WORKSPACE/work/src")
+          test -n "$ROOT" || { echo "Aucune racine Android valide dans le ZIP."; exit 1; }
           echo "ROOT=$ROOT" >> "$GITHUB_ENV"
+
+          # Si le projet embarque le module plugin-api de LinkShare, compiler son vrai JAR ici.
+          # Le JAR reste dans le workspace CI et est réutilisé pour compiler les plugins intégrés.
+          if [ -f "$ROOT/plugin-api/build.gradle.kts" ] && grep -q 'exportApiJar' "$ROOT/plugin-api/build.gradle.kts"; then
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null 2>&1 || true
+            "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0" >/dev/null
+            (cd "$ROOT" && gradle :plugin-api:exportApiJar --no-daemon)
+            API="$ROOT/build/plugin-api/linkshare-plugin-api-2.0.jar"
+            test -s "$API" || { echo "Le module plugin-api n'a pas produit son JAR."; exit 1; }
+            echo "LINKSHARE_API_JAR=$API" >> "$GITHUB_ENV"
+            echo "API LinkShare réelle compilée : $API"
+          else
+            echo "Aucun module plugin-api LinkShare détecté dans ce projet."
+          fi
 
           python3 "$S/native_setup.py" gradle "$CFG" "$ROOT" | tee "$GITHUB_WORKSPACE/work/gradle.out"
           MOD=$(sed -n 's/^MODULE=//p' "$GITHUB_WORKSPACE/work/gradle.out" | head -n1)
@@ -96,6 +113,54 @@ jobs:
           test -n "$APK" || { echo "Aucun APK debug produit."; exit 1; }
           echo "APK=$APK" >> "$GITHUB_ENV"
 
+      - name: Plugin intégré (assemblage)
+        run: |
+          # Seulement si la demande est « plugin intégré » (plugin = {"mode":"embedded",…}).
+          # Un échec ici n'est jamais bloquant : l'APK est publiée quand même (avertissement seulement).
+          CF="$GITHUB_WORKSPACE/$DIR/native.json"
+          [ "$(jq -r '((.plugin|type)=="object") and (.plugin.mode=="embedded")' "$CF")" = "true" ] || { echo "Pas de plugin intégré demandé."; exit 0; }
+          set +e
+          (
+            set -e
+            S="$GITHUB_WORKSPACE/.github/scripts"
+            NAME=$(jq -r .name "$CF"); VN=$(jq -r .versionName "$CF")
+            SLUG=$(echo "$NAME" | iconv -f utf-8 -t ascii//TRANSLIT | tr -cs 'A-Za-z0-9' '-' | sed 's/^-//;s/-$//')
+            [ -n "$SLUG" ] || SLUG=app
+            OUT="$GITHUB_WORKSPACE/$SLUG-$VN.lsplugin"
+            API="${LINKSHARE_API_JAR:-}"
+            # Cas spécial du projet LinkShare lui-même : l'exemple officiel est à côté de LinkShare/.
+            SAMPLE="$GITHUB_WORKSPACE/work/src/sample-plugin"
+            if [ -n "$API" ] && [ -f "$SAMPLE/build.gradle.kts" ] && [ -f "$SAMPLE/plugin.template.json" ]; then
+              mkdir -p "$SAMPLE/libs"
+              cp "$API" "$SAMPLE/libs/linkshare-plugin-api-2.0.jar"
+              yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null 2>&1 || true
+              "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0" >/dev/null
+              (cd "$SAMPLE" && gradle buildLsplugin --no-daemon)
+              SAMPLE_OUT="$SAMPLE/build/sample-uppercase.lsplugin"
+              test -s "$SAMPLE_OUT" || { echo "Le plugin d'exemple LinkShare n'a pas été généré."; exit 1; }
+              cp "$SAMPLE_OUT" "$OUT"
+              echo "Plugin LinkShare d'exemple généré avec le vrai JAR API."
+            else
+              test -f "$ROOT/plugin/plugin.json" || { echo "plugin/plugin.json absent : le projet doit contenir le module Gradle « plugin » (prompt « prépare ce projet pour LinkShare »)."; exit 1; }
+              if [ -z "$API" ]; then
+                echo "Erreur : API LinkShare réelle absente. Pour un .lsplugin contrat 2, ajoute le module plugin-api au projet hôte ou fournis son JAR vérifié. Le stub de test n'est pas accepté."
+                exit 1
+              fi
+              mkdir -p "$ROOT/plugin/libs"
+              cp "$API" "$ROOT/plugin/libs/linkshare-plugin-api.jar"
+              cd "$ROOT"
+              ARGS=(assemblePlugin --no-daemon "-PlinkshareApiJar=$API")
+              if [ -f gradlew ]; then chmod +x gradlew; ./gradlew "${ARGS[@]}"; else gradle "${ARGS[@]}"; fi
+              python3 "$S/plugin_embed.py" "$CF" "$ROOT" "$OUT" --api-jar "$API"
+            fi
+            echo "PLUGIN_FILE=$SLUG-$VN.lsplugin" >> "$GITHUB_ENV"
+          ) 2>&1 | tee -a "$GITHUB_WORKSPACE/build.log"
+          RC=${PIPESTATUS[0]}
+          if [ "$RC" != 0 ]; then
+            echo "::warning::Plugin intégré non créé (voir le journal ci-dessus). L'APK est publiée normalement."
+          fi
+          exit 0
+
       - name: Publier l'APK
         env:
           GH_TOKEN: ${{ github.token }}
@@ -109,6 +174,14 @@ jobs:
           CFGJ=$(jq -c 'del(.fromRelease,.replaces,.iconFrom)' "$CF")
           NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : native\nConfig : %s' "$VN" "$(jq -r .versionCode "$CF")" "$(jq -r .pkg "$CF")" "$CFGJ")
           FILES=("$SLUG-$VN.apk")
+          # Plugin LinkShare (.lsplugin) si la demande l'a coché
+          if [ "$(jq -r '((.plugin|type)=="object") and (.plugin.mode=="embedded")' "$CF")" = "true" ]; then
+            # « Intégré » : fichier produit par plugin_embed.py à l'étape précédente (absent si elle a échoué)
+            if [ -n "${PLUGIN_FILE:-}" ] && [ -f "$PLUGIN_FILE" ]; then FILES+=("$PLUGIN_FILE"); else echo "::warning::Plugin intégré absent : l'APK est publiée sans plugin."; fi
+          else
+            # « Appli installée » : comportement historique, inchangé
+            if bash "$GITHUB_WORKSPACE/.github/scripts/plugin_pack.sh" "$CF" "$SLUG-$VN.apk" "$SLUG-$VN.lsplugin"; then FILES+=("$SLUG-$VN.lsplugin"); fi
+          fi
           if [ -f "$DIR/app.zip" ] && [ "$(jq -r '.sourceKind // ""' "$CF")" != "site" ]; then cp "$DIR/app.zip" source.zip; FILES+=(source.zip); fi
           if [ -f "$DIR/icon.png" ]; then FILES+=("$DIR/icon.png"); fi
           bash "$GITHUB_WORKSPACE/.github/scripts/release_create.sh" "apk-$ID" "${FILES[@]}" --title "$NAME" --notes "$NOTES"

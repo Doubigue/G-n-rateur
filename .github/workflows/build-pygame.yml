@@ -116,6 +116,8 @@ jobs:
           CFGJ=$(jq -c 'del(.fromRelease,.replaces,.iconFrom)' "$CF")
           NOTES=$(printf 'Version : %s (%s)\nPaquet : %s\nType : pygame\nConfig : %s' "$VN" "$(jq -r .versionCode "$CF")" "$(jq -r .pkg "$CF")" "$CFGJ")
           FILES=("$SLUG-$VN.apk")
+          # Plugin LinkShare (.lsplugin) si la demande l'a coché
+          if bash "$GITHUB_WORKSPACE/.github/scripts/plugin_pack.sh" "$CF" "$SLUG-$VN.apk" "$SLUG-$VN.lsplugin"; then FILES+=("$SLUG-$VN.lsplugin"); fi
           if [ -f "$DIR/app.zip" ] && [ "$(jq -r '.sourceKind // ""' "$CF")" != "site" ]; then cp "$DIR/app.zip" source.zip; FILES+=(source.zip); fi
           if [ -f "$DIR/icon.png" ]; then FILES+=("$DIR/icon.png"); fi
           bash "$GITHUB_WORKSPACE/.github/scripts/release_create.sh" "apk-$ID" "${FILES[@]}" --title "$NAME" --notes "$NOTES"
