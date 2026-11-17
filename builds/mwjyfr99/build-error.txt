@@ -1,0 +1,87 @@
+== Journal de compilation (mwjyfr99) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mwjyfr99/app.zip | icône : False
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/build.gradle.kts | applicationId = com.doubigue.converter | version = 1.0.7 (8)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app
+Onglet Fonction : désactivé (Description.md, Captures et Animation ne sont pas inclus)
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:mergeDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+
+> Task :app:processDebugMainManifest
+/home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/AndroidManifest.xml:38:5-66:19 Warning:
+	application@android:icon was tagged at AndroidManifest.xml:38 to replace other declarations but no other declaration present
+/home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/AndroidManifest.xml:38:5-66:19 Warning:
+	application@android:roundIcon was tagged at AndroidManifest.xml:38 to replace other declarations but no other declaration present
+/home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/AndroidManifest.xml:38:5-66:19 Warning:
+	application@android:theme was tagged at AndroidManifest.xml:38 to replace other declarations but no other declaration present
+
+> Task :app:processDebugManifest
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:compressDebugAssets
+> Task :app:processDebugManifestForPackage
+> Task :app:checkDebugDuplicateClasses
+> Task :app:processDebugResources
+> Task :app:mergeExtDexDebug
+> Task :app:mergeDebugJniLibFolders
+> Task :app:mergeLibDexDebug
+> Task :app:mergeDebugNativeLibs
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidlame.so, libandroidx.graphics.path.so.
+
+> Task :app:writeDebugSigningConfigVersions
+
+> Task :app:compileDebugKotlin
+e: The daemon has terminated unexpectedly on startup attempt #1 with error code: 0. The daemon process output:
+    1. Kotlin compile daemon is ready
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/java/com/mediastudio/app/Saver.kt:8:35 Syntax error: Expecting a top level declaration.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/java/com/mediastudio/app/Saver.kt:8:36 Syntax error: Expecting a top level declaration.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/java/com/mediastudio/app/Saver.kt:8:44 Syntax error: Expecting a top level declaration.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/java/com/mediastudio/app/Saver.kt:8:51 Syntax error: Expecting a top level declaration.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/java/com/mediastudio/app/Saver.kt:8:52 Syntax error: Expecting a top level declaration.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/java/com/mediastudio/app/Saver.kt:8:60 Syntax error: Expecting a top level declaration.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/java/com/mediastudio/app/Saver.kt:8:61 Syntax error: Expecting a top level declaration.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/java/com/mediastudio/app/Saver.kt:8:78 Syntax error: imports are only allowed in the beginning of file.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/java/com/mediastudio/app/Saver.kt:19:24 Unresolved reference 'DocumentsContract'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/java/com/mediastudio/app/Saver.kt:20:37 Unresolved reference 'DocumentsContract'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/java/com/mediastudio/app/Saver.kt:22:27 Unresolved reference 'DocumentsContract'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/java/com/mediastudio/app/VideoOps.kt:166:60 Unresolved reference 'roundToInt'.
+
+> Task :app:compileDebugKotlin FAILED
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_5-1794875455749.json
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m 22s
+28 actionable tasks: 28 executed
