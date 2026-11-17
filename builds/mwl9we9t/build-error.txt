@@ -1,0 +1,38 @@
+== Journal de compilation (mwl9we9t) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mwl9we9t/app.zip | icône : False
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/build.gradle.kts | applicationId = com.doubigue.converter | version = 1.0.8 (9)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app
+Onglet Fonction : désactivé (Description.md, Captures et Animation ne sont pas inclus)
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :app
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/build.gradle.kts:36:29: Unresolved reference: net
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/build.gradle.kts:39:33: Unresolved reference: net
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/build.gradle.kts:41:46: No cast needed
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_5-1794955359576.json
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file '/home/runner/work/G-n-rateur/G-n-rateur/work/src/MediaStudio/app/build.gradle.kts' line: 36
+
+* What went wrong:
+Script compilation errors:
+
+  Line 36:             var conn = java.net.URI(url).toURL().openConnection() as java.net.HttpURLConnection
+                                       ^ Unresolved reference: net
+
+  Line 39:                 val next = java.net.URI(url).resolve(conn.getHeaderField("Location")).toURL()
+                                           ^ Unresolved reference: net
+
+2 errors
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 31s
