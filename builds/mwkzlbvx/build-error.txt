@@ -1,0 +1,56 @@
+== Journal de compilation (mwkzlbvx) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mwkzlbvx/app.zip | icône : False
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/VoskCaptions/app/build.gradle.kts | applicationId = com.doubigue.transcriptor | version = 1.0.1 (2)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/VoskCaptions/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/VoskCaptions/app
+Onglet Fonction : désactivé (Description.md, Captures et Animation ne sont pas inclus)
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+
+> Configure project :app
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/VoskCaptions/app/build.gradle.kts:26:32: Unresolved reference: util
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_5-1794937808287.json
+
+FAILURE: Build completed with 2 failures.
+
+1: Task failed with an exception.
+-----------
+* Where:
+Build file '/home/runner/work/G-n-rateur/G-n-rateur/work/src/VoskCaptions/app/build.gradle.kts' line: 26
+
+* What went wrong:
+Script compilation error:
+
+  Line 26:             it.writeBytes(java.util.Base64.getMimeDecoder().decode(b64))
+                                          ^ Unresolved reference: util
+
+1 error
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+2: Task failed with an exception.
+-----------
+* Where:
+Build file '/home/runner/work/G-n-rateur/G-n-rateur/work/src/VoskCaptions/app/build.gradle.kts' line: 26
+
+* What went wrong:
+Script compilation error:
+
+  Line 26:             it.writeBytes(java.util.Base64.getMimeDecoder().decode(b64))
+                                          ^ Unresolved reference: util
+
+1 error
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+==============================================================================
+
+BUILD FAILED in 15s
