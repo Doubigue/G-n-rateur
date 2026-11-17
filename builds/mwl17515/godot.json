@@ -1,0 +1,28 @@
+{
+  "name": "Ruban Rosh",
+  "pkg": "com.doubigue.taxi",
+  "versionName": "1.0.0",
+  "versionCode": 1,
+  "orientation": "auto",
+  "color": "#2a2f6b",
+  "fullscreen": true,
+  "icon": true,
+  "type": "godot",
+  "permissions": [
+    "storage",
+    "media",
+    "allfiles",
+    "camera",
+    "micro",
+    "location",
+    "notifications",
+    "contacts",
+    "calendar",
+    "bluetooth",
+    "phone"
+  ],
+  "share": true,
+  "askStart": true,
+  "omnicode": false,
+  "fonction": false
+}
