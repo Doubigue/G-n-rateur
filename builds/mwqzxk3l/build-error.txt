@@ -1,0 +1,153 @@
+== Journal de compilation (mwqzxk3l) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mwqzxk3l/app.zip | icône : False
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/build.gradle.kts | applicationId = com.doubigue.arpenteur | version = 1.0.0 (1)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app
+Onglet Fonction : désactivé (Description.md, Captures et Animation ne sont pas inclus)
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugBuildConfig
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:mergeDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:processDebugResources
+> Task :app:checkDebugDuplicateClasses
+> Task :app:mergeDebugStartupProfile
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/MapScreen.kt:47:75 Unresolved reference 'argb'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/MapScreen.kt:48:75 Unresolved reference 'parseColor'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/MapScreen.kt:62:88 Unresolved reference 'BLACK'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/MapScreen.kt:63:61 Unresolved reference 'parseColor'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/MapScreen.kt:66:31 Unresolved reference 'WHITE'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/MapScreen.kt:67:43 Unresolved reference 'parseColor'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/MapScreen.kt:67:76 Unresolved reference 'parseColor'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/MapScreen.kt:68:31 Unresolved reference 'BLACK'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:28:21 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:38:87 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:46:22 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:48:39 None of the following candidates is applicable:
+fun BigDecimal.div(other: BigDecimal): BigDecimal
+fun BigInteger.div(other: BigInteger): BigInteger
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:48:62 None of the following candidates is applicable:
+fun BigDecimal.div(other: BigDecimal): BigDecimal
+fun BigInteger.div(other: BigInteger): BigInteger
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:55:51 'operator' modifier is required on 'FirNamedFunctionSymbol kotlin/text/compareTo' in 'compareTo'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:55:57 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:56:45 None of the following candidates is applicable:
+fun BigDecimal.div(other: BigDecimal): BigDecimal
+fun BigInteger.div(other: BigInteger): BigInteger
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:60:45 None of the following candidates is applicable:
+fun BigDecimal.div(other: BigDecimal): BigDecimal
+fun BigInteger.div(other: BigInteger): BigInteger
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:76:52 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:81:64 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:85:60 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:88:104 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:88:121 Argument type mismatch: actual type is 'androidx.compose.animation.core.ComplexDouble', but 'kotlin.Float' was expected.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:88:124 Cannot access 'fun Double.times(other: ComplexDouble): ComplexDouble': it is internal in file.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:93:114 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:95:66 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:102:88 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:102:106 Argument type mismatch: actual type is 'androidx.compose.animation.core.ComplexDouble', but 'kotlin.Float' was expected.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:102:109 Cannot access 'fun Double.times(other: ComplexDouble): ComplexDouble': it is internal in file.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:107:46 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:108:56 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:109:104 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:109:128 Argument type mismatch: actual type is 'androidx.compose.animation.core.ComplexDouble', but 'kotlin.Float' was expected.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:109:131 Cannot access 'fun Double.times(other: ComplexDouble): ComplexDouble': it is internal in file.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:115:54 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:117:82 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:117:113 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:118:39 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:118:73 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:122:25 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:122:48 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:123:52 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:123:78 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:123:96 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:123:126 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:123:152 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:123:170 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:124:31 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:127:58 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:127:85 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:128:57 Overload resolution ambiguity between candidates:
+fun String?.plus(other: Any?): String
+fun <T> Array<T>.plus(element: T): Array<T>
+fun FloatArray.plus(element: Float): FloatArray
+fun <T> Collection<T>.plus(element: T): List<T>
+fun <T> Iterable<T>.plus(element: T): List<T>
+fun <T> Set<T>.plus(element: T): Set<T>
+fun <T> Sequence<T>.plus(element: T): Sequence<T>
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:128:72 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:129:49 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:129:79 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:129:93 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:130:41 Overload resolution ambiguity between candidates:
+fun String?.plus(other: Any?): String
+fun <T> Array<T>.plus(element: T): Array<T>
+fun FloatArray.plus(element: Float): FloatArray
+fun <T> Collection<T>.plus(element: T): List<T>
+fun <T> Iterable<T>.plus(element: T): List<T>
+fun <T> Set<T>.plus(element: T): Set<T>
+fun <T> Sequence<T>.plus(element: T): Sequence<T>
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:130:56 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:130:78 Overload resolution ambiguity between candidates:
+fun String?.plus(other: Any?): String
+fun <T> Array<T>.plus(element: T): Array<T>
+fun FloatArray.plus(element: Float): FloatArray
+fun <T> Collection<T>.plus(element: T): List<T>
+fun <T> Iterable<T>.plus(element: T): List<T>
+fun <T> Set<T>.plus(element: T): Set<T>
+fun <T> Sequence<T>.plus(element: T): Sequence<T>
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:130:93 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:130:107 Unresolved reference 'dp'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:131:91 Overload resolution ambiguity between candidates:
+fun String?.plus(other: Any?): String
+fun <T> Array<T>.plus(element: T): Array<T>
+fun FloatArray.plus(element: Float): FloatArray
+fun <T> Collection<T>.plus(element: T): List<T>
+fun <T> Iterable<T>.plus(element: T): List<T>
+fun <T> Set<T>.plus(element: T): Set<T>
+fun <T> Sequence<T>.plus(element: T): Sequence<T>
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/Arpenteur/app/src/main/java/app/arpenteur/PlotCanvas.kt:131:111 Unresolved reference 'dp'.
+
+> Task :app:mergeExtDexDebug
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_5-1795301213630.json
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m 10s
+23 actionable tasks: 23 executed
