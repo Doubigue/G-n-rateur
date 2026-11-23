@@ -1,0 +1,91 @@
+== Journal de compilation (mwsi5b1q) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mwsi5b1q/app.zip | icône : False
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/build.gradle.kts | applicationId = com.doubigue.applangue | version = 1.0.10 (11)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app
+Onglet Fonction : désactivé (Description.md, Captures et Animation ne sont pas inclus)
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:mergeDebugResources
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:processDebugResources
+> Task :app:compressDebugAssets
+> Task :app:checkDebugDuplicateClasses
+> Task :app:mergeDebugStartupProfile
+> Task :app:kaptGenerateStubsDebugKotlin
+> Task :app:mergeExtDexDebug
+> Task :app:mergeDebugJniLibFolders
+> Task :app:mergeLibDexDebug
+> Task :app:validateSigningDebug
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
+> Task :app:mergeDebugNativeLibs
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so, libfilament-jni.so, libfilament-utils-jni.so, libgltfio-jni.so, libjnidispatch.so, libonnxruntime.so, libsherpa-onnx-c-api.so, libsherpa-onnx-cxx-api.so, libsherpa-onnx-jni.so, libvosk.so.
+
+> Task :app:kaptDebugKotlin
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/LessonScreen.kt:156:35 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/LessonScreen.kt:156:35 Not enough information to infer type argument for 'R'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/LessonScreen.kt:157:32 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/LessonScreen.kt:158:17 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/LessonScreen.kt:158:17 Not enough information to infer type argument for 'R'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/LessonScreen.kt:159:21 Unresolved reference 'context'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/LessonScreen.kt:159:52 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/LessonScreen.kt:159:52 Not enough information to infer type argument for 'R'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/LessonScreen.kt:159:56 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/LessonScreen.kt:162:27 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/LessonScreen.kt:162:27 Not enough information to infer type argument for 'R'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/LessonScreen.kt:162:27 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T, R> T.let(block: (T) -> R): R
+    [R|Contract description]
+     <
+        CallsInPlace(block, EXACTLY_ONCE)
+    >
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/LessonScreen.kt:162:33 Cannot infer type for this parameter. Specify it explicitly.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/VoicesSettings.kt:155:27 Unresolved reference 'speaker'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/VoicesSettings.kt:159:48 Unresolved reference 'speaker'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/VoicesSettings.kt:160:44 Unresolved reference 'speaker'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/VoicesSettings.kt:160:108 Unresolved reference 'speaker'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/VoicesSettings.kt:193:23 Unresolved reference 'speaker'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/VoicesSettings.kt:197:44 Unresolved reference 'speaker'.
+e: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/LinguaVibe/app/src/main/java/com/linguavibe/app/ui/VoicesSettings.kt:198:40 Unresolved reference 'speaker'.
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_5-1795392288280.json
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m 13s
+31 actionable tasks: 31 executed
