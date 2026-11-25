@@ -1,0 +1,73 @@
+== Journal de compilation (mwwajp6v) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mwwajp6v/app.zip | icône : False
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/build.gradle.kts | applicationId = com.doubigue.telephone | version = 1.0.2 (3)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app
+Onglet Fonction : désactivé (Description.md, Captures et Animation ne sont pas inclus)
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:mergeDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:processDebugManifestForPackage
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:desugarDebugFileDependencies
+> Task :app:processDebugResources
+> Task :app:checkDebugDuplicateClasses
+> Task :app:mergeDebugStartupProfile
+> Task :app:mergeDebugJniLibFolders
+> Task :app:mergeLibDexDebug
+> Task :app:validateSigningDebug
+> Task :app:mergeDebugNativeLibs
+> Task :app:writeDebugAppMetadata
+> Task :app:writeDebugSigningConfigVersions
+
+> Task :app:stripDebugDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libandroidx.graphics.path.so.
+
+> Task :app:mergeExtDexDebug
+> Task :app:compileDebugKotlin
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/java/com/dlvibe/dlphone/DlInCallService.kt:128:15 'fun onCallAudioStateChanged(p0: CallAudioState!): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/java/com/dlvibe/dlphone/InCallActivity.kt:440:39 'val Icons.Filled.VolumeUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.VolumeUp.
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/java/com/dlvibe/dlphone/InCallActivity.kt:441:22 'fun setAudioRoute(p0: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/java/com/dlvibe/dlphone/InCallActivity.kt:452:26 'fun setAudioRoute(p0: Int): Unit' is deprecated. Deprecated in Java.
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/java/com/dlvibe/dlphone/ThemeEditorActivity.kt:197:67 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/java/com/dlvibe/dlphone/ThemeEditorActivity.kt:289:40 'val Icons.Filled.VolumeUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.VolumeUp.
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/java/com/dlvibe/dlphone/sms/ConversationActivity.kt:269:63 'val Icons.Filled.ArrowBack: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.ArrowBack.
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/java/com/dlvibe/dlphone/sms/ConversationActivity.kt:420:40 'val Icons.Filled.Send: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Send.
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/java/com/dlvibe/dlphone/ui/DialerScreen.kt:231:35 'val Icons.Filled.Backspace: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.Backspace.
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/java/com/dlvibe/dlphone/ui/ListsScreens.kt:85:76 'val Icons.Filled.CallMissed: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.CallMissed.
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/java/com/dlvibe/dlphone/ui/ListsScreens.kt:86:49 'val Icons.Filled.CallReceived: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.CallReceived.
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/java/com/dlvibe/dlphone/ui/ListsScreens.kt:87:49 'val Icons.Filled.CallMade: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.CallMade.
+w: file:///home/runner/work/G-n-rateur/G-n-rateur/work/src/DLPhone/app/src/main/java/com/dlvibe/dlphone/ui/MagicScreen.kt:450:34 'val Icons.Filled.TrendingUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.TrendingUp.
+
+> Task :app:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics
+> Task :app:processDebugJavaRes
+> Task :app:mergeProjectDexDebug
+> Task :app:mergeDebugJavaResource
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect
+> Task :app:assembleDebug
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_5-1795621342332.json
+
+BUILD SUCCESSFUL in 1m 6s
+36 actionable tasks: 36 executed
