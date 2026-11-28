@@ -1,0 +1,58 @@
+== Journal de compilation (mx0jl6mf) ==
+Source prête : /home/runner/work/G-n-rateur/G-n-rateur/builds/mx0jl6mf/app.zip | icône : False
+Module Gradle : /home/runner/work/G-n-rateur/G-n-rateur/work/src/Funerailles/app/build.gradle.kts | applicationId = com.doubigue.funeraile | version = 1.1.3 (2)
+Manifeste : /home/runner/work/G-n-rateur/G-n-rateur/work/src/Funerailles/app/src/main/AndroidManifest.xml
+MODULE=/home/runner/work/G-n-rateur/G-n-rateur/work/src/Funerailles/app
+Manifeste : onglet Fonction déclaré
+Onglet Fonction : description non · 0 capture(s) · animation non
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.9/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateDebugResValues
+> Task :app:checkDebugAarMetadata
+> Task :app:mapDebugSourceSetPaths
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:createDebugCompatibleScreenManifests
+> Task :app:extractDeepLinksDebug
+> Task :app:parseDebugLocalResources
+> Task :app:processDebugMainManifest
+> Task :app:processDebugManifest
+> Task :app:javaPreCompileDebug
+> Task :app:mergeDebugShaders
+> Task :app:processDebugManifestForPackage
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugResources
+> Task :app:mergeDebugAssets
+> Task :app:compressDebugAssets
+> Task :app:processDebugResources
+> Task :app:desugarDebugFileDependencies
+> Task :app:compileDebugKotlin NO-SOURCE
+
+> Task :app:compileDebugJavaWithJavac FAILED
+/home/runner/work/G-n-rateur/G-n-rateur/work/src/Funerailles/app/src/main/java/com/example/funerailles/CotisationActivity.java:11: error: cannot find symbol
+ LinearLayout fields=horizontal();nom=new EditText(this);nom.setSingleLine(true);nom.setHint("Nom et prénom");nom.setTextColor(Ui.INK);nom.setHintTextColor(Ui.MUTED);Ui.style(nom);montant=new EditText(this);montant.setSingleLine(true);montant.setHint("Somme (FCFA)");montant.setInputType(InputType.TYPE_CLASS_NUMBER|InputType.NUMBER_FLAG_DECIMAL);montant.setTextColor(Ui.INK);montant.setHintTextColor(Ui.MUTED);Ui.style(montant);
+                                                                                                                                                                                                                                                                                                                                     ^
+  symbol:   variable NUMBER_FLAG_DECIMAL
+  location: interface InputType
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+1 error
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/__run_5-1795878389219.json
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugJavaWithJavac'.
+> Compilation failed; see the compiler error output for details.
+
+* Try:
+> Run with --info option to get more log output.
+> Run with --scan to get full insights.
+
+BUILD FAILED in 24s
+19 actionable tasks: 19 executed
